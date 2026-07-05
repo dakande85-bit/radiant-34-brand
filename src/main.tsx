@@ -2,7 +2,52 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles.css';
 
-// ─── SUNBURST ─────────────────────────────────────────────────────────────────
+// ─── BRAND MARK (half rising-sun, matches actual logo) ─────────────────────
+function BrandMark({ size = 80 }: { size?: number }) {
+  const h = size * 0.58;
+  const cx = size / 2;
+  const cy = h;              // centre at bottom edge
+  const innerR = size * 0.08;
+  const rayCount = 22;
+  const arcStart = 195;      // °  left edge of fan
+  const arcEnd = 345;        // °  right edge of fan
+  const arcSpread = arcEnd - arcStart;
+
+  return (
+    <svg
+      width={size}
+      height={h}
+      viewBox={`0 0 ${size} ${h}`}
+      aria-hidden="true"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      {Array.from({ length: rayCount }, (_, i) => {
+        const t = i / (rayCount - 1);
+        const angleDeg = arcStart + t * arcSpread;
+        const rad = (angleDeg * Math.PI) / 180;
+        // centre ray (270°) is longest; taper toward edges
+        const distFromCenter = Math.abs(angleDeg - 270) / 75;
+        const maxLen = size * 0.5;
+        const minLen = size * 0.27;
+        const outerR = maxLen - (maxLen - minLen) * Math.pow(distFromCenter, 0.55);
+        return (
+          <line
+            key={i}
+            x1={cx + innerR * Math.cos(rad)}
+            y1={cy + innerR * Math.sin(rad)}
+            x2={cx + outerR * Math.cos(rad)}
+            y2={cy + outerR * Math.sin(rad)}
+            stroke="#B58A3B"
+            strokeWidth={Math.max(0.7, size * 0.013)}
+            strokeLinecap="round"
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── SUNBURST (full circle — decorative accents / bullets) ─────────────────
 function Sunburst({ size = 80 }: { size?: number }) {
   const rays = 16;
   const cx = size / 2;
@@ -53,13 +98,50 @@ function PlaceholderImage({ label, todo, tall }: { label: string; todo?: string;
   );
 }
 
-// ─── DIVIDER ──────────────────────────────────────────────────────────────────
+// ─── PRODUCT IMAGE (real or placeholder) ─────────────────────────────────────
+function ProductImage({
+  src, alt, tall, label, todo,
+}: {
+  src?: string | null; alt?: string; tall?: boolean; label: string; todo?: string;
+}) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={alt ?? label}
+        className={`product-photo${tall ? ' product-photo--tall' : ''}`}
+      />
+    );
+  }
+  return <PlaceholderImage label={label} todo={todo} tall={tall} />;
+}
+
+// ─── SECTION DIVIDER ──────────────────────────────────────────────────────────
 function SunburstDivider() {
   return (
     <div className="sb-divider" aria-hidden="true">
       <span className="sb-divider__line" />
       <Sunburst size={26} />
       <span className="sb-divider__line" />
+    </div>
+  );
+}
+
+// ─── LOGO LOCKUP ─────────────────────────────────────────────────────────────
+function Logo({ inv = false, large = false }: { inv?: boolean; large?: boolean }) {
+  const markSize = large ? 120 : 32;
+  return (
+    <div className={`logo-lockup${large ? ' logo-lockup--large' : ''}${inv ? ' logo-lockup--inv' : ''}`}>
+      <BrandMark size={markSize} />
+      <div className="logo-type">
+        <span className="logo-type__radiant">RADIANT</span>
+        <span className="logo-type__bar">
+          <span className="logo-type__rule" />
+          <span className="logo-type__num">34</span>
+          <span className="logo-type__rule" />
+        </span>
+        {large && <span className="logo-type__ref">PSALM 34:5</span>}
+      </div>
     </div>
   );
 }
@@ -71,18 +153,15 @@ function Header() {
   return (
     <header className="site-header">
       <div className="header-inner">
-        <a href="#top" className="logo" aria-label="Radiant 34 home">
-          <Sunburst size={28} />
-          <span className="logo-text">
-            RADIANT <strong>34</strong>
-          </span>
+        <a href="#top" aria-label="Radiant 34 home" className="header-logo-link">
+          <Logo />
         </a>
 
         <nav className={`main-nav${open ? ' main-nav--open' : ''}`} aria-label="Primary navigation">
-          <a href="#story" onClick={() => setOpen(false)}>Story</a>
-          <a href="#purpose" onClick={() => setOpen(false)}>Purpose</a>
+          <a href="#story"      onClick={() => setOpen(false)}>Story</a>
+          <a href="#purpose"    onClick={() => setOpen(false)}>Purpose</a>
           <a href="#collection" onClick={() => setOpen(false)}>Collection</a>
-          <a href="#community" onClick={() => setOpen(false)}>Community</a>
+          <a href="#community"  onClick={() => setOpen(false)}>Community</a>
         </nav>
 
         <a className="header-cta" href="#collection">Shop Coming Soon</a>
@@ -93,9 +172,9 @@ function Header() {
           aria-expanded={open}
           onClick={() => setOpen(!open)}
         >
-          <span className={`menu-btn__bar${open ? ' menu-btn__bar--open' : ''}`} />
-          <span className={`menu-btn__bar${open ? ' menu-btn__bar--open' : ''}`} />
-          <span className={`menu-btn__bar${open ? ' menu-btn__bar--open' : ''}`} />
+          <span className="menu-btn__bar" />
+          <span className="menu-btn__bar" />
+          <span className="menu-btn__bar" />
         </button>
       </div>
     </header>
@@ -103,17 +182,40 @@ function Header() {
 }
 
 // ─── HERO ─────────────────────────────────────────────────────────────────────
+const HERO_PRODUCTS = [
+  {
+    label: 'Signature Hoodie',
+    img: '/images/hoodie-city.png',
+    alt: 'Man wearing Radiant 34 cream hoodie with city skyline',
+  },
+  {
+    label: 'Radiant Tee',
+    img: '/images/tshirt-radiant.png',
+    alt: 'Radiant 34 cream t-shirt with sunburst logo, flat lay',
+    featured: true,
+  },
+  {
+    label: 'Structured Cap',
+    img: '/images/cap-radiant.png',
+    alt: 'Radiant 34 beige structured cap with embroidered logo',
+  },
+];
+
 function Hero() {
   return (
     <section className="hero" id="top">
       <div className="hero-text">
-        <div className="hero-sunburst">
-          <Sunburst size={104} />
+        <div className="hero-mark">
+          <BrandMark size={110} />
         </div>
-        <p className="eyebrow">Psalm 34:5 · Bible-Inspired Clothing</p>
         <h1 className="hero-wordmark">
           <span className="hero-wordmark__main">RADIANT</span>
-          <span className="hero-wordmark__num">34</span>
+          <span className="hero-wordmark__bar">
+            <span className="hero-wordmark__rule" />
+            <span className="hero-wordmark__num">34</span>
+            <span className="hero-wordmark__rule" />
+          </span>
+          <span className="hero-wordmark__ref">PSALM 34:5</span>
         </h1>
         <blockquote className="hero-scripture">
           "Those who look to Him are radiant; their faces are never covered with shame."
@@ -124,24 +226,17 @@ function Hero() {
         <p className="hero-sub">Bible-inspired art and designs for everyday wear.</p>
         <div className="hero-actions">
           <a href="#collection" className="btn btn--dark">View Collection</a>
-          <a href="#story" className="btn btn--outline">Brand Story</a>
+          <a href="#story"      className="btn btn--outline">Brand Story</a>
         </div>
       </div>
 
       <div className="hero-products">
-        {/* TODO: Replace placeholders with Radiant 34 product photos */}
-        <div className="hero-product-card">
-          <PlaceholderImage label="Hoodie" todo="TODO: Radiant 34 Hoodie photo" tall />
-          <p className="hero-product-card__name">Signature Hoodie</p>
-        </div>
-        <div className="hero-product-card hero-product-card--featured">
-          <PlaceholderImage label="T-Shirt" todo="TODO: Radiant 34 T-Shirt photo" tall />
-          <p className="hero-product-card__name">Core Tee</p>
-        </div>
-        <div className="hero-product-card">
-          <PlaceholderImage label="Cap" todo="TODO: Radiant 34 Cap photo" tall />
-          <p className="hero-product-card__name">Structured Cap</p>
-        </div>
+        {HERO_PRODUCTS.map((p) => (
+          <div className={`hero-product-card${p.featured ? ' hero-product-card--featured' : ''}`} key={p.label}>
+            <img src={p.img} alt={p.alt} className="hero-product-img" />
+            <p className="hero-product-card__name">{p.label}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -162,8 +257,8 @@ function Inspiration() {
 
         <div className="two-col two-col--img-first">
           <div className="two-col__img">
-            {/* TODO: Replace with open Bible / scripture image */}
-            <PlaceholderImage label="Open Bible" todo="TODO: Bible / scripture image" />
+            {/* TODO: Replace with open Bible / devotional image */}
+            <PlaceholderImage label="Open Bible" todo="TODO: Bible / devotional image" />
           </div>
           <div className="two-col__copy">
             <p>Radiant 34 was born from one verse. A promise that identity, confidence, and freedom from shame flow from looking to God.</p>
@@ -194,8 +289,11 @@ function Vision() {
             </p>
           </div>
           <div className="two-col__img">
-            {/* TODO: Replace with brand sketch / notebook / vision image */}
-            <PlaceholderImage label="Brand Vision" todo="TODO: Brand inspiration / sketch image" />
+            <img
+              src="/images/notebook-pen.png"
+              alt="Radiant 34 branded notebook with Seek Him, Fear Him, Bless Him, and pen"
+              className="product-photo"
+            />
           </div>
         </div>
       </div>
@@ -243,18 +341,24 @@ function Purpose() {
 const COLLECTION_ITEMS = [
   {
     id: 'tshirt',
-    name: 'T-Shirt',
-    desc: 'Minimal faith design. Premium cotton. Everyday wear.',
+    name: 'Radiant Tee',
+    desc: 'Premium cotton. Signature Radiant 34 logo. The everyday essential.',
+    img: '/images/tshirt-radiant.png',
+    alt: 'Radiant 34 cream t-shirt flat lay with sunburst logo and Psalm 34:5',
   },
   {
-    id: 'tanktop',
-    name: 'Tank Top',
-    desc: 'Lightweight. Breathable. Made for movement and the everyday.',
+    id: 'cap',
+    name: 'Structured Cap',
+    desc: 'Embroidered Radiant 34 logo. Beige cotton twill. Worn for every occasion.',
+    img: '/images/cap-radiant.png',
+    alt: 'Radiant 34 beige structured cap with embroidered sunburst logo',
   },
   {
     id: 'hoodie',
-    name: 'Hoodie',
-    desc: 'Heavyweight fleece. Oversized silhouette. Scripture detail.',
+    name: 'Signature Hoodie',
+    desc: 'Premium heavyweight fleece. Oversized fit. Radiant 34 back print.',
+    img: '/images/hoodie-city.png',
+    alt: 'Man wearing Radiant 34 cream hoodie overlooking city skyline',
   },
 ];
 
@@ -270,8 +374,7 @@ function Collection() {
           {COLLECTION_ITEMS.map((item) => (
             <article className="product-card" key={item.id}>
               <div className="product-card__img">
-                {/* TODO: Replace with Radiant 34 product photo */}
-                <PlaceholderImage label={item.name} todo={`TODO: ${item.name} product photo`} tall />
+                <img src={item.img} alt={item.alt} className="product-photo product-photo--tall" />
               </div>
               <div className="product-card__info">
                 <Sunburst size={16} />
@@ -291,10 +394,10 @@ function Collection() {
 
 // ─── ESSENTIALS ───────────────────────────────────────────────────────────────
 const ESSENTIALS_ITEMS = [
-  { id: 'keychain',    name: 'Key Chain',    desc: 'Carry the verse.' },
-  { id: 'bracelet',   name: 'Bracelet',     desc: 'Daily reminder on the wrist.' },
-  { id: 'bottle',     name: 'Water Bottle', desc: 'Hydrate with purpose.' },
-  { id: 'backpack',   name: 'Backpack',     desc: 'Built for the everyday.' },
+  { id: 'notebook',    name: 'Notebook',     desc: 'Seek Him. Fear Him. Bless Him.',  img: '/images/notebook-pen.png', alt: 'Radiant 34 branded notebook with pen' },
+  { id: 'bracelet',    name: 'Bracelet',     desc: 'Daily reminder on the wrist.',     img: null, alt: '' },
+  { id: 'bottle',      name: 'Water Bottle', desc: 'Hydrate with purpose.',            img: null, alt: '' },
+  { id: 'backpack',    name: 'Backpack',     desc: 'Built for the everyday.',          img: null, alt: '' },
 ];
 
 function Essentials() {
@@ -308,8 +411,12 @@ function Essentials() {
           {ESSENTIALS_ITEMS.map((item) => (
             <article className="essential-card" key={item.id}>
               <div className="essential-card__img">
-                {/* TODO: Replace with Radiant 34 essential photo */}
-                <PlaceholderImage label={item.name} todo={`TODO: ${item.name} photo`} />
+                <ProductImage
+                  src={item.img}
+                  alt={item.alt}
+                  label={item.name}
+                  todo={`TODO: ${item.name} product photo`}
+                />
               </div>
               <div className="essential-card__info">
                 <h3 className="essential-card__name">{item.name}</h3>
@@ -328,10 +435,10 @@ function Essentials() {
 
 // ─── EVERYDAY FAITH ───────────────────────────────────────────────────────────
 const LIFESTYLE_ITEMS = [
-  { id: 'gym',    label: 'The Gym',       desc: 'Built for movement.' },
-  { id: 'street', label: 'The Streets',   desc: 'Standing out naturally.' },
-  { id: 'work',   label: 'The Workplace', desc: 'Faith at work.' },
-  { id: 'daily',  label: 'Daily Carry',   desc: 'Every moment matters.' },
+  { id: 'gym',    label: 'The Gym',       desc: 'Built for movement.',     img: null },
+  { id: 'street', label: 'The Streets',   desc: 'Standing out naturally.', img: '/images/hoodie-city.png' },
+  { id: 'work',   label: 'The Workplace', desc: 'Faith at work.',          img: null },
+  { id: 'daily',  label: 'Daily Carry',   desc: 'Every moment matters.',   img: '/images/notebook-pen.png' },
 ];
 
 function EverydayFaith() {
@@ -345,8 +452,16 @@ function EverydayFaith() {
         <div className="everyday-grid">
           {LIFESTYLE_ITEMS.map((item) => (
             <div className="everyday-card" key={item.id}>
-              {/* TODO: Replace with Radiant 34 lifestyle photography */}
-              <PlaceholderImage label={item.label} todo={`TODO: ${item.label} lifestyle photo`} />
+              {item.img ? (
+                <img
+                  src={item.img}
+                  alt={item.label}
+                  className="everyday-photo"
+                />
+              ) : (
+                /* TODO: Replace with Radiant 34 lifestyle photography */
+                <PlaceholderImage label={item.label} todo={`TODO: ${item.label} lifestyle photo`} />
+              )}
               <div className="everyday-card__caption">
                 <strong>{item.label}</strong>
                 <span>{item.desc}</span>
@@ -391,8 +506,11 @@ function Details() {
             <p className="bottom-line bottom-line--left">Quality with purpose. Every detail matters.</p>
           </div>
           <div className="details-img">
-            {/* TODO: Replace with Radiant 34 product detail / close-up */}
-            <PlaceholderImage label="Product Detail" todo="TODO: Close-up product detail photo" />
+            <img
+              src="/images/tshirt-radiant.png"
+              alt="Radiant 34 cream t-shirt — close-up detail"
+              className="product-photo"
+            />
           </div>
         </div>
       </div>
@@ -413,7 +531,7 @@ function Community() {
         </p>
         <div className="community-img">
           {/* TODO: Replace with Radiant 34 community / group lifestyle photo */}
-          <PlaceholderImage label="Community" todo="TODO: Community / lifestyle photo" />
+          <PlaceholderImage label="Community" todo="TODO: Community / lifestyle group photo" />
         </div>
         <p className="bottom-line">Different stories. One truth. His goodness.</p>
       </div>
@@ -421,28 +539,25 @@ function Community() {
   );
 }
 
-// ─── BRAND PANEL + FOOTER ────────────────────────────────────────────────────
+// ─── BRAND PANEL + FOOTER ─────────────────────────────────────────────────────
 function BrandPanel() {
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (email.trim()) {
-      setDone(true);
-    }
+    if (email.trim()) setDone(true);
   };
 
   return (
     <>
       <section className="brand-panel" id="brand-panel">
+        <div className="brand-panel__badge">
+          <img src="/images/brand-badge.png" alt="Radiant 34 official brand mark" className="brand-badge-img" />
+        </div>
         <div className="container brand-panel__inner">
-          <Sunburst size={72} />
-          <a href="#top" className="logo logo--inv">
-            <span className="logo-text">RADIANT <strong>34</strong></span>
-          </a>
+          <Logo inv large />
           <p className="brand-tagline">Faith in motion. Light in everyday life.</p>
-          <p className="brand-verse">"Those who look to Him are radiant." — Psalm 34:5</p>
 
           <div className="email-block">
             <p className="email-block__label">Be the first to know when Drop 001 launches.</p>
@@ -481,7 +596,7 @@ function BrandPanel() {
   );
 }
 
-// ─── APP ─────────────────────────────────────────────────────────────────────
+// ─── APP ──────────────────────────────────────────────────────────────────────
 function App() {
   return (
     <>

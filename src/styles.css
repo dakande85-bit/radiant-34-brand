@@ -164,6 +164,83 @@ blockquote { margin: 0; }
   opacity: 0.65;
 }
 
+/* ─── LOGO LOCKUP ────────────────────────────────────────────────────────── */
+.logo-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.logo-lockup--large {
+  gap: 4px;
+}
+
+.logo-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  line-height: 1;
+}
+.logo-type__radiant {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--black);
+}
+.logo-lockup--inv .logo-type__radiant { color: var(--white); }
+
+.logo-type__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
+}
+.logo-type__rule {
+  display: block;
+  width: 14px;
+  height: 1px;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+.logo-type__num {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+.logo-type__ref {
+  font-size: 0.46rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--charcoal);
+  margin-top: 3px;
+}
+.logo-lockup--inv .logo-type__ref { color: rgba(245,241,234,0.5); }
+
+/* Large logo (hero / brand panel) */
+.logo-lockup--large .logo-type__radiant { font-size: 1.4rem; letter-spacing: 0.3em; }
+.logo-lockup--large .logo-type__rule    { width: 28px; }
+.logo-lockup--large .logo-type__num     { font-size: 1.3rem; letter-spacing: 0.22em; }
+.logo-lockup--large .logo-type__ref     { font-size: 0.7rem; letter-spacing: 0.26em; margin-top: 6px; }
+
+.header-logo-link { display: block; }
+
+/* ─── PRODUCT PHOTOS ─────────────────────────────────────────────────────── */
+.product-photo {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  object-position: center;
+}
+.product-photo--tall {
+  height: 380px;
+  object-position: center top;
+}
+
 /* ─── SITE HEADER ────────────────────────────────────────────────────────── */
 .site-header {
   position: fixed;
@@ -185,22 +262,10 @@ blockquote { margin: 0; }
   min-height: var(--header-h);
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+.header-logo-link {
   margin-right: auto;
+  flex-shrink: 0;
 }
-.logo-text {
-  font-size: 0.76rem;
-  font-weight: 900;
-  letter-spacing: 0.26em;
-  text-transform: uppercase;
-  color: var(--black);
-  line-height: 1;
-}
-.logo-text strong { color: var(--gold); font-weight: 900; }
 
 .main-nav {
   display: flex;
@@ -286,19 +351,39 @@ blockquote { margin: 0; }
   line-height: 1;
 }
 .hero-wordmark__main {
-  font-size: clamp(3.8rem, 12vw, 9.5rem);
+  font-size: clamp(3.5rem, 11vw, 9rem);
   font-weight: 900;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--black);
   line-height: 0.9;
 }
+.hero-wordmark__bar {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 18px);
+  margin: clamp(4px, 0.8vw, 10px) 0;
+}
+.hero-wordmark__rule {
+  display: block;
+  width: clamp(24px, 4vw, 52px);
+  height: 1.5px;
+  background: var(--gold);
+}
 .hero-wordmark__num {
-  font-size: clamp(2.8rem, 9vw, 7rem);
+  font-size: clamp(2.2rem, 7vw, 6rem);
   font-weight: 900;
-  letter-spacing: 0.32em;
+  letter-spacing: 0.28em;
   color: var(--gold);
-  line-height: 0.9;
+  line-height: 1;
+}
+.hero-wordmark__ref {
+  font-size: clamp(0.55rem, 1vw, 0.78rem);
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--charcoal);
+  margin-top: 2px;
 }
 
 .hero-scripture {
@@ -366,6 +451,13 @@ blockquote { margin: 0; }
   text-transform: uppercase;
   color: var(--charcoal);
   border-top: 1px solid var(--beige);
+}
+.hero-product-img {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  object-position: center top;
 }
 
 /* ─── SECTIONS (base) ────────────────────────────────────────────────────── */
@@ -598,12 +690,39 @@ blockquote { margin: 0; }
   overflow: hidden;
 }
 
+/* ─── EVERYDAY PHOTO ─────────────────────────────────────────────────────── */
+.everyday-photo {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  object-position: center;
+}
+
 /* ─── BRAND PANEL ────────────────────────────────────────────────────────── */
 .brand-panel {
   background: var(--black);
   color: var(--white);
+  position: relative;
+  overflow: hidden;
+}
+.brand-panel__badge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.brand-badge-img {
+  width: min(440px, 90%);
+  opacity: 0.07;
+  filter: grayscale(1) brightness(3);
+  object-fit: contain;
 }
 .brand-panel__inner {
+  position: relative;
+  z-index: 2;
   padding: 100px 0 80px;
   display: flex;
   flex-direction: column;
@@ -612,22 +731,12 @@ blockquote { margin: 0; }
   gap: 18px;
 }
 
-.logo--inv .logo-text { color: var(--white); }
-
 .brand-tagline {
   font-size: clamp(1rem, 2vw, 1.3rem);
   font-style: italic;
   color: rgba(245, 241, 234, 0.65);
   margin: 0;
 }
-.brand-verse {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: var(--gold);
-  margin: 0;
-}
-
 .email-block {
   margin-top: 8px;
   width: 100%;

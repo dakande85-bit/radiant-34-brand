@@ -109,10 +109,9 @@ function Hero() {
       </div>
 
       <div className="hero-image">
-        {/* Replace with lifestyle model photo: woman in cream hoodie, warm light */}
         <img
-          src="/images/hero-hoodie.png"
-          alt="Radiant 34 cream hoodie with small chest logo"
+          src="/images/model-hoodie.png"
+          alt="Woman wearing Radiant 34 cream hoodie leaning against warm stone wall"
         />
       </div>
     </section>
@@ -140,10 +139,9 @@ function StorySection() {
         </div>
 
         <div className="story-image">
-          {/* Replace with lifestyle: woman in black tee + man in cream hoodie */}
           <img
-            src="/images/tshirt-black.png"
-            alt="Radiant 34 black T-shirt with small chest logo on warm background"
+            src="/images/model-tees.png"
+            alt="Woman in Radiant 34 black tee and man in cream tee, golden hour city backdrop"
             loading="lazy"
           />
         </div>
@@ -158,10 +156,9 @@ function PurposeSection() {
     <section className="purpose-section" id="purpose">
       <div className="purpose-inner">
         <div className="purpose-image">
-          {/* Replace with lifestyle: models wearing pieces naturally */}
           <img
-            src="/images/hero-hoodie.png"
-            alt="Radiant 34 Signature Hoodie detail"
+            src="/images/model-group.png"
+            alt="Three friends in Radiant 34 pieces — tank, tee, hoodie — golden hour"
             loading="lazy"
           />
         </div>
@@ -184,21 +181,24 @@ function PurposeSection() {
 const COLLECTION_ITEMS = [
   {
     name: 'Signature Hoodie',
-    line: 'Warm. Comfortable. Carries more than warmth.',
-    img: '/images/hero-hoodie.png',
-    alt: 'Radiant 34 cream hoodie with small chest logo',
+    line: 'Soft everyday hoodie. Small chest mark. Built for comfort and daily wear.',
+    img: '/images/model-hoodie.png',
+    alt: 'Woman wearing Radiant 34 cream hoodie leaning against stone wall',
+    pos: 'center top',
   },
   {
     name: 'Classic Tee',
-    line: 'Clean and minimal. Wearable truth.',
-    img: '/images/tshirt-black.png',
-    alt: 'Radiant 34 black T-shirt with small chest logo',
+    line: 'Heavyweight tee carrying the Radiant 34 mark with restraint. Rooted in Psalm 34:5.',
+    img: '/images/model-tees.png',
+    alt: 'Woman in Radiant 34 black tee, golden hour city skyline',
+    pos: 'left top',
   },
   {
     name: 'Everyday Tank',
-    line: 'Light and free. Made for every season.',
-    img: null,
-    alt: '',
+    line: 'Lightweight and free. Designed for movement, training, and every season.',
+    img: '/images/model-group.png',
+    alt: 'Group of friends wearing Radiant 34 pieces in golden hour',
+    pos: 'left center',
   },
 ];
 
@@ -213,7 +213,7 @@ function CollectionTeaser() {
             <article key={item.name} className="collection-card">
               <div className="collection-card__img">
                 {item.img ? (
-                  <img src={item.img} alt={item.alt} loading="lazy" />
+                  <img src={item.img} alt={item.alt} loading="lazy" style={{ objectPosition: item.pos }} />
                 ) : (
                   <div className="collection-card__placeholder">
                     <BulbAccent size={32} />

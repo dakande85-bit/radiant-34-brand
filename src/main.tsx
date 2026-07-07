@@ -58,7 +58,7 @@ function Header() {
     <header className="site-header">
       <div className="header-inner">
         <a href="#top" className="header-logo" aria-label="Radiant 34 home">
-          <img src="/images/logo.jpg" alt="Radiant 34" className="header-logo-img" />
+          <img src="/images/logo-transparent.png" alt="Radiant 34" className="header-logo-img" />
         </a>
 
         <nav
@@ -246,14 +246,14 @@ function FinalPanel() {
 
   return (
     <section className="final-panel">
-      <div className="final-panel__inner">
+      <div className="final-panel__left">
         <h2 className="final-panel__heading">
           "Those who look to Him are radiant."
         </h2>
-        <p className="final-panel__copy">
+        <p className="final-panel__body">
           A clothing label built to remind a generation who they are, where their light comes from, and why they were made to shine.
         </p>
-        <a href="#story" className="btn btn--outline-cream">Join the Journey</a>
+        <a href="#collection" className="btn btn--outline-cream">Join the Journey</a>
 
         <div className="final-panel__email">
           <p className="final-panel__email-label">
@@ -275,6 +275,14 @@ function FinalPanel() {
             </form>
           )}
         </div>
+      </div>
+
+      <div className="final-panel__right">
+        <img
+          src="/images/model-psalm.png"
+          alt="Man wearing Radiant 34 tee sitting on stone steps, Psalm 34:5 carved in wall behind him"
+          loading="lazy"
+        />
       </div>
     </section>
   );

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles.css';
 
+const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+
 type Product = {
   name: string;
   category: string;
@@ -21,7 +23,7 @@ const PRODUCTS: Product[] = [
     name: 'Psalm 34 Tee',
     category: 'Signature Tee',
     line: 'Clean everyday tee carrying the Radiant 34 mark and Psalm 34:5 identity.',
-    img: '/images/model-psalm.png',
+    img: asset('/images/model-psalm.png'),
     alt: 'Man wearing Radiant 34 cream tee beside Psalm 34:5 wall text',
     pos: 'center top',
   },
@@ -29,7 +31,7 @@ const PRODUCTS: Product[] = [
     name: 'Radiant Hoodie',
     category: 'Everyday Hoodie',
     line: 'Soft cream hoodie made for daily wear, quiet faith, and warm light.',
-    img: '/images/model-hoodie.png',
+    img: asset('/images/model-hoodie.png'),
     alt: 'Woman wearing Radiant 34 cream hoodie in golden light',
     pos: 'center top',
   },
@@ -37,7 +39,7 @@ const PRODUCTS: Product[] = [
     name: 'Classic Tee Set',
     category: 'Core Apparel',
     line: 'Black and cream staples with restrained artwork, built for real life.',
-    img: '/images/model-tees.png',
+    img: asset('/images/model-tees.png'),
     alt: 'Models wearing Radiant 34 black and cream tees',
     pos: 'left top',
   },
@@ -45,7 +47,7 @@ const PRODUCTS: Product[] = [
     name: 'Everyday Tank',
     category: 'Movement Piece',
     line: 'Lightweight, easy, and made for summer, training, and movement.',
-    img: '/images/model-group.png',
+    img: asset('/images/model-group.png'),
     alt: 'Group wearing Radiant 34 tank, tee, and hoodie',
     pos: 'left center',
   },
@@ -73,7 +75,7 @@ function Header() {
     <header className="site-header">
       <div className="header-inner">
         <a href="#top" className="header-logo" aria-label="Radiant 34 home">
-          <img src="/images/logo-transparent.png" alt="Radiant 34" className="header-logo-img" />
+          <img src={asset('/images/logo-transparent.png')} alt="Radiant 34" className="header-logo-img" />
         </a>
 
         <nav className={`main-nav${open ? ' main-nav--open' : ''}`} aria-label="Primary navigation">
@@ -123,7 +125,7 @@ function Hero() {
 
       <div className="hero-image">
         <img
-          src="/images/model-psalm.png"
+          src={asset('/images/model-psalm.png')}
           alt="Man wearing a cream Radiant 34 t-shirt at sunset beside Psalm 34 verse text"
         />
       </div>
@@ -136,7 +138,7 @@ function StorySection() {
     <section className="story-section" id="story">
       <div className="story-inner">
         <div className="story-image">
-          <img src="/images/model-hoodie.png" alt="Radiant 34 cream hoodie in golden light" loading="lazy" />
+          <img src={asset('/images/model-hoodie.png')} alt="Radiant 34 cream hoodie in golden light" loading="lazy" />
         </div>
         <div className="story-copy">
           <p className="eyebrow">The meaning</p>
@@ -214,10 +216,10 @@ function LookbookSection() {
           <a href="#signup" className="btn btn--outline-cream">Join the Launch List</a>
         </div>
         <div className="lookbook-image lookbook-image--one">
-          <img src="/images/model-tees.png" alt="Radiant 34 tees editorial image" loading="lazy" />
+          <img src={asset('/images/model-tees.png')} alt="Radiant 34 tees editorial image" loading="lazy" />
         </div>
         <div className="lookbook-image lookbook-image--two">
-          <img src="/images/model-group.png" alt="Radiant 34 group apparel editorial image" loading="lazy" />
+          <img src={asset('/images/model-group.png')} alt="Radiant 34 group apparel editorial image" loading="lazy" />
         </div>
       </div>
     </section>
@@ -267,7 +269,7 @@ function Footer() {
   return (
     <footer className="site-footer">
       <div className="container footer-inner">
-        <img src="/images/logo-transparent.png" alt="Radiant 34" />
+        <img src={asset('/images/logo-transparent.png')} alt="Radiant 34" />
         <p>“Those who look to Him are radiant; their faces are never covered with shame.”</p>
         <span>© 2026 Radiant 34. Bible-inspired clothing and everyday art.</span>
       </div>

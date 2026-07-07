@@ -1,16 +1,32 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles.css';
 
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
 
 type Product = {
-  name: string;
-  category: string;
-  line: string;
-  img: string;
-  alt: string;
-  pos?: string;
+  id: string;
+  title: string;
+  handle: string;
+  category: 'T-Shirt' | 'Hoodie' | 'Tank Top' | 'Accessory' | 'Drinkware' | 'Bag';
+  shopCategory: 'Tees' | 'Hoodies' | 'Tanks' | 'Accessories';
+  price: string;
+  status: 'Drop 001 Preview';
+  description: string;
+  images: string[];
+  options?: {
+    size?: string[];
+    color?: string[];
+  };
+  variants: { sku: string; size?: string; color?: string }[];
+  tags: string[];
+  collection: 'Drop 001';
+  shopifyProductId: null;
+  shopifyVariantIds: Record<string, never>;
+  gelatoProductUid: null;
+  fulfillmentType: 'gelato' | 'manual';
+  seoTitle: string;
+  seoDescription: string;
 };
 
 type Principle = {
@@ -18,38 +34,179 @@ type Principle = {
   copy: string;
 };
 
+const apparelVariants = (prefix: string) =>
+  ['Cream', 'Black'].flatMap(color =>
+    ['S', 'M', 'L', 'XL', 'XXL'].map(size => ({
+      sku: `${prefix}-${color.slice(0, 3).toUpperCase()}-${size}`,
+      size,
+      color,
+    }))
+  );
+
 const PRODUCTS: Product[] = [
   {
-    name: 'Psalm 34 Tee',
-    category: 'Signature Tee',
-    line: 'Clean everyday tee carrying the Radiant 34 mark and Psalm 34:5 identity.',
-    img: asset('/images/model-psalm.png'),
-    alt: 'Man wearing Radiant 34 cream tee beside Psalm 34:5 wall text',
-    pos: 'center top',
+    id: 'psalm-34-tee',
+    title: 'Psalm 34 Tee',
+    handle: 'psalm-34-tee',
+    category: 'T-Shirt',
+    shopCategory: 'Tees',
+    price: '£34',
+    status: 'Drop 001 Preview',
+    description: 'A clean everyday tee carrying the Radiant 34 mark and Psalm 34:5 identity.',
+    images: [asset('/images/model-psalm.png')],
+    options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
+    variants: apparelVariants('R34-TEE-PS34'),
+    tags: ['drop-001', 'psalm-34', 'tee', 'gelato-ready'],
+    collection: 'Drop 001',
+    shopifyProductId: null,
+    shopifyVariantIds: {},
+    gelatoProductUid: null,
+    fulfillmentType: 'gelato',
+    seoTitle: 'Psalm 34 Tee | Radiant 34',
+    seoDescription: 'A Bible-inspired Radiant 34 tee rooted in Psalm 34:5.',
   },
   {
-    name: 'Radiant Hoodie',
-    category: 'Everyday Hoodie',
-    line: 'Soft cream hoodie made for daily wear, quiet faith, and warm light.',
-    img: asset('/images/model-hoodie.png'),
-    alt: 'Woman wearing Radiant 34 cream hoodie in golden light',
-    pos: 'center top',
+    id: 'radiant-hoodie',
+    title: 'Radiant Hoodie',
+    handle: 'radiant-hoodie',
+    category: 'Hoodie',
+    shopCategory: 'Hoodies',
+    price: '£58',
+    status: 'Drop 001 Preview',
+    description: 'A soft everyday hoodie built around warmth, light, and quiet faith.',
+    images: [asset('/images/model-hoodie.png')],
+    options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
+    variants: apparelVariants('R34-HDY-RAD'),
+    tags: ['drop-001', 'hoodie', 'gelato-ready'],
+    collection: 'Drop 001',
+    shopifyProductId: null,
+    shopifyVariantIds: {},
+    gelatoProductUid: null,
+    fulfillmentType: 'gelato',
+    seoTitle: 'Radiant Hoodie | Radiant 34',
+    seoDescription: 'A warm Bible-inspired hoodie from Radiant 34.',
   },
   {
-    name: 'Classic Tee Set',
-    category: 'Core Apparel',
-    line: 'Black and cream staples with restrained artwork, built for real life.',
-    img: asset('/images/model-tees.png'),
-    alt: 'Models wearing Radiant 34 black and cream tees',
-    pos: 'left top',
+    id: 'classic-radiant-tee',
+    title: 'Classic Tee',
+    handle: 'classic-radiant-tee',
+    category: 'T-Shirt',
+    shopCategory: 'Tees',
+    price: '£34',
+    status: 'Drop 001 Preview',
+    description: 'A minimal Radiant 34 staple designed for everyday wear.',
+    images: [asset('/images/model-tees.png')],
+    options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
+    variants: apparelVariants('R34-TEE-CLS'),
+    tags: ['drop-001', 'classic', 'tee', 'gelato-ready'],
+    collection: 'Drop 001',
+    shopifyProductId: null,
+    shopifyVariantIds: {},
+    gelatoProductUid: null,
+    fulfillmentType: 'gelato',
+    seoTitle: 'Classic Tee | Radiant 34',
+    seoDescription: 'A minimal everyday Radiant 34 tee.',
   },
   {
-    name: 'Everyday Tank',
-    category: 'Movement Piece',
-    line: 'Lightweight, easy, and made for summer, training, and movement.',
-    img: asset('/images/model-group.png'),
-    alt: 'Group wearing Radiant 34 tank, tee, and hoodie',
-    pos: 'left center',
+    id: 'everyday-tank',
+    title: 'Everyday Tank',
+    handle: 'everyday-tank',
+    category: 'Tank Top',
+    shopCategory: 'Tanks',
+    price: '£28',
+    status: 'Drop 001 Preview',
+    description: 'Lightweight and made for movement, training, and summer.',
+    images: [asset('/images/model-group.png')],
+    options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
+    variants: apparelVariants('R34-TNK-EVD'),
+    tags: ['drop-001', 'tank', 'gelato-ready'],
+    collection: 'Drop 001',
+    shopifyProductId: null,
+    shopifyVariantIds: {},
+    gelatoProductUid: null,
+    fulfillmentType: 'gelato',
+    seoTitle: 'Everyday Tank | Radiant 34',
+    seoDescription: 'A Radiant 34 tank top for movement and summer wear.',
+  },
+  {
+    id: 'radiant-key-chain',
+    title: 'Radiant Key Chain',
+    handle: 'radiant-key-chain',
+    category: 'Accessory',
+    shopCategory: 'Accessories',
+    price: '£9',
+    status: 'Drop 001 Preview',
+    description: 'A small everyday reminder of Psalm 34:5.',
+    images: [],
+    variants: [{ sku: 'R34-ACC-KEYCHAIN' }],
+    tags: ['drop-001', 'accessory', 'manual-fulfillment'],
+    collection: 'Drop 001',
+    shopifyProductId: null,
+    shopifyVariantIds: {},
+    gelatoProductUid: null,
+    fulfillmentType: 'manual',
+    seoTitle: 'Radiant Key Chain | Radiant 34',
+    seoDescription: 'A small Radiant 34 accessory inspired by Psalm 34:5.',
+  },
+  {
+    id: 'radiant-bracelet',
+    title: 'Radiant Bracelet',
+    handle: 'radiant-bracelet',
+    category: 'Accessory',
+    shopCategory: 'Accessories',
+    price: '£12',
+    status: 'Drop 001 Preview',
+    description: 'A simple faith-inspired bracelet for daily wear.',
+    images: [],
+    variants: [{ sku: 'R34-ACC-BRACELET' }],
+    tags: ['drop-001', 'bracelet', 'manual-fulfillment'],
+    collection: 'Drop 001',
+    shopifyProductId: null,
+    shopifyVariantIds: {},
+    gelatoProductUid: null,
+    fulfillmentType: 'manual',
+    seoTitle: 'Radiant Bracelet | Radiant 34',
+    seoDescription: 'A faith-inspired Radiant 34 bracelet for daily wear.',
+  },
+  {
+    id: 'radiant-water-bottle',
+    title: 'Radiant Water Bottle',
+    handle: 'radiant-water-bottle',
+    category: 'Drinkware',
+    shopCategory: 'Accessories',
+    price: '£22',
+    status: 'Drop 001 Preview',
+    description: 'Everyday drinkware carrying the Radiant 34 mark.',
+    images: [],
+    variants: [{ sku: 'R34-DRK-BOTTLE' }],
+    tags: ['drop-001', 'water-bottle', 'gelato-ready'],
+    collection: 'Drop 001',
+    shopifyProductId: null,
+    shopifyVariantIds: {},
+    gelatoProductUid: null,
+    fulfillmentType: 'gelato',
+    seoTitle: 'Radiant Water Bottle | Radiant 34',
+    seoDescription: 'Radiant 34 everyday drinkware inspired by Psalm 34:5.',
+  },
+  {
+    id: 'radiant-backpack',
+    title: 'Radiant Backpack',
+    handle: 'radiant-backpack',
+    category: 'Bag',
+    shopCategory: 'Accessories',
+    price: '£42',
+    status: 'Drop 001 Preview',
+    description: 'A clean everyday bag for work, church, training, and travel.',
+    images: [],
+    variants: [{ sku: 'R34-BAG-BACKPACK' }],
+    tags: ['drop-001', 'backpack', 'manual-fulfillment'],
+    collection: 'Drop 001',
+    shopifyProductId: null,
+    shopifyVariantIds: {},
+    gelatoProductUid: null,
+    fulfillmentType: 'manual',
+    seoTitle: 'Radiant Backpack | Radiant 34',
+    seoDescription: 'A clean Radiant 34 everyday backpack for work, church, training, and travel.',
   },
 ];
 
@@ -68,6 +225,9 @@ const PRINCIPLES: Principle[] = [
   },
 ];
 
+const FILTERS = ['All', 'Tees', 'Hoodies', 'Tanks', 'Accessories'] as const;
+type Filter = typeof FILTERS[number];
+
 function Header() {
   const [open, setOpen] = useState(false);
 
@@ -80,12 +240,13 @@ function Header() {
 
         <nav className={`main-nav${open ? ' main-nav--open' : ''}`} aria-label="Primary navigation">
           <a href="#story" onClick={() => setOpen(false)}>Story</a>
-          <a href="#collection" onClick={() => setOpen(false)}>Collection</a>
+          <a href="#drop" onClick={() => setOpen(false)}>Drop 001</a>
+          <a href="#shop" onClick={() => setOpen(false)}>Shop</a>
           <a href="#lookbook" onClick={() => setOpen(false)}>Lookbook</a>
-          <a href="#vision" onClick={() => setOpen(false)}>Vision</a>
+          <a href="#signup" onClick={() => setOpen(false)}>Launch List</a>
         </nav>
 
-        <a href="#signup" className="header-cta">Join Drop 001</a>
+        <a href="#signup" className="header-cta">Join Launch List</a>
 
         <button
           className={`menu-btn${open ? ' menu-btn--open' : ''}`}
@@ -102,19 +263,53 @@ function Header() {
   );
 }
 
+function ProductVisual({ product }: { product: Product }) {
+  if (product.images[0]) {
+    return <img src={product.images[0]} alt={product.title} loading="lazy" />;
+  }
+
+  return (
+    <div className="product-placeholder">
+      <img src={asset('/images/logo-transparent.png')} alt="" aria-hidden="true" />
+      <span>{product.category}</span>
+      <strong>{product.title}</strong>
+    </div>
+  );
+}
+
+function ProductCard({ product, onSelect }: { product: Product; onSelect: (product: Product) => void }) {
+  return (
+    <article className="product-card">
+      <button className="product-card__visual" type="button" onClick={() => onSelect(product)}>
+        <ProductVisual product={product} />
+      </button>
+      <div className="product-card__content">
+        <div className="product-card__meta">
+          <span>{product.category}</span>
+          <strong>{product.price}</strong>
+        </div>
+        <h3>{product.title}</h3>
+        <p>{product.description}</p>
+        <div className="product-card__footer">
+          <span className="status-pill">{product.status}</span>
+          <button type="button" onClick={() => onSelect(product)}>Notify Me</button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function Hero() {
   return (
     <section className="hero" id="top">
       <div className="hero-copy-block">
         <p className="eyebrow">Psalm 34:5 inspired clothing</p>
-        <h1 className="hero-headline">
-          Those who look to Him are radiant.
-        </h1>
+        <h1 className="hero-headline">Those who look to Him are radiant.</h1>
         <p className="hero-lead">
           Radiant 34 is a Bible-inspired clothing label making faith-led art, apparel, and everyday pieces that carry light without feeling forced.
         </p>
         <div className="hero-actions">
-          <a href="#collection" className="btn btn--gold">View Drop 001</a>
+          <a href="#shop" className="btn btn--gold">View the Shop Preview</a>
           <a href="#story" className="btn btn--outline">Read the Story</a>
         </div>
         <div className="hero-scripture">
@@ -124,10 +319,95 @@ function Hero() {
       </div>
 
       <div className="hero-image">
-        <img
-          src={asset('/images/model-psalm.png')}
-          alt="Man wearing a cream Radiant 34 t-shirt at sunset beside Psalm 34 verse text"
-        />
+        <img src={asset('/images/model-psalm.png')} alt="Man wearing a cream Radiant 34 t-shirt at sunset beside Psalm 34 verse text" />
+      </div>
+    </section>
+  );
+}
+
+function DropIntro() {
+  return (
+    <section className="drop-intro" id="drop">
+      <div className="container drop-intro__inner">
+        <div>
+          <p className="eyebrow">Drop 001</p>
+          <h2 className="section-heading">Those Who Look.</h2>
+        </div>
+        <p>
+          The first Radiant 34 collection is built around Psalm 34:5: light, identity, and no shame. This page is the shop preview before checkout goes live through Shopify.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function ShopSection() {
+  const [filter, setFilter] = useState<Filter>('All');
+  const [selected, setSelected] = useState<Product>(PRODUCTS[0]);
+
+  const visibleProducts = useMemo(() => {
+    if (filter === 'All') return PRODUCTS;
+    return PRODUCTS.filter(product => product.shopCategory === filter);
+  }, [filter]);
+
+  return (
+    <section className="shop-section" id="shop">
+      <div className="container shop-head">
+        <div>
+          <p className="eyebrow">Shop preview</p>
+          <h2 className="section-heading">Drop 001 products are visible now.</h2>
+        </div>
+        <p>
+          The site is live as a pre-launch shop. The products are shown now; payment and fulfilment will switch on after Shopify and Gelato are connected.
+        </p>
+      </div>
+
+      <div className="container shop-filters" aria-label="Product filters">
+        {FILTERS.map(item => (
+          <button key={item} type="button" className={filter === item ? 'is-active' : ''} onClick={() => setFilter(item)}>
+            {item}
+          </button>
+        ))}
+      </div>
+
+      <div className="container product-grid">
+        {visibleProducts.map(product => (
+          <ProductCard key={product.id} product={product} onSelect={setSelected} />
+        ))}
+      </div>
+
+      <div className="container product-detail" aria-live="polite">
+        <div className="product-detail__visual">
+          <ProductVisual product={selected} />
+        </div>
+        <div className="product-detail__content">
+          <p className="eyebrow">Selected product</p>
+          <h3>{selected.title}</h3>
+          <div className="product-detail__line">
+            <span>{selected.category}</span>
+            <strong>{selected.price}</strong>
+          </div>
+          <p>{selected.description}</p>
+          {selected.options?.size && (
+            <div className="option-row">
+              <span>Sizes</span>
+              <div>{selected.options.size.map(size => <button key={size} type="button">{size}</button>)}</div>
+            </div>
+          )}
+          {selected.options?.color && (
+            <div className="option-row">
+              <span>Colours</span>
+              <div>{selected.options.color.map(color => <button key={color} type="button">{color}</button>)}</div>
+            </div>
+          )}
+          <div className="integration-note">
+            <strong>Shopify + Gelato ready</strong>
+            <p>
+              Handle: <code>{selected.handle}</code>. Fulfilment: <code>{selected.fulfillmentType}</code>. Shopify product ID and Gelato UID are waiting to be mapped when the store is connected.
+            </p>
+          </div>
+          <a href="#signup" className="btn btn--gold">Notify Me</a>
+        </div>
       </div>
     </section>
   );
@@ -175,43 +455,15 @@ function PrinciplesSection() {
   );
 }
 
-function CollectionSection() {
-  return (
-    <section className="collection-section" id="collection">
-      <div className="container collection-head">
-        <p className="eyebrow">Drop 001</p>
-        <h2 className="section-heading">The first collection.</h2>
-        <p>
-          A focused launch range: tees, tanks, hoodies, key chains, bracelets, bottles, and backpacks — built around Radiant 34 identity and Psalm 34:5.
-        </p>
-      </div>
-      <div className="container collection-grid">
-        {PRODUCTS.map(product => (
-          <article className="collection-card" key={product.name}>
-            <div className="collection-card__img">
-              <img src={product.img} alt={product.alt} loading="lazy" style={{ objectPosition: product.pos || 'center top' }} />
-            </div>
-            <div className="collection-card__info">
-              <span>{product.category}</span>
-              <h3>{product.name}</h3>
-              <p>{product.line}</p>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function LookbookSection() {
   return (
     <section className="lookbook-section" id="lookbook">
       <div className="lookbook-panel">
         <div className="lookbook-copy">
-          <p className="eyebrow">Visual direction</p>
+          <p className="eyebrow">Lookbook</p>
           <h2>Warm light. Clean pieces. Scripture carried naturally.</h2>
           <p>
-            The brand should feel like a real lifestyle label: sunlight, cream, gold, black, handwritten marks, and product imagery that makes the message feel alive.
+            The visual direction is lifestyle-led: sunlight, cream, gold, black, handwritten marks, and product imagery that makes the message feel alive.
           </p>
           <a href="#signup" className="btn btn--outline-cream">Join the Launch List</a>
         </div>
@@ -227,20 +479,23 @@ function LookbookSection() {
 }
 
 function LaunchSection() {
-  const [email, setEmail] = useState('');
-  const [done, setDone] = useState(false);
+  const [email, setEmail] = useState(() => localStorage.getItem('radiant34-email') || '');
+  const [done, setDone] = useState(Boolean(localStorage.getItem('radiant34-email')));
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (email.trim()) setDone(true);
+    if (email.trim()) {
+      localStorage.setItem('radiant34-email', email.trim());
+      setDone(true);
+    }
   };
 
   return (
     <section className="launch-section" id="signup">
       <div className="launch-inner">
         <div>
-          <p className="eyebrow">Launch soon</p>
-          <h2>Drop 001 is being prepared.</h2>
+          <p className="eyebrow">Launch list</p>
+          <h2>Be first when Drop 001 opens.</h2>
           <p>
             Join the early list for first access, product previews, and the story behind the first Radiant 34 pieces.
           </p>
@@ -283,9 +538,10 @@ function App() {
       <Header />
       <main>
         <Hero />
+        <DropIntro />
+        <ShopSection />
         <StorySection />
         <PrinciplesSection />
-        <CollectionSection />
         <LookbookSection />
         <LaunchSection />
       </main>

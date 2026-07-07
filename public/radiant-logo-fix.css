@@ -1,0 +1,95 @@
+/* Final logo fix: use the real transparent SVG, hide the old broken bitmap everywhere. */
+:root {
+  --header-h: 88px !important;
+  --r34-header-logo-w: 132px;
+  --r34-header-logo-h: 92px;
+}
+
+.header-inner {
+  padding-left: 170px !important;
+}
+
+.header-logo {
+  position: absolute !important;
+  left: 22px !important;
+  top: 50% !important;
+  width: var(--r34-header-logo-w) !important;
+  height: var(--r34-header-logo-h) !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  display: block !important;
+  z-index: 20 !important;
+}
+
+.header-logo-img {
+  display: none !important;
+}
+
+.header-logo::before {
+  content: '' !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-image: url('/images/r34-logo-clean.svg') !important;
+  background-repeat: no-repeat !important;
+  background-position: center left !important;
+  background-size: contain !important;
+}
+
+.footer-inner > img,
+.product-placeholder > img {
+  display: none !important;
+}
+
+.footer-inner::before {
+  content: '' !important;
+  display: block !important;
+  width: 96px !important;
+  height: 68px !important;
+  background-image: url('/images/r34-logo-clean.svg') !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+}
+
+.product-placeholder::before {
+  content: '' !important;
+  display: block !important;
+  width: 122px !important;
+  height: 86px !important;
+  background-image: url('/images/r34-logo-clean.svg') !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  margin-bottom: 6px !important;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-h: 76px !important;
+    --r34-header-logo-w: 104px;
+    --r34-header-logo-h: 72px;
+  }
+
+  .header-inner {
+    padding-left: 132px !important;
+  }
+
+  .header-logo {
+    left: 14px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --r34-header-logo-w: 92px;
+    --r34-header-logo-h: 64px;
+  }
+
+  .header-inner {
+    padding-left: 112px !important;
+  }
+}

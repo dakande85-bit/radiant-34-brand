@@ -1,12 +1,12 @@
 /* Final logo fix: use the real transparent SVG, hide the old broken bitmap everywhere. */
 :root {
   --header-h: 88px !important;
-  --r34-header-logo-w: 132px;
-  --r34-header-logo-h: 92px;
+  --r34-header-logo-w: 118px;
+  --r34-header-logo-h: 82px;
 }
 
 .header-inner {
-  padding-left: 170px !important;
+  padding-left: 154px !important;
 }
 
 .header-logo {
@@ -47,8 +47,8 @@
 .footer-inner::before {
   content: '' !important;
   display: block !important;
-  width: 96px !important;
-  height: 68px !important;
+  width: 88px !important;
+  height: 62px !important;
   background-image: url('/images/r34-logo-clean.svg') !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
@@ -58,8 +58,8 @@
 .product-placeholder::before {
   content: '' !important;
   display: block !important;
-  width: 122px !important;
-  height: 86px !important;
+  width: 108px !important;
+  height: 76px !important;
   background-image: url('/images/r34-logo-clean.svg') !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
@@ -70,12 +70,12 @@
 @media (max-width: 768px) {
   :root {
     --header-h: 76px !important;
-    --r34-header-logo-w: 104px;
-    --r34-header-logo-h: 72px;
+    --r34-header-logo-w: 94px;
+    --r34-header-logo-h: 66px;
   }
 
   .header-inner {
-    padding-left: 132px !important;
+    padding-left: 120px !important;
   }
 
   .header-logo {
@@ -85,11 +85,11 @@
 
 @media (max-width: 420px) {
   :root {
-    --r34-header-logo-w: 92px;
-    --r34-header-logo-h: 64px;
+    --r34-header-logo-w: 82px;
+    --r34-header-logo-h: 58px;
   }
 
   .header-inner {
-    padding-left: 112px !important;
+    padding-left: 102px !important;
   }
 }

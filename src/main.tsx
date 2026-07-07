@@ -11,7 +11,7 @@ type Product = {
   category: 'T-Shirt' | 'Hoodie' | 'Tank Top' | 'Accessory' | 'Drinkware' | 'Bag';
   shopCategory: 'Tees' | 'Hoodies' | 'Tanks' | 'Accessories';
   price: string;
-  status: 'Drop 001 Preview';
+  status: 'Launching Monday';
   description: string;
   images: string[];
   options?: {
@@ -51,7 +51,7 @@ const PRODUCTS: Product[] = [
     category: 'T-Shirt',
     shopCategory: 'Tees',
     price: '£34',
-    status: 'Drop 001 Preview',
+    status: 'Launching Monday',
     description: 'A clean everyday tee carrying the Radiant 34 mark and Psalm 34:5 identity.',
     images: [asset('/images/model-psalm.png')],
     options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
@@ -72,7 +72,7 @@ const PRODUCTS: Product[] = [
     category: 'Hoodie',
     shopCategory: 'Hoodies',
     price: '£58',
-    status: 'Drop 001 Preview',
+    status: 'Launching Monday',
     description: 'A soft everyday hoodie built around warmth, light, and quiet faith.',
     images: [asset('/images/model-hoodie.png')],
     options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
@@ -93,7 +93,7 @@ const PRODUCTS: Product[] = [
     category: 'T-Shirt',
     shopCategory: 'Tees',
     price: '£34',
-    status: 'Drop 001 Preview',
+    status: 'Launching Monday',
     description: 'A minimal Radiant 34 staple designed for everyday wear.',
     images: [asset('/images/model-tees.png')],
     options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
@@ -114,7 +114,7 @@ const PRODUCTS: Product[] = [
     category: 'Tank Top',
     shopCategory: 'Tanks',
     price: '£28',
-    status: 'Drop 001 Preview',
+    status: 'Launching Monday',
     description: 'Lightweight and made for movement, training, and summer.',
     images: [asset('/images/model-group.png')],
     options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
@@ -135,7 +135,7 @@ const PRODUCTS: Product[] = [
     category: 'Accessory',
     shopCategory: 'Accessories',
     price: '£9',
-    status: 'Drop 001 Preview',
+    status: 'Launching Monday',
     description: 'A small everyday reminder of Psalm 34:5.',
     images: [],
     variants: [{ sku: 'R34-ACC-KEYCHAIN' }],
@@ -155,7 +155,7 @@ const PRODUCTS: Product[] = [
     category: 'Accessory',
     shopCategory: 'Accessories',
     price: '£12',
-    status: 'Drop 001 Preview',
+    status: 'Launching Monday',
     description: 'A simple faith-inspired bracelet for daily wear.',
     images: [],
     variants: [{ sku: 'R34-ACC-BRACELET' }],
@@ -175,7 +175,7 @@ const PRODUCTS: Product[] = [
     category: 'Drinkware',
     shopCategory: 'Accessories',
     price: '£22',
-    status: 'Drop 001 Preview',
+    status: 'Launching Monday',
     description: 'Everyday drinkware carrying the Radiant 34 mark.',
     images: [],
     variants: [{ sku: 'R34-DRK-BOTTLE' }],
@@ -195,7 +195,7 @@ const PRODUCTS: Product[] = [
     category: 'Bag',
     shopCategory: 'Accessories',
     price: '£42',
-    status: 'Drop 001 Preview',
+    status: 'Launching Monday',
     description: 'A clean everyday bag for work, church, training, and travel.',
     images: [],
     variants: [{ sku: 'R34-BAG-BACKPACK' }],
@@ -239,14 +239,14 @@ function Header() {
         </a>
 
         <nav className={`main-nav${open ? ' main-nav--open' : ''}`} aria-label="Primary navigation">
-          <a href="#story" onClick={() => setOpen(false)}>Story</a>
+          <a href="#top" onClick={() => setOpen(false)}>Home</a>
           <a href="#drop" onClick={() => setOpen(false)}>Drop 001</a>
           <a href="#shop" onClick={() => setOpen(false)}>Shop</a>
           <a href="#lookbook" onClick={() => setOpen(false)}>Lookbook</a>
-          <a href="#signup" onClick={() => setOpen(false)}>Launch List</a>
+          <a href="#story" onClick={() => setOpen(false)}>About</a>
         </nav>
 
-        <a href="#signup" className="header-cta">Join Launch List</a>
+        <a href="#shop" className="header-cta">Shop Drop 001</a>
 
         <button
           className={`menu-btn${open ? ' menu-btn--open' : ''}`}
@@ -292,7 +292,7 @@ function ProductCard({ product, onSelect }: { product: Product; onSelect: (produ
         <p>{product.description}</p>
         <div className="product-card__footer">
           <span className="status-pill">{product.status}</span>
-          <button type="button" onClick={() => onSelect(product)}>Notify Me</button>
+          <button type="button" onClick={() => onSelect(product)}>View Product</button>
         </div>
       </div>
     </article>
@@ -309,7 +309,7 @@ function Hero() {
           Radiant 34 is a Bible-inspired clothing label making faith-led art, apparel, and everyday pieces that carry light without feeling forced.
         </p>
         <div className="hero-actions">
-          <a href="#shop" className="btn btn--gold">View the Shop Preview</a>
+          <a href="#shop" className="btn btn--gold">Shop Drop 001</a>
           <a href="#story" className="btn btn--outline">Read the Story</a>
         </div>
         <div className="hero-scripture">
@@ -334,7 +334,7 @@ function DropIntro() {
           <h2 className="section-heading">Those Who Look.</h2>
         </div>
         <p>
-          The first Radiant 34 collection is built around Psalm 34:5: light, identity, and no shame. This page is the shop preview before checkout goes live through Shopify.
+          The first Radiant 34 collection launches Monday with Shopify checkout and Gelato fulfilment. Products are already shown here so customers can see the range before orders open.
         </p>
       </div>
     </section>
@@ -354,11 +354,11 @@ function ShopSection() {
     <section className="shop-section" id="shop">
       <div className="container shop-head">
         <div>
-          <p className="eyebrow">Shop preview</p>
-          <h2 className="section-heading">Drop 001 products are visible now.</h2>
+          <p className="eyebrow">Shop</p>
+          <h2 className="section-heading">Products ready for Monday launch.</h2>
         </div>
         <p>
-          The site is live as a pre-launch shop. The products are shown now; payment and fulfilment will switch on after Shopify and Gelato are connected.
+          The shop range is live to view now. Checkout will switch on Monday once the Shopify catalogue and Gelato fulfilment products are connected.
         </p>
       </div>
 
@@ -381,7 +381,7 @@ function ShopSection() {
           <ProductVisual product={selected} />
         </div>
         <div className="product-detail__content">
-          <p className="eyebrow">Selected product</p>
+          <p className="eyebrow">Product detail</p>
           <h3>{selected.title}</h3>
           <div className="product-detail__line">
             <span>{selected.category}</span>
@@ -401,12 +401,12 @@ function ShopSection() {
             </div>
           )}
           <div className="integration-note">
-            <strong>Shopify + Gelato ready</strong>
+            <strong>Monday launch setup</strong>
             <p>
-              Handle: <code>{selected.handle}</code>. Fulfilment: <code>{selected.fulfillmentType}</code>. Shopify product ID and Gelato UID are waiting to be mapped when the store is connected.
+              This product is prepared for Shopify checkout and {selected.fulfillmentType === 'gelato' ? 'Gelato fulfilment' : 'manual fulfilment'}.
             </p>
           </div>
-          <a href="#signup" className="btn btn--gold">Notify Me</a>
+          <a href="#signup" className="btn btn--gold">Get Drop Alert</a>
         </div>
       </div>
     </section>
@@ -465,7 +465,7 @@ function LookbookSection() {
           <p>
             The visual direction is lifestyle-led: sunlight, cream, gold, black, handwritten marks, and product imagery that makes the message feel alive.
           </p>
-          <a href="#signup" className="btn btn--outline-cream">Join the Launch List</a>
+          <a href="#shop" className="btn btn--outline-cream">Shop Drop 001</a>
         </div>
         <div className="lookbook-image lookbook-image--one">
           <img src={asset('/images/model-tees.png')} alt="Radiant 34 tees editorial image" loading="lazy" />
@@ -494,14 +494,14 @@ function LaunchSection() {
     <section className="launch-section" id="signup">
       <div className="launch-inner">
         <div>
-          <p className="eyebrow">Launch list</p>
-          <h2>Be first when Drop 001 opens.</h2>
+          <p className="eyebrow">Drop alerts</p>
+          <h2>Get the Monday launch alert.</h2>
           <p>
-            Join the early list for first access, product previews, and the story behind the first Radiant 34 pieces.
+            Leave your email for the Drop 001 opening notice, product previews, and the first access announcement when Shopify checkout goes live.
           </p>
         </div>
         {done ? (
-          <p className="email-thanks">Thank you. You are on the list.</p>
+          <p className="email-thanks">Thank you. You will get the Drop 001 alert.</p>
         ) : (
           <form className="email-form" onSubmit={submit}>
             <input
@@ -510,9 +510,9 @@ function LaunchSection() {
               onChange={event => setEmail(event.target.value)}
               placeholder="Your email address"
               required
-              aria-label="Email address for Radiant 34 launch updates"
+              aria-label="Email address for Radiant 34 drop updates"
             />
-            <button type="submit">Notify Me</button>
+            <button type="submit">Get Alert</button>
           </form>
         )}
       </div>

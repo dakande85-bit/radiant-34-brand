@@ -980,49 +980,53 @@ function ShopifyProducts({
         {visibleProducts.map((product) => (
           <article className="shopify-card" key={product.id}>
             <button
-              className="shopify-card__image"
+              className="shopify-card__main"
               type="button"
               onClick={() => {
                 onSelect(product);
               }}
             >
-              {product.image ? <img src={product.image} alt={product.title} /> : null}
-              {product.hoverImage ? <img className="shopify-card__hover" src={product.hoverImage} alt="" loading="lazy" /> : null}
-              <span className="product-card__badges">
-                {product.badges.slice(0, 2).map((badge) => <span key={badge}>{badge}</span>)}
-              </span>
-              <span className="product-card__overlay">View product</span>
-            </button>
-            <div className="shopify-card__body">
-              <p className="product-card__category">{product.category || 'Radiant 34'}</p>
-              <h2>{product.title}</h2>
-              {product.description ? <p>{product.description}</p> : null}
-              <div className="shopify-card__meta">
-                {product.price ? <strong>{product.price}</strong> : null}
-                <span className="swatches" aria-label={`${product.title} colours`}>
-                  {product.swatches.map((swatch) => (
-                    <span
-                      style={{ backgroundColor: swatch.startsWith('#') ? swatch : swatch.toLowerCase().includes('black') ? '#11100d' : '#e9ddc8' }}
-                      key={swatch}
-                      title={swatch}
-                    />
-                  ))}
+              <span className="shopify-card__image">
+                {product.image ? <img src={product.image} alt={product.title} /> : null}
+                {product.hoverImage ? <img className="shopify-card__hover" src={product.hoverImage} alt="" loading="lazy" /> : null}
+                <span className="product-card__badges">
+                  {product.badges.slice(0, 2).map((badge) => <span key={badge}>{badge}</span>)}
                 </span>
-              </div>
-              <div className="shopify-card__actions">
-                {product.storefrontVariantId ? (
-                  <>
-                    <button type="button" onClick={() => quickAdd(product)}>Quick Add</button>
-                    <button type="button" onClick={() => quickAdd(product, true)}>Buy Now</button>
-                  </>
-                ) : (
-                  <button type="button" disabled>Preparing release</button>
-                )}
-              </div>
+                <span className="product-card__overlay">View product</span>
+              </span>
+              <span className="shopify-card__body">
+                <span className="product-card__category">{product.category || 'Radiant 34'}</span>
+                <strong>{product.title}</strong>
+                {product.description ? <span className="shopify-card__description">{product.description}</span> : null}
+                <span className="shopify-card__meta">
+                  {product.price ? <span className="shopify-card__price">{product.price}</span> : null}
+                  <span className="swatches" aria-label={`${product.title} colours`}>
+                    {product.swatches.map((swatch) => (
+                      <span
+                        style={{ backgroundColor: swatch.startsWith('#') ? swatch : swatch.toLowerCase().includes('black') ? '#11100d' : '#e9ddc8' }}
+                        key={swatch}
+                        title={swatch}
+                      />
+                    ))}
+                  </span>
+                </span>
+                <span className="shopify-card__view">View Product</span>
+              </span>
+            </button>
+            <div className="shopify-card__actions">
+              {product.storefrontVariantId ? (
+                <>
+                  <button type="button" onClick={() => quickAdd(product)}>Quick Add</button>
+                  <button type="button" onClick={() => quickAdd(product, true)}>Buy Now</button>
+                </>
+              ) : (
+                <button type="button" disabled>Preparing release</button>
+              )}
             </div>
           </article>
         ))}
       </div>
+      <p className="build-marker">Build: e996 product-card-view-fix</p>
     </>
   );
 }
@@ -1283,6 +1287,7 @@ function App() {
     if (!handle) return;
 
     const localProduct = getLocalRadiantProductByHandle(handle);
+    const shopifyLookupHandle = localProduct?.handle ?? handle;
     if (localProduct) {
       const shopProduct = toLocalShopProduct(localProduct);
       setSelectedShopifyProduct(shopProduct);
@@ -1292,11 +1297,14 @@ function App() {
     if (!shopifyConfigured) return;
 
     let mounted = true;
-    fetchShopifyProductByHandle(handle)
+    fetchShopifyProductByHandle(shopifyLookupHandle)
       .then((product) => {
         if (!mounted || !product) return;
-        setSelectedShopifyProduct(product);
-        setSelectedProduct(fallbackForShopifyProduct(product, 0));
+        const displayProduct = localProduct
+          ? mergeLocalProductsWithShopify([toLocalShopProduct(localProduct)], [product])[0]
+          : product;
+        setSelectedShopifyProduct(displayProduct);
+        setSelectedProduct(fallbackForShopifyProduct(displayProduct, 0));
       })
       .catch((error) => {
         logShopifyDebug('Product handle lookup failed', error instanceof Error ? error.message : error);

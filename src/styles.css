@@ -1366,6 +1366,16 @@ main {
   transform: translateY(-5px);
 }
 
+.shopify-card__main {
+  width: 100%;
+  padding: 0;
+  display: block;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
 .shopify-card__image {
   position: relative;
   width: 100%;
@@ -1387,16 +1397,20 @@ main {
 
 .shopify-card__body {
   padding: 18px 0 0;
+  display: block;
 }
 
-.shopify-card__body h2 {
+.shopify-card__body strong {
+  display: block;
   margin: 0 0 12px;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 1.5rem;
   font-weight: 400;
+  line-height: 1.15;
 }
 
-.shopify-card__body p {
+.shopify-card__description {
+  display: block;
   color: var(--muted);
   line-height: 1.65;
 }
@@ -1409,20 +1423,28 @@ main {
   gap: 14px;
 }
 
+.shopify-card__price {
+  font-weight: 900;
+}
+
+.shopify-card__view {
+  width: max-content;
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 1px solid currentColor;
+  color: var(--ink);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .shopify-card__actions {
   margin-top: 18px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 180ms ease, transform 180ms ease;
-}
-
-.shopify-card:hover .shopify-card__actions,
-.shopify-card:focus-within .shopify-card__actions {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .shopify-card__actions button {
@@ -1448,9 +1470,32 @@ main {
   color: var(--gold);
 }
 
+.shopify-card__actions button:disabled {
+  grid-column: 1 / -1;
+  cursor: not-allowed;
+  border-color: rgba(17, 16, 13, 0.18);
+  background: rgba(17, 16, 13, 0.06);
+  color: var(--muted);
+}
+
+.shopify-card__actions button:disabled:hover {
+  border-color: rgba(17, 16, 13, 0.18);
+  color: var(--muted);
+}
+
 .product-grid--shop {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(20px, 2.2vw, 34px);
+}
+
+.build-marker {
+  margin: 34px 0 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .integration-note h2 {

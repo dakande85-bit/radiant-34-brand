@@ -1312,7 +1312,12 @@ function App() {
 
     const localProduct = getLocalRadiantProductByHandle(handle);
     const shopifyLookupHandle = localProduct?.handle ?? handle;
-    if (localProduct) {
+    const currentProductStillMatches = selectedShopifyProduct
+      && (selectedShopifyProduct.handle === handle || selectedShopifyProduct.shopifyHandle === shopifyLookupHandle);
+
+    if (currentProductStillMatches && selectedShopifyProduct?.storefrontVariantId) return;
+
+    if (localProduct && !currentProductStillMatches) {
       const shopProduct = toLocalShopProduct(localProduct);
       setSelectedShopifyProduct(shopProduct);
       setSelectedProduct(fallbackForShopifyProduct(shopProduct, 0));
@@ -1337,7 +1342,7 @@ function App() {
     return () => {
       mounted = false;
     };
-  }, [page]);
+  }, [page, selectedShopifyProduct]);
 
   useEffect(() => {
     document.title = page === '/product'

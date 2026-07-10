@@ -138,6 +138,55 @@ async function testTokenlessCart(variantId?: string) {
   };
 }
 
+async function getStorefrontProductForCart(handle: string) {
+  const response = await fetch(`https://${getShopifyDomain()}/api/${getShopifyApiVersion()}/graphql.json`, {
+    method: 'POST',
+    headers: storefrontHeaders(),
+    body: JSON.stringify({
+      query: `query ProductForCart($handle: String!) {
+        product(handle: $handle) {
+          id
+          title
+          handle
+          availableForSale
+          variants(first: 20) {
+            nodes {
+              id
+              title
+              availableForSale
+            }
+          }
+        }
+      }`,
+      variables: { handle },
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  const product = payload.data?.product ?? null;
+
+  return {
+    ok: response.ok && !payload.errors?.length && Boolean(product),
+    status: response.status,
+    product: product as null | {
+      title: string;
+      handle: string;
+      availableForSale: boolean;
+      variants?: { nodes?: Array<{ id: string; title: string; availableForSale: boolean }> };
+    },
+    errors: payload.errors ?? [],
+  };
+}
+
+const localProductMap = [
+  { title: 'Psalm 34 Tee', handle: 'premium-unisex-crewneck-t-shirt-bella-canvas-3001-white' },
+  { title: 'Radiant Hoodie', handle: 'radiant-hoodie' },
+  { title: 'Classic Tee', handle: 'classic-tee' },
+  { title: 'Everyday Tank', handle: 'everyday-tank' },
+  { title: 'Radiant Water Bottle', handle: 'radiant-water-bottle' },
+  { title: 'Radiant Backpack', handle: 'radiant-backpack' },
+];
+
 async function getStorefrontProductCount() {
   const productResponse = await fetch(`https://${getShopifyDomain()}/api/${getShopifyApiVersion()}/graphql.json`, {
     method: 'POST',
@@ -208,30 +257,40 @@ export default async function handler(req: any, res: any) {
     adminProductCount: 0,
     storefrontProductCount: 0,
     matchedProductCount: 0,
-    variantIdCount: 0,
+    adminVariantIdCount: 0,
+    storefrontVariantIdCount: 0,
+    storefrontVisibleProductHandles: [] as string[],
+    cartEnabledProductTitles: [] as string[],
+    cartDisabledProductTitles: [] as string[],
+    lastCartError: null as unknown,
   };
 
   try {
     const token = await getShopifyAccessToken();
     const admin = await getAdminProductCount(token.accessToken);
     const adminWithVariants = await getAdminProductsWithVariants(token.accessToken);
-    const localHandles = [
-      'premium-unisex-crewneck-t-shirt-bella-canvas-3001-white',
-      'radiant-hoodie',
-      'classic-tee',
-      'everyday-tank',
-      'radiant-water-bottle',
-      'radiant-backpack',
-    ];
+    const localHandles = localProductMap.map((product) => product.handle);
     const matchedProducts = adminWithVariants.products.filter((product) => localHandles.includes(product.handle));
-    const firstVariantId = adminWithVariants.products
-      .flatMap((product) => product.variants?.nodes ?? [])
-      .find((variant) => variant.id)?.id;
-    const variantIdCount = matchedProducts.filter((product) => product.variants?.nodes?.some((variant) => variant.id)).length;
-    const cartTest = await testTokenlessCart(firstVariantId);
-    const storefront = diagnostic.storefrontTokenExists
-      ? await getStorefrontProductCount()
-      : null;
+    const adminVariantIdCount = matchedProducts.filter((product) => product.variants?.nodes?.some((variant) => variant.id)).length;
+    const storefront = await getStorefrontProductCount();
+    const storefrontChecks = await Promise.all(
+      localProductMap.map(async (localProduct) => ({
+        localTitle: localProduct.title,
+        localHandle: localProduct.handle,
+        result: await getStorefrontProductForCart(localProduct.handle),
+      })),
+    );
+    const cartEnabled = storefrontChecks.filter((check) =>
+      check.result.product?.availableForSale
+      && check.result.product.variants?.nodes?.some((variant) => variant.availableForSale),
+    );
+    const firstStorefrontVariantId = cartEnabled
+      .flatMap((check) => check.result.product?.variants?.nodes ?? [])
+      .find((variant) => variant.availableForSale)?.id;
+    const cartTest = await testTokenlessCart(firstStorefrontVariantId);
+    const lastCartError = cartTest.ok
+      ? null
+      : ('reason' in cartTest ? cartTest.reason : cartTest.errors?.[0] ?? cartTest.userErrors?.[0] ?? null);
 
     return res.status(200).json({
       ...diagnostic,
@@ -244,14 +303,23 @@ export default async function handler(req: any, res: any) {
       adminProductTitles: admin.productTitles,
       adminProducts: admin.products,
       adminErrors: admin.errors,
-      storefrontRequestStatus: storefront?.status ?? null,
+      adminVariantIdCount,
+      storefrontRequestStatus: storefront.status,
       storefrontTokenExists: diagnostic.storefrontTokenExists,
-      storefrontProductCount: storefront?.productCount ?? 0,
-      storefrontProductTitles: storefront?.productTitles ?? [],
-      storefrontProducts: storefront?.products ?? [],
-      storefrontErrors: storefront?.errors ?? [],
+      storefrontProductCount: storefront.productCount,
+      storefrontProductTitles: storefront.productTitles,
+      storefrontProducts: storefront.products,
+      storefrontErrors: storefront.errors,
+      storefrontVisibleProductHandles: storefrontChecks
+        .filter((check) => check.result.ok)
+        .map((check) => check.localHandle),
       matchedProductCount: matchedProducts.length,
-      variantIdCount,
+      storefrontVariantIdCount: cartEnabled.length,
+      cartEnabledProductTitles: cartEnabled.map((check) => check.localTitle),
+      cartDisabledProductTitles: storefrontChecks
+        .filter((check) => !cartEnabled.includes(check))
+        .map((check) => check.localTitle),
+      lastCartError,
       storefrontCartTokenlessTest: cartTest,
     });
   } catch (error) {

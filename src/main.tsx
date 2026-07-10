@@ -36,6 +36,9 @@ type ShopifyProduct = {
   badges: string[];
   swatches: string[];
   variantId?: string;
+  adminVariantId?: string;
+  storefrontVariantId?: string;
+  canCheckout?: boolean;
   gallery: string[];
   status?: string;
 };
@@ -57,6 +60,9 @@ type ShopifyProductNode = {
       selectedOptions: Array<{ name: string; value: string }>;
     }>;
   };
+  adminVariantId?: string;
+  storefrontVariantId?: string;
+  canCheckout?: boolean;
   priceRange?: { minVariantPrice?: { amount: string; currencyCode: string } };
 };
 
@@ -268,13 +274,13 @@ function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyP
     ]).filter((image, index, images): image is string => Boolean(image) && images.indexOf(image) === index);
 
   const buyProduct = async (checkout = false) => {
-    if (!shopifyProduct?.variantId) {
+    if (!shopifyProduct?.storefrontVariantId) {
       setPurchaseMessage('Preparing release.');
       return;
     }
 
     try {
-      const cart = await addVariantToCart(shopifyProduct.variantId, quantity);
+      const cart = await addVariantToCart(shopifyProduct.storefrontVariantId, quantity);
       setPurchaseMessage(`${title} added to cart.`);
       if (checkout) window.location.href = cart.checkoutUrl;
     } catch (error) {
@@ -349,7 +355,7 @@ function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyP
         </div>
 
         <div className="purchase-actions">
-          {shopifyProduct?.variantId ? (
+          {shopifyProduct?.storefrontVariantId ? (
             <>
               <button className="btn btn--gold" type="button" onClick={() => buyProduct(false)}>
                 Add to Cart
@@ -730,8 +736,11 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
     tags: product.tags ?? [],
     badges: fallback.badges,
     swatches: swatches.length ? swatches : fallback.swatches,
-    variantId: variant?.id,
-    status: variant?.id ? undefined : 'Preparing release',
+    variantId: product.storefrontVariantId ?? variant?.id,
+    adminVariantId: product.adminVariantId,
+    storefrontVariantId: product.storefrontVariantId ?? variant?.id,
+    canCheckout: product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id),
+    status: (product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id)) ? undefined : 'Preparing release',
   };
 };
 
@@ -752,8 +761,11 @@ const mergeLocalProductsWithShopify = (localProducts: ShopifyProduct[], shopifyP
       price: shopifyProduct.price ?? localProduct.price,
       createdAt: shopifyProduct.createdAt,
       tags: Array.from(new Set([...localProduct.tags, ...shopifyProduct.tags])),
-      variantId: shopifyProduct.variantId,
-      status: shopifyProduct.variantId ? undefined : localProduct.status,
+      variantId: shopifyProduct.storefrontVariantId,
+      adminVariantId: shopifyProduct.adminVariantId,
+      storefrontVariantId: shopifyProduct.storefrontVariantId,
+      canCheckout: Boolean(shopifyProduct.storefrontVariantId),
+      status: shopifyProduct.storefrontVariantId ? undefined : localProduct.status,
     };
   });
 };
@@ -920,13 +932,13 @@ function ShopifyProducts({
   }, [filter, products, sort]);
 
   const quickAdd = async (product: ShopifyProduct, checkout = false) => {
-    if (!product.variantId) {
+    if (!product.storefrontVariantId) {
       setCartMessage('Preparing release.');
       return;
     }
 
     try {
-      const cart = await addVariantToCart(product.variantId, 1);
+      const cart = await addVariantToCart(product.storefrontVariantId, 1);
       setCartMessage(`${product.title} added to cart.`);
       if (checkout) window.location.href = cart.checkoutUrl;
     } catch (error) {
@@ -998,7 +1010,7 @@ function ShopifyProducts({
                 </span>
               </div>
               <div className="shopify-card__actions">
-                {product.variantId ? (
+                {product.storefrontVariantId ? (
                   <>
                     <button type="button" onClick={() => quickAdd(product)}>Quick Add</button>
                     <button type="button" onClick={() => quickAdd(product, true)}>Buy Now</button>

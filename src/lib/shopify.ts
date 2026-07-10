@@ -23,6 +23,10 @@ function normalizeCheckoutUrl(checkoutUrl: string) {
       url.hostname = shopifyCheckoutDomain;
       url.protocol = 'https:';
     }
+    if (url.hostname === shopifyCheckoutDomain && url.pathname.startsWith('/cart/')) {
+      url.searchParams.set('_fd', '0');
+      url.searchParams.set('pb', '0');
+    }
     return url.toString();
   } catch {
     return checkoutUrl;

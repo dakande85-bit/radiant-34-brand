@@ -18,7 +18,8 @@ type ShopifyCart = {
 function normalizeCheckoutUrl(checkoutUrl: string) {
   try {
     const url = new URL(checkoutUrl);
-    if (url.hostname === window.location.hostname && url.pathname.startsWith('/cart/')) {
+    const hostedDomains = new Set(['radiant34.com', 'www.radiant34.com']);
+    if (hostedDomains.has(url.hostname) && url.pathname.startsWith('/cart/')) {
       url.hostname = shopifyCheckoutDomain;
       url.protocol = 'https:';
     }

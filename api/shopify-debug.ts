@@ -1,13 +1,23 @@
 /// <reference types="node" />
 
 import {
-  getCachedTokenStatus,
-  getShopifyAccessToken,
   getShopifyApiVersion,
   getShopifyDomain,
-  hasShopifyServerCredentials,
-  ShopifyTokenError,
 } from './_shopifyAuth.js';
+
+const buildStorefrontHeaders = () => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+
+  const storefrontToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+  if (storefrontToken) {
+    headers['X-Shopify-Storefront-Access-Token'] = storefrontToken;
+  }
+
+  return headers;
+};
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'GET') {
@@ -22,52 +32,66 @@ export default async function handler(req: any, res: any) {
     domainLoaded: Boolean(getShopifyDomain()),
     shopifyDomain: getShopifyDomain(),
     apiVersion: getShopifyApiVersion(),
-    clientIdExists: Boolean(process.env.SHOPIFY_CLIENT_ID),
-    clientSecretExists: Boolean(process.env.SHOPIFY_CLIENT_SECRET),
-    configured: hasShopifyServerCredentials(),
-    token: getCachedTokenStatus(),
+    storefrontAccessTokenExists: Boolean(process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN),
     localProductCount: 6,
     shopifyProductCount: 0,
+    shopifyErrors: [] as unknown[],
   };
 
   try {
-    const token = await getShopifyAccessToken();
-    let shopifyProductCount = 0;
     const productResponse = await fetch(`https://${getShopifyDomain()}/api/${getShopifyApiVersion()}/graphql.json`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`,
-      },
+      headers: buildStorefrontHeaders(),
       body: JSON.stringify({
-        query: 'query RadiantDebugProducts { products(first: 20) { nodes { id } } }',
+        query: `query RadiantDebugProducts {
+          products(first: 20) {
+            nodes {
+              id
+              title
+              handle
+              availableForSale
+              variants(first: 5) {
+                nodes {
+                  id
+                  availableForSale
+                }
+              }
+            }
+          }
+        }`,
         variables: {},
       }),
     });
+
     const productPayload = await productResponse.json().catch(() => ({}));
-    shopifyProductCount = productPayload.data?.products?.nodes?.length ?? 0;
+    const productNodes = productPayload.data?.products?.nodes ?? [];
 
     return res.status(200).json({
       ...diagnostic,
-      ok: true,
-      tokenRequestStatus: 200,
-      shopifyProductCount,
-      token: {
-        cached: true,
-        expiresAt: new Date(token.expiresAt).toISOString(),
-      },
+      ok: productResponse.ok && !productPayload.errors?.length,
+      storefrontRequestStatus: productResponse.status,
+      shopifyProductCount: productNodes.length,
+      shopifyProductTitles: productNodes.map((product: { title: string }) => product.title),
+      shopifyProducts: productNodes.map((product: {
+        title: string;
+        handle: string;
+        availableForSale: boolean;
+        variants?: { nodes?: Array<{ id: string; availableForSale: boolean }> };
+      }) => ({
+        title: product.title,
+        handle: product.handle,
+        availableForSale: product.availableForSale,
+        variantCount: product.variants?.nodes?.length ?? 0,
+        availableVariantCount: product.variants?.nodes?.filter((variant) => variant.availableForSale).length ?? 0,
+      })),
+      shopifyErrors: productPayload.errors ?? [],
     });
   } catch (error) {
-    const tokenError = error instanceof ShopifyTokenError ? error : null;
     return res.status(200).json({
       ...diagnostic,
       ok: false,
-      shopifyReachable: true,
-      tokenRequestStatus: tokenError?.status ?? null,
-      shopifyErrorCode: tokenError?.shopifyErrorCode ?? null,
-      shopifyErrorDescription: tokenError?.shopifyErrorDescription ?? null,
-      tokenError: error instanceof Error ? error.message : 'Unknown Shopify token error',
+      storefrontReachable: false,
+      storefrontError: error instanceof Error ? error.message : 'Unknown Shopify Storefront error',
     });
   }
 }

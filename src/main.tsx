@@ -39,6 +39,7 @@ type ShopifyProduct = {
   adminVariantId?: string;
   storefrontVariantId?: string;
   canCheckout?: boolean;
+  shopifyHandle?: string;
   gallery: string[];
   status?: string;
 };
@@ -93,6 +94,9 @@ const footerItems: { label: string; path: Page }[] = [
 const filterLabels = ['All', 'Tees', 'Hoodies', 'Tanks', 'Accessories'];
 
 const sortLabels = ['Featured', 'Newest', 'Price Low to High', 'Price High to Low'];
+
+const ACTIVE_SHOPIFY_HANDLE = 'premium-unisex-crewneck-t-shirt-bella-canvas-3001-white';
+const BUILD_MARKER = 'e996 product-card-view-fix';
 
 const getCurrentPage = (): Page => {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
@@ -689,6 +693,7 @@ const toLocalShopProduct = (product: RadiantProduct): ShopifyProduct => {
     id: `local-${product.handle}`,
     title: product.title,
     handle: product.displayHandle ?? product.handle,
+    shopifyHandle: product.handle,
     description: product.description,
     image: product.images.primary,
     hoverImage: product.images.hover,
@@ -717,6 +722,7 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
     id: product.id,
     title: product.title,
     handle: product.handle,
+    shopifyHandle: product.handle,
     description: product.description || fallback.description,
     createdAt: product.createdAt,
     image: imageOverride?.primary ?? fallback.images[0] ?? product.featuredImage?.url ?? images[0]?.url,
@@ -754,6 +760,7 @@ const mergeLocalProductsWithShopify = (localProducts: ShopifyProduct[], shopifyP
       ?? shopifyByHandle.get(localProduct.handle);
 
     if (!shopifyProduct) return localProduct;
+    const canUseCheckout = originalHandle === ACTIVE_SHOPIFY_HANDLE && Boolean(shopifyProduct.storefrontVariantId);
 
     return {
       ...localProduct,
@@ -761,11 +768,12 @@ const mergeLocalProductsWithShopify = (localProducts: ShopifyProduct[], shopifyP
       price: shopifyProduct.price ?? localProduct.price,
       createdAt: shopifyProduct.createdAt,
       tags: Array.from(new Set([...localProduct.tags, ...shopifyProduct.tags])),
-      variantId: shopifyProduct.storefrontVariantId,
+      variantId: canUseCheckout ? shopifyProduct.storefrontVariantId : undefined,
       adminVariantId: shopifyProduct.adminVariantId,
-      storefrontVariantId: shopifyProduct.storefrontVariantId,
-      canCheckout: Boolean(shopifyProduct.storefrontVariantId),
-      status: shopifyProduct.storefrontVariantId ? undefined : localProduct.status,
+      storefrontVariantId: canUseCheckout ? shopifyProduct.storefrontVariantId : undefined,
+      canCheckout: canUseCheckout,
+      shopifyHandle: originalHandle ?? localProduct.shopifyHandle ?? localProduct.handle,
+      status: canUseCheckout ? undefined : localProduct.status,
     };
   });
 };
@@ -813,6 +821,7 @@ function ShopifyProducts({
   const [filter, setFilter] = useState('All');
   const [sort, setSort] = useState('Featured');
   const [cartMessage, setCartMessage] = useState('');
+  const [lastCartError, setLastCartError] = useState('');
 
   useEffect(() => {
     void checkShopifyProxy();
@@ -933,22 +942,29 @@ function ShopifyProducts({
 
   const quickAdd = async (product: ShopifyProduct, checkout = false) => {
     if (!product.storefrontVariantId) {
-      setCartMessage('Preparing release.');
+      const errorText = 'Preparing release.';
+      setCartMessage(errorText);
+      setLastCartError(errorText);
       return;
     }
 
     try {
+      setLastCartError('');
       const cart = await addVariantToCart(product.storefrontVariantId, 1);
       setCartMessage(`${product.title} added to cart.`);
       if (checkout) window.location.href = cart.checkoutUrl;
     } catch (error) {
-      setCartMessage(error instanceof Error ? error.message : 'Unable to add product.');
+      const errorText = error instanceof Error ? error.message : 'Unable to add product.';
+      setCartMessage(errorText);
+      setLastCartError(errorText);
     }
   };
 
   if (loading) {
     return <p className="shop-empty">Loading Radiant 34 products.</p>;
   }
+
+  const activeProduct = products.find((product) => product.shopifyHandle === ACTIVE_SHOPIFY_HANDLE);
 
   return (
     <>
@@ -1026,7 +1042,15 @@ function ShopifyProducts({
           </article>
         ))}
       </div>
-      <p className="build-marker">Build: e996 product-card-view-fix</p>
+      <aside className="shop-diagnostic" aria-label="Temporary shop diagnostic">
+        <strong>Shop Diagnostic</strong>
+        <span>build commit: {BUILD_MARKER}</span>
+        <span>active Shopify handle found: {activeProduct ? 'true' : 'false'}</span>
+        <span>storefrontVariantId: {activeProduct?.storefrontVariantId ?? 'none'}</span>
+        <span>availableForSale: {activeProduct?.storefrontVariantId ? 'true' : 'false'}</span>
+        <span>last cart error: {lastCartError || 'none'}</span>
+      </aside>
+      <p className="build-marker">Build: {BUILD_MARKER}</p>
     </>
   );
 }

@@ -1498,6 +1498,26 @@ main {
   text-transform: uppercase;
 }
 
+.shop-diagnostic {
+  margin: 34px auto 0;
+  padding: 16px 18px;
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(17, 16, 13, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 250, 240, 0.86);
+  color: var(--charcoal);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.shop-diagnostic strong {
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .integration-note h2 {
   max-width: 840px;
 }

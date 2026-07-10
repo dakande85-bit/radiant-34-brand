@@ -1,7 +1,19 @@
 {
+  "redirects": [
+    {
+      "source": "/cart/:path*",
+      "destination": "https://xagsqp-u0.myshopify.com/cart/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/checkout/:path*",
+      "destination": "https://xagsqp-u0.myshopify.com/checkout/:path*",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
-      "source": "/((?!api/).*)",
+      "source": "/((?!api/|cart/|checkout/).*)",
       "destination": "/index.html"
     }
   ]

@@ -15,6 +15,20 @@ type ShopifyTokenResponse = {
   error_description?: string;
 };
 
+export class ShopifyTokenError extends Error {
+  status: number;
+  shopifyErrorCode?: string;
+  shopifyErrorDescription?: string;
+
+  constructor(status: number, body: ShopifyTokenResponse) {
+    super(`Shopify token request failed: ${status}`);
+    this.name = 'ShopifyTokenError';
+    this.status = status;
+    this.shopifyErrorCode = body.error;
+    this.shopifyErrorDescription = body.error_description;
+  }
+}
+
 let cachedToken: CachedToken | null = null;
 
 export const getShopifyDomain = () =>
@@ -62,7 +76,7 @@ export async function getShopifyAccessToken() {
       error: body.error,
       errorDescription: body.error_description,
     });
-    throw new Error(`Shopify token request failed: ${response.status}`);
+    throw new ShopifyTokenError(response.status, body);
   }
 
   const expiresInMs = Math.max((body.expires_in ?? 3600) * 1000, TOKEN_EXPIRY_BUFFER_MS);

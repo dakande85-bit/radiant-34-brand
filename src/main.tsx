@@ -11,6 +11,7 @@ import {
   getProductsByCategory,
 } from './data/products';
 import { getRadiantProductImages } from './data/radiantProductImages';
+import { radiantProducts, type RadiantProduct } from './data/radiantProducts';
 import {
   addVariantToCart,
   checkShopifyProxy,
@@ -36,6 +37,7 @@ type ShopifyProduct = {
   swatches: string[];
   variantId?: string;
   gallery: string[];
+  status?: string;
 };
 
 type ShopifyProductNode = {
@@ -267,7 +269,7 @@ function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyP
 
   const buyProduct = async (checkout = false) => {
     if (!shopifyProduct?.variantId) {
-      setPurchaseMessage('Checkout opens when this piece is available.');
+      setPurchaseMessage('Preparing release.');
       return;
     }
 
@@ -347,12 +349,20 @@ function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyP
         </div>
 
         <div className="purchase-actions">
-          <button className="btn btn--gold" type="button" onClick={() => buyProduct(false)}>
-            Add to Cart
-          </button>
-          <button className="btn btn--outline" type="button" onClick={() => buyProduct(true)}>
-            Buy Now
-          </button>
+          {shopifyProduct?.variantId ? (
+            <>
+              <button className="btn btn--gold" type="button" onClick={() => buyProduct(false)}>
+                Add to Cart
+              </button>
+              <button className="btn btn--outline" type="button" onClick={() => buyProduct(true)}>
+                Buy Now
+              </button>
+            </>
+          ) : (
+            <button className="btn btn--gold" type="button" disabled>
+              Preparing release
+            </button>
+          )}
         </div>
         {purchaseMessage ? <p className="cart-message">{purchaseMessage}</p> : null}
         <div className="product-accordions">
@@ -663,6 +673,31 @@ const fallbackForShopifyProduct = (product: { handle: string; title: string }, i
   ?? getProducts().find((item) => product.title.toLowerCase().includes(item.title.split(' - ')[0].toLowerCase()))
   ?? getProducts()[index % getProducts().length];
 
+const getLocalRadiantProductByHandle = (handle: string) =>
+  radiantProducts.find((product) => product.handle === handle || product.displayHandle === handle);
+
+const toLocalShopProduct = (product: RadiantProduct): ShopifyProduct => {
+  const fallback = fallbackForShopifyProduct(product, 0);
+
+  return {
+    id: `local-${product.handle}`,
+    title: product.title,
+    handle: product.displayHandle ?? product.handle,
+    description: product.description,
+    image: product.images.primary,
+    hoverImage: product.images.hover,
+    gallery: product.images.gallery,
+    price: product.price,
+    category: product.productType,
+    tags: [product.badge, product.productType, product.status],
+    badges: [product.badge, product.status],
+    swatches: fallback.swatches,
+    status: product.status,
+  };
+};
+
+const localShopProducts = () => radiantProducts.map(toLocalShopProduct);
+
 const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduct => {
   const fallback = fallbackForShopifyProduct(product, index);
   const imageOverride = getRadiantProductImages(product);
@@ -696,7 +731,31 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
     badges: fallback.badges,
     swatches: swatches.length ? swatches : fallback.swatches,
     variantId: variant?.id,
+    status: variant?.id ? undefined : 'Preparing release',
   };
+};
+
+const mergeLocalProductsWithShopify = (localProducts: ShopifyProduct[], shopifyProducts: ShopifyProduct[]) => {
+  const shopifyByHandle = new Map(shopifyProducts.map((product) => [product.handle, product]));
+
+  return localProducts.map((localProduct) => {
+    const originalHandle = radiantProducts.find((product) =>
+      (product.displayHandle ?? product.handle) === localProduct.handle)?.handle;
+    const shopifyProduct = shopifyByHandle.get(originalHandle ?? localProduct.handle)
+      ?? shopifyByHandle.get(localProduct.handle);
+
+    if (!shopifyProduct) return localProduct;
+
+    return {
+      ...localProduct,
+      id: shopifyProduct.id,
+      price: shopifyProduct.price ?? localProduct.price,
+      createdAt: shopifyProduct.createdAt,
+      tags: Array.from(new Set([...localProduct.tags, ...shopifyProduct.tags])),
+      variantId: shopifyProduct.variantId,
+      status: shopifyProduct.variantId ? undefined : localProduct.status,
+    };
+  });
 };
 
 async function fetchShopifyProductByHandle(handle: string) {
@@ -737,17 +796,21 @@ function ShopifyProducts({
 }: {
   onSelect: (product: ShopifyProduct) => void;
 }) {
-  const [products, setProducts] = useState<ShopifyProduct[]>([]);
-  const [loading, setLoading] = useState(shopifyConfigured);
+  const [products, setProducts] = useState<ShopifyProduct[]>(localShopProducts);
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('All');
   const [sort, setSort] = useState('Featured');
   const [cartMessage, setCartMessage] = useState('');
 
   useEffect(() => {
     void checkShopifyProxy();
+    const localProducts = localShopProducts();
+    console.log('Radiant local product count:', radiantProducts.length);
+    setProducts(localProducts);
 
     if (!shopifyConfigured) {
-      logShopifyDebug('No active Shopify products returned. Check product status, sales channel publishing, and product images.');
+      console.log('Shopify product count:', 0);
+      console.log('Final rendered product count:', localProducts.length);
       return;
     }
 
@@ -807,19 +870,26 @@ function ShopifyProducts({
     }>(query)
       .then((data) => {
         if (!mounted) return;
-        logShopifyDebug('Product count returned', data.products.nodes.length);
-        if (!data.products.nodes.length) {
+        const shopifyProducts = data.products.nodes.map((product, index) => toShopifyProduct(product, index));
+        const finalProducts = shopifyProducts.length
+          ? mergeLocalProductsWithShopify(localProducts, shopifyProducts)
+          : localProducts;
+
+        console.log('Shopify product count:', shopifyProducts.length);
+        console.log('Final rendered product count:', finalProducts.length);
+        logShopifyDebug('Product count returned', shopifyProducts.length);
+        if (!shopifyProducts.length) {
           logShopifyDebug('No active Shopify products returned. Check product status, sales channel publishing, and product images.');
         }
-        setProducts(
-          data.products.nodes.map((product, index) => toShopifyProduct(product, index)),
-        );
+        setProducts(finalProducts);
       })
       .catch((error) => {
         if (!mounted) return;
+        console.log('Shopify product count:', 0);
+        console.log('Final rendered product count:', localProducts.length);
+        console.error('Shopify failed, using local Radiant products', error);
         logShopifyDebug('Shopify GraphQL errors', error instanceof Error ? error.message : error);
-        logShopifyDebug('No active Shopify products returned. Check product status, sales channel publishing, and product images.');
-        setProducts([]);
+        setProducts(localProducts);
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -851,7 +921,7 @@ function ShopifyProducts({
 
   const quickAdd = async (product: ShopifyProduct, checkout = false) => {
     if (!product.variantId) {
-      setCartMessage('This product needs a Shopify variant before it can be added.');
+      setCartMessage('Preparing release.');
       return;
     }
 
@@ -928,8 +998,14 @@ function ShopifyProducts({
                 </span>
               </div>
               <div className="shopify-card__actions">
-                <button type="button" onClick={() => quickAdd(product)}>Quick Add</button>
-                <button type="button" onClick={() => quickAdd(product, true)}>Buy Now</button>
+                {product.variantId ? (
+                  <>
+                    <button type="button" onClick={() => quickAdd(product)}>Quick Add</button>
+                    <button type="button" onClick={() => quickAdd(product, true)}>Buy Now</button>
+                  </>
+                ) : (
+                  <button type="button" disabled>Preparing release</button>
+                )}
               </div>
             </div>
           </article>
@@ -1170,7 +1246,15 @@ function App() {
       const nextPage = getCurrentPage();
       setPage(nextPage);
       if (nextPage === '/product') {
-        const product = getProductByHandle(getCurrentProductHandle() ?? '');
+        const handle = getCurrentProductHandle() ?? '';
+        const localProduct = getLocalRadiantProductByHandle(handle);
+        if (localProduct) {
+          const shopProduct = toLocalShopProduct(localProduct);
+          setSelectedShopifyProduct(shopProduct);
+          setSelectedProduct(fallbackForShopifyProduct(shopProduct, 0));
+          return;
+        }
+        const product = getProductByHandle(handle);
         if (product) {
           setSelectedShopifyProduct(null);
           setSelectedProduct(product);
@@ -1182,9 +1266,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (page !== '/product' || selectedShopifyProduct || !shopifyConfigured) return;
+    if (page !== '/product') return;
     const handle = getCurrentProductHandle();
     if (!handle) return;
+
+    const localProduct = getLocalRadiantProductByHandle(handle);
+    if (localProduct) {
+      const shopProduct = toLocalShopProduct(localProduct);
+      setSelectedShopifyProduct(shopProduct);
+      setSelectedProduct(fallbackForShopifyProduct(shopProduct, 0));
+    }
+
+    if (!shopifyConfigured) return;
 
     let mounted = true;
     fetchShopifyProductByHandle(handle)
@@ -1200,7 +1293,7 @@ function App() {
     return () => {
       mounted = false;
     };
-  }, [page, selectedShopifyProduct]);
+  }, [page]);
 
   useEffect(() => {
     document.title = page === '/product'

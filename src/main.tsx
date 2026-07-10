@@ -1,257 +1,160 @@
-import React, { useMemo, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles.css';
+import siteAssets from './data/siteAssets';
+import {
+  type Product,
+  getDropProducts,
+  getProductByHandle,
+  getProducts,
+  getProductsByCategory,
+} from './data/products';
+import { getRadiantProductImages } from './data/radiantProductImages';
+import {
+  addVariantToCart,
+  checkShopifyProxy,
+  logShopifyDebug,
+  shopifyConfigured,
+  shopifyFetch,
+} from './lib/shopify';
 
-const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+type Page = '/' | '/drop-001' | '/shop' | '/lookbook' | '/about' | '/mission' | '/contact' | '/product';
 
-type Product = {
+type ShopifyProduct = {
   id: string;
   title: string;
   handle: string;
-  category: 'T-Shirt' | 'Hoodie' | 'Tank Top' | 'Accessory' | 'Drinkware' | 'Bag';
-  shopCategory: 'Tees' | 'Hoodies' | 'Tanks' | 'Accessories';
-  price: string;
-  status: 'Launching Monday';
   description: string;
-  images: string[];
-  options?: {
-    size?: string[];
-    color?: string[];
-  };
-  variants: { sku: string; size?: string; color?: string }[];
+  createdAt?: string;
+  image?: string;
+  hoverImage?: string;
+  price?: string;
+  category: string;
   tags: string[];
-  collection: 'Drop 001';
-  shopifyProductId: null;
-  shopifyVariantIds: Record<string, never>;
-  gelatoProductUid: null;
-  fulfillmentType: 'gelato' | 'manual';
-  seoTitle: string;
-  seoDescription: string;
+  badges: string[];
+  swatches: string[];
+  variantId?: string;
+  gallery: string[];
 };
 
-type Principle = {
+type ShopifyProductNode = {
+  id: string;
   title: string;
-  copy: string;
+  handle: string;
+  description: string;
+  createdAt?: string;
+  productType?: string;
+  tags?: string[];
+  featuredImage?: { url: string; altText?: string };
+  images?: { nodes: Array<{ url: string; altText?: string }> };
+  variants?: {
+    nodes: Array<{
+      id: string;
+      availableForSale: boolean;
+      selectedOptions: Array<{ name: string; value: string }>;
+    }>;
+  };
+  priceRange?: { minVariantPrice?: { amount: string; currencyCode: string } };
 };
 
-const apparelVariants = (prefix: string) =>
-  ['Cream', 'Black'].flatMap(color =>
-    ['S', 'M', 'L', 'XL', 'XXL'].map(size => ({
-      sku: `${prefix}-${color.slice(0, 3).toUpperCase()}-${size}`,
-      size,
-      color,
-    }))
-  );
+const pageTitles: Record<Page, string> = {
+  '/': 'Radiant 34 | Bible Inspired Clothing',
+  '/drop-001': 'Drop 001 | Radiant 34',
+  '/shop': 'Shop | Radiant 34',
+  '/lookbook': 'Lookbook | Radiant 34',
+  '/about': 'About | Radiant 34',
+  '/mission': 'Mission | Radiant 34',
+  '/contact': 'Contact | Radiant 34',
+  '/product': 'Product | Radiant 34',
+};
 
-const PRODUCTS: Product[] = [
-  {
-    id: 'psalm-34-tee',
-    title: 'Psalm 34 Tee',
-    handle: 'psalm-34-tee',
-    category: 'T-Shirt',
-    shopCategory: 'Tees',
-    price: '£34',
-    status: 'Launching Monday',
-    description: 'A clean everyday tee carrying the Radiant 34 mark and Psalm 34:5 identity.',
-    images: [asset('/images/model-psalm.png')],
-    options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
-    variants: apparelVariants('R34-TEE-PS34'),
-    tags: ['drop-001', 'psalm-34', 'tee', 'gelato-ready'],
-    collection: 'Drop 001',
-    shopifyProductId: null,
-    shopifyVariantIds: {},
-    gelatoProductUid: null,
-    fulfillmentType: 'gelato',
-    seoTitle: 'Psalm 34 Tee | Radiant 34',
-    seoDescription: 'A Bible-inspired Radiant 34 tee rooted in Psalm 34:5.',
-  },
-  {
-    id: 'radiant-hoodie',
-    title: 'Radiant Hoodie',
-    handle: 'radiant-hoodie',
-    category: 'Hoodie',
-    shopCategory: 'Hoodies',
-    price: '£58',
-    status: 'Launching Monday',
-    description: 'A soft everyday hoodie built around warmth, light, and quiet faith.',
-    images: [asset('/images/model-hoodie.png')],
-    options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
-    variants: apparelVariants('R34-HDY-RAD'),
-    tags: ['drop-001', 'hoodie', 'gelato-ready'],
-    collection: 'Drop 001',
-    shopifyProductId: null,
-    shopifyVariantIds: {},
-    gelatoProductUid: null,
-    fulfillmentType: 'gelato',
-    seoTitle: 'Radiant Hoodie | Radiant 34',
-    seoDescription: 'A warm Bible-inspired hoodie from Radiant 34.',
-  },
-  {
-    id: 'classic-radiant-tee',
-    title: 'Classic Tee',
-    handle: 'classic-radiant-tee',
-    category: 'T-Shirt',
-    shopCategory: 'Tees',
-    price: '£34',
-    status: 'Launching Monday',
-    description: 'A minimal Radiant 34 staple designed for everyday wear.',
-    images: [asset('/images/model-tees.png')],
-    options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
-    variants: apparelVariants('R34-TEE-CLS'),
-    tags: ['drop-001', 'classic', 'tee', 'gelato-ready'],
-    collection: 'Drop 001',
-    shopifyProductId: null,
-    shopifyVariantIds: {},
-    gelatoProductUid: null,
-    fulfillmentType: 'gelato',
-    seoTitle: 'Classic Tee | Radiant 34',
-    seoDescription: 'A minimal everyday Radiant 34 tee.',
-  },
-  {
-    id: 'everyday-tank',
-    title: 'Everyday Tank',
-    handle: 'everyday-tank',
-    category: 'Tank Top',
-    shopCategory: 'Tanks',
-    price: '£28',
-    status: 'Launching Monday',
-    description: 'Lightweight and made for movement, training, and summer.',
-    images: [asset('/images/model-group.png')],
-    options: { size: ['S', 'M', 'L', 'XL', 'XXL'], color: ['Cream', 'Black'] },
-    variants: apparelVariants('R34-TNK-EVD'),
-    tags: ['drop-001', 'tank', 'gelato-ready'],
-    collection: 'Drop 001',
-    shopifyProductId: null,
-    shopifyVariantIds: {},
-    gelatoProductUid: null,
-    fulfillmentType: 'gelato',
-    seoTitle: 'Everyday Tank | Radiant 34',
-    seoDescription: 'A Radiant 34 tank top for movement and summer wear.',
-  },
-  {
-    id: 'radiant-key-chain',
-    title: 'Radiant Key Chain',
-    handle: 'radiant-key-chain',
-    category: 'Accessory',
-    shopCategory: 'Accessories',
-    price: '£9',
-    status: 'Launching Monday',
-    description: 'A small everyday reminder of Psalm 34:5.',
-    images: [],
-    variants: [{ sku: 'R34-ACC-KEYCHAIN' }],
-    tags: ['drop-001', 'accessory', 'manual-fulfillment'],
-    collection: 'Drop 001',
-    shopifyProductId: null,
-    shopifyVariantIds: {},
-    gelatoProductUid: null,
-    fulfillmentType: 'manual',
-    seoTitle: 'Radiant Key Chain | Radiant 34',
-    seoDescription: 'A small Radiant 34 accessory inspired by Psalm 34:5.',
-  },
-  {
-    id: 'radiant-bracelet',
-    title: 'Radiant Bracelet',
-    handle: 'radiant-bracelet',
-    category: 'Accessory',
-    shopCategory: 'Accessories',
-    price: '£12',
-    status: 'Launching Monday',
-    description: 'A simple faith-inspired bracelet for daily wear.',
-    images: [],
-    variants: [{ sku: 'R34-ACC-BRACELET' }],
-    tags: ['drop-001', 'bracelet', 'manual-fulfillment'],
-    collection: 'Drop 001',
-    shopifyProductId: null,
-    shopifyVariantIds: {},
-    gelatoProductUid: null,
-    fulfillmentType: 'manual',
-    seoTitle: 'Radiant Bracelet | Radiant 34',
-    seoDescription: 'A faith-inspired Radiant 34 bracelet for daily wear.',
-  },
-  {
-    id: 'radiant-water-bottle',
-    title: 'Radiant Water Bottle',
-    handle: 'radiant-water-bottle',
-    category: 'Drinkware',
-    shopCategory: 'Accessories',
-    price: '£22',
-    status: 'Launching Monday',
-    description: 'Everyday drinkware carrying the Radiant 34 mark.',
-    images: [],
-    variants: [{ sku: 'R34-DRK-BOTTLE' }],
-    tags: ['drop-001', 'water-bottle', 'gelato-ready'],
-    collection: 'Drop 001',
-    shopifyProductId: null,
-    shopifyVariantIds: {},
-    gelatoProductUid: null,
-    fulfillmentType: 'gelato',
-    seoTitle: 'Radiant Water Bottle | Radiant 34',
-    seoDescription: 'Radiant 34 everyday drinkware inspired by Psalm 34:5.',
-  },
-  {
-    id: 'radiant-backpack',
-    title: 'Radiant Backpack',
-    handle: 'radiant-backpack',
-    category: 'Bag',
-    shopCategory: 'Accessories',
-    price: '£42',
-    status: 'Launching Monday',
-    description: 'A clean everyday bag for work, church, training, and travel.',
-    images: [],
-    variants: [{ sku: 'R34-BAG-BACKPACK' }],
-    tags: ['drop-001', 'backpack', 'manual-fulfillment'],
-    collection: 'Drop 001',
-    shopifyProductId: null,
-    shopifyVariantIds: {},
-    gelatoProductUid: null,
-    fulfillmentType: 'manual',
-    seoTitle: 'Radiant Backpack | Radiant 34',
-    seoDescription: 'A clean Radiant 34 everyday backpack for work, church, training, and travel.',
-  },
+const navItems: { label: string; path: Page }[] = [
+  { label: 'Shop', path: '/shop' },
+  { label: 'Drop 001', path: '/drop-001' },
+  { label: 'Lookbook', path: '/lookbook' },
+  { label: 'About', path: '/about' },
+  { label: 'Mission', path: '/mission' },
 ];
 
-const PRINCIPLES: Principle[] = [
-  {
-    title: 'Scripture first',
-    copy: 'The brand begins with Psalm 34:5: those who look to Him are radiant, and their faces are not covered with shame.',
-  },
-  {
-    title: 'Wearable, not cheesy',
-    copy: 'The designs carry faith through art, typography, light, and restraint — not loud slogans on every product.',
-  },
-  {
-    title: 'Built for everyday use',
-    copy: 'T-shirts, hoodies, tanks, bottles, bracelets, key chains, and bags that feel natural in daily life.',
-  },
+const footerItems: { label: string; path: Page }[] = [
+  ...navItems,
+  { label: 'Contact', path: '/contact' },
 ];
 
-const FILTERS = ['All', 'Tees', 'Hoodies', 'Tanks', 'Accessories'] as const;
-type Filter = typeof FILTERS[number];
+const filterLabels = ['All', 'Tees', 'Hoodies', 'Tanks', 'Accessories'];
 
-function Header() {
+const sortLabels = ['Featured', 'Newest', 'Price Low to High', 'Price High to Low'];
+
+const getCurrentPage = (): Page => {
+  const path = window.location.pathname.replace(/\/$/, '') || '/';
+  if (path.startsWith('/products/')) return '/product';
+  const validPages: Page[] = ['/', '/drop-001', '/shop', '/lookbook', '/about', '/mission', '/contact'];
+  return validPages.includes(path as Page) ? (path as Page) : '/';
+};
+
+const getCurrentProductHandle = () => {
+  const match = window.location.pathname.match(/^\/products\/([^/]+)\/?$/);
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+function Header({ navigate }: { navigate: (path: Page) => void }) {
   const [open, setOpen] = useState(false);
+
+  const go = (path: Page) => {
+    navigate(path);
+    setOpen(false);
+  };
 
   return (
     <header className="site-header">
+      <div className="announcement-bar">DROP 001 — PSALM 34:5 INSPIRED CLOTHING</div>
       <div className="header-inner">
-        <a href="#top" className="header-logo" aria-label="Radiant 34 home">
-          <img src={asset('/images/logo-transparent.png')} alt="Radiant 34" className="header-logo-img" />
+        <a
+          className="brand-link header-logo"
+          href="/"
+          onClick={(event) => {
+            event.preventDefault();
+            go('/');
+          }}
+          aria-label="Radiant 34 home"
+        >
+          <img src={siteAssets.logo} alt="Radiant 34" className="brand-logo" />
         </a>
 
         <nav className={`main-nav${open ? ' main-nav--open' : ''}`} aria-label="Primary navigation">
-          <a href="#top" onClick={() => setOpen(false)}>Home</a>
-          <a href="#drop" onClick={() => setOpen(false)}>Drop 001</a>
-          <a href="#shop" onClick={() => setOpen(false)}>Shop</a>
-          <a href="#lookbook" onClick={() => setOpen(false)}>Lookbook</a>
-          <a href="#story" onClick={() => setOpen(false)}>About</a>
+          {navItems.map((item) => (
+            <a
+              href={item.path}
+              key={item.path}
+              onClick={(event) => {
+                event.preventDefault();
+                go(item.path);
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+          <div className="mobile-nav-actions">
+            <button type="button" onClick={() => go('/shop')}>Search</button>
+            <button type="button" onClick={() => go('/contact')}>Get Drop Alert</button>
+          </div>
         </nav>
 
-        <a href="#shop" className="header-cta">Shop Drop 001</a>
+        <div className="header-actions" aria-label="Shop actions">
+          <button className="header-search" type="button" onClick={() => go('/shop')}>
+            Search
+          </button>
+          <button className="header-cta" type="button" onClick={() => go('/contact')}>
+            Get Drop Alert
+          </button>
+        </div>
 
         <button
           className={`menu-btn${open ? ' menu-btn--open' : ''}`}
           aria-label={open ? 'Close menu' : 'Open menu'}
           aria-expanded={open}
+          type="button"
           onClick={() => setOpen(!open)}
         >
           <span />
@@ -263,192 +166,322 @@ function Header() {
   );
 }
 
-function ProductVisual({ product }: { product: Product }) {
-  if (product.images[0]) {
-    return <img src={product.images[0]} alt={product.title} loading="lazy" />;
+function ProductVisual({ product, large = false }: { product: Product; large?: boolean }) {
+  const [failed, setFailed] = useState(false);
+  const image = product.images[0];
+
+  if (image && !failed) {
+    return (
+      <img
+        src={image}
+        alt={`${product.title} by Radiant 34`}
+        loading={large ? 'eager' : 'lazy'}
+        onError={() => setFailed(true)}
+      />
+    );
   }
 
   return (
     <div className="product-placeholder">
-      <img src={asset('/images/logo-transparent.png')} alt="" aria-hidden="true" />
-      <span>{product.category}</span>
+      <img src={siteAssets.logo} alt="" aria-hidden="true" />
+      <span>{product.collection}</span>
       <strong>{product.title}</strong>
+      <small>{product.category}</small>
     </div>
   );
 }
 
-function ProductCard({ product, onSelect }: { product: Product; onSelect: (product: Product) => void }) {
+function ProductImageStack({ product }: { product: Product }) {
   return (
-    <article className="product-card">
-      <button className="product-card__visual" type="button" onClick={() => onSelect(product)}>
-        <ProductVisual product={product} />
-      </button>
-      <div className="product-card__content">
-        <div className="product-card__meta">
-          <span>{product.category}</span>
-          <strong>{product.price}</strong>
-        </div>
-        <h3>{product.title}</h3>
-        <p>{product.description}</p>
-        <div className="product-card__footer">
-          <span className="status-pill">{product.status}</span>
-          <button type="button" onClick={() => onSelect(product)}>View Product</button>
-        </div>
-      </div>
-    </article>
+    <>
+      <ProductVisual product={product} />
+      <img className="product-card__hover-image" src={product.hoverImage} alt="" loading="lazy" />
+    </>
   );
 }
 
-function Hero() {
+function ProductCard({
+  product,
+  onSelect,
+  selected = false,
+}: {
+  product: Product;
+  onSelect: (product: Product) => void;
+  selected?: boolean;
+}) {
   return (
-    <section className="hero" id="top">
-      <div className="hero-copy-block">
+    <button
+      className={`product-card${selected ? ' product-card--selected' : ''}`}
+      type="button"
+      onClick={() => onSelect(product)}
+      aria-pressed={selected}
+      aria-label={`View ${product.title}`}
+    >
+      <span className="product-card__visual">
+        <ProductImageStack product={product} />
+        <span className="product-card__badges">
+          {product.badges.slice(0, 2).map((badge) => (
+            <span key={badge}>{badge}</span>
+          ))}
+        </span>
+        <span className="product-card__overlay">View product</span>
+      </span>
+      <span className="product-card__body">
+        <span>
+          <span className="product-card__category">{product.category}</span>
+          <strong className="product-card__title">{product.title}</strong>
+          <span className="product-card__status">{product.badges[2] ?? product.status}</span>
+        </span>
+        <span className="swatches" aria-label={`${product.title} colours`}>
+          {product.swatches.map((swatch) => (
+            <span style={{ backgroundColor: swatch }} key={swatch} />
+          ))}
+        </span>
+      </span>
+      <span className="notify-link">{selected ? 'Selected' : 'View Product'}</span>
+    </button>
+  );
+}
+
+function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyProduct?: ShopifyProduct | null }) {
+  const [selectedSize, setSelectedSize] = useState(product.options?.size?.[0] ?? '');
+  const [selectedColor, setSelectedColor] = useState(product.options?.color?.[0] ?? '');
+  const [quantity, setQuantity] = useState(1);
+  const [purchaseMessage, setPurchaseMessage] = useState('');
+
+  useEffect(() => {
+    setSelectedSize(product.options?.size?.[0] ?? '');
+    setSelectedColor(product.options?.color?.[0] ?? '');
+  }, [product]);
+
+  const title = shopifyProduct?.title ?? product.title;
+  const description = shopifyProduct?.description ?? product.description;
+  const galleryImages = (shopifyProduct?.gallery?.length
+    ? shopifyProduct.gallery
+    : [
+      shopifyProduct?.image,
+      shopifyProduct?.hoverImage,
+      ...product.images,
+      product.hoverImage,
+    ]).filter((image, index, images): image is string => Boolean(image) && images.indexOf(image) === index);
+
+  const buyProduct = async (checkout = false) => {
+    if (!shopifyProduct?.variantId) {
+      setPurchaseMessage('Checkout opens when this piece is available.');
+      return;
+    }
+
+    try {
+      const cart = await addVariantToCart(shopifyProduct.variantId, quantity);
+      setPurchaseMessage(`${title} added to cart.`);
+      if (checkout) window.location.href = cart.checkoutUrl;
+    } catch (error) {
+      setPurchaseMessage(error instanceof Error ? error.message : 'Unable to add product.');
+    }
+  };
+
+  return (
+    <section className="product-detail" id="product-detail" aria-label={`${product.title} details`}>
+      <div className="product-gallery">
+        {galleryImages.map((image, index) => (
+          <div className="product-gallery__item" key={image}>
+            <img src={image} alt={`${title} view ${index + 1}`} loading={index === 0 ? 'eager' : 'lazy'} />
+          </div>
+        ))}
+      </div>
+      <div className="product-detail__copy">
+        <div className="product-badge-row">
+          {product.badges.map((badge) => (
+            <span className="status-badge" key={badge}>{badge}</span>
+          ))}
+        </div>
+        <p className="eyebrow">{product.collection}</p>
+        <h2>{title}</h2>
+        <p className="product-category">{shopifyProduct?.category ?? product.category}</p>
+        {shopifyProduct?.price ? <strong className="product-price">{shopifyProduct.price}</strong> : null}
+        <p className="product-description">{description}</p>
+        <p className="product-description">{product.story}</p>
+        {product.options?.size ? (
+          <div className="selector-group">
+            <span>Size</span>
+            <div>
+              {product.options.size.map((size) => (
+                <button
+                  type="button"
+                  key={size}
+                  className={selectedSize === size ? 'selected' : ''}
+                  onClick={() => setSelectedSize(size)}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {product.options?.color ? (
+          <div className="selector-group">
+            <span>Colour</span>
+            <div>
+              {product.options.color.map((color) => (
+                <button
+                  type="button"
+                  key={color}
+                  className={selectedColor === color ? 'selected' : ''}
+                  onClick={() => setSelectedColor(color)}
+                >
+                  {color}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="selector-group selector-group--qty">
+          <span>Quantity</span>
+          <div>
+            <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>-</button>
+            <strong>{quantity}</strong>
+            <button type="button" onClick={() => setQuantity((value) => Math.min(9, value + 1))}>+</button>
+          </div>
+        </div>
+
+        <div className="purchase-actions">
+          <button className="btn btn--gold" type="button" onClick={() => buyProduct(false)}>
+            Add to Cart
+          </button>
+          <button className="btn btn--outline" type="button" onClick={() => buyProduct(true)}>
+            Buy Now
+          </button>
+        </div>
+        {purchaseMessage ? <p className="cart-message">{purchaseMessage}</p> : null}
+        <div className="product-accordions">
+          <details open>
+            <summary>Fabric and fit</summary>
+            <p>{product.material} {product.fit}</p>
+          </details>
+          <details>
+            <summary>Care</summary>
+            <p>{product.care}</p>
+          </details>
+          <details>
+            <summary>Shipping and returns</summary>
+            <p>Shipping, returns, and final pricing are handled through Shopify checkout.</p>
+          </details>
+          <details>
+            <summary>Mission note</summary>
+            <p>Every order helps Radiant 34 keep making Scripture visible through products, biblical media, and future support for gospel mission.</p>
+          </details>
+        </div>
+        <ul className="detail-notes size-guide">
+          <li>Size guide: relaxed unisex fit on tees and hoodies.</li>
+          <li>Colour selected: {selectedColor || 'One colour'}.</li>
+          <li>Size selected: {selectedSize || 'One size'}.</li>
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function Hero({ navigate }: { navigate: (path: Page) => void }) {
+  return (
+    <section className="hero">
+      <div className="hero-copy">
         <p className="eyebrow">Psalm 34:5 inspired clothing</p>
-        <h1 className="hero-headline">Those who look to Him are radiant.</h1>
-        <p className="hero-lead">
-          Radiant 34 is a Bible-inspired clothing label making faith-led art, apparel, and everyday pieces that carry light without feeling forced.
+        <h1>Those who look to Him are radiant.</h1>
+        <p>
+          Psalm 34 is a testimony — written by someone who knew shame and was delivered from it.
+          Radiant 34 puts that testimony on, so it gets carried into rooms scripture doesn&apos;t
+          usually reach.
         </p>
         <div className="hero-actions">
-          <a href="#shop" className="btn btn--gold">Shop Drop 001</a>
-          <a href="#story" className="btn btn--outline">Read the Story</a>
+          <button className="btn btn--gold" type="button" onClick={() => navigate('/drop-001')}>
+            Explore Drop 001
+          </button>
+          <button className="btn btn--outline" type="button" onClick={() => navigate('/about')}>
+            Read the Story
+          </button>
         </div>
-        <div className="hero-scripture">
+        <blockquote>
           <span>Psalm 34:5</span>
-          <p>“Those who look to Him are radiant; their faces are never covered with shame.”</p>
-        </div>
+          Those who look to Him are radiant; their faces are never covered with shame.
+        </blockquote>
       </div>
-
       <div className="hero-image">
-        <img src={asset('/images/model-psalm.png')} alt="Man wearing a cream Radiant 34 t-shirt at sunset beside Psalm 34 verse text" />
+        <img src={siteAssets.heroModel} alt="Model wearing Radiant 34 Psalm 34 tee" />
       </div>
     </section>
   );
 }
 
-function DropIntro() {
+function FeaturedProducts({ navigate, onSelect }: { navigate: (path: Page) => void; onSelect: (product: Product) => void }) {
+  const products = getDropProducts('Drop 001').slice(0, 6);
+
   return (
-    <section className="drop-intro" id="drop">
-      <div className="container drop-intro__inner">
-        <div>
-          <p className="eyebrow">Drop 001</p>
-          <h2 className="section-heading">Those Who Look.</h2>
-        </div>
+    <section className="section-band drop-band">
+      <div className="section-head">
+        <p className="eyebrow">Featured pieces</p>
+        <h2>Drop 001 is the first testimony.</h2>
         <p>
-          The first Radiant 34 collection launches Monday with Shopify checkout and Gelato fulfilment. Products are already shown here so customers can see the range before orders open.
+          Three pieces. One verse. Built for the days faith is loud, and the days it&apos;s quiet.
         </p>
+      </div>
+      <div className="product-grid">
+        {products.map((product) => (
+          <ProductCard product={product} onSelect={onSelect} key={product.id} />
+        ))}
+      </div>
+      <div className="center-actions">
+        <button className="btn btn--outline" type="button" onClick={() => navigate('/shop')}>
+          Shop Drop 001
+        </button>
       </div>
     </section>
   );
 }
 
-function ShopSection() {
-  const [filter, setFilter] = useState<Filter>('All');
-  const [selected, setSelected] = useState<Product>(PRODUCTS[0]);
-
-  const visibleProducts = useMemo(() => {
-    if (filter === 'All') return PRODUCTS;
-    return PRODUCTS.filter(product => product.shopCategory === filter);
-  }, [filter]);
+function DropCollection({
+  selected,
+  onSelect,
+}: {
+  selected: Product;
+  onSelect: (product: Product) => void;
+}) {
+  const [filter, setFilter] = useState('All');
+  const filteredProducts = useMemo(() => getProductsByCategory(filter), [filter]);
 
   return (
-    <section className="shop-section" id="shop">
-      <div className="container shop-head">
+    <section className="section-band shop-band">
+      <div className="section-head section-head--split">
         <div>
-          <p className="eyebrow">Shop</p>
-          <h2 className="section-heading">Products ready for Monday launch.</h2>
+          <p className="eyebrow">The first collection</p>
+        <h2>Drop 001 - Those Who Look.</h2>
         </div>
         <p>
-          The shop range is live to view now. Checkout will switch on Monday once the Shopify catalogue and Gelato fulfilment products are connected.
+          A wearable testimony from Psalm 34: delivered, then carried. These are the first pieces
+          in the Radiant 34 world.
         </p>
       </div>
-
-      <div className="container shop-filters" aria-label="Product filters">
-        {FILTERS.map(item => (
-          <button key={item} type="button" className={filter === item ? 'is-active' : ''} onClick={() => setFilter(item)}>
-            {item}
+      <div className="filters" aria-label="Product filters">
+        {filterLabels.map((label) => (
+          <button
+            key={label}
+            className={filter === label ? 'selected' : ''}
+            type="button"
+            onClick={() => setFilter(label)}
+          >
+            {label}
           </button>
         ))}
       </div>
-
-      <div className="container product-grid">
-        {visibleProducts.map(product => (
-          <ProductCard key={product.id} product={product} onSelect={setSelected} />
-        ))}
-      </div>
-
-      <div className="container product-detail" aria-live="polite">
-        <div className="product-detail__visual">
-          <ProductVisual product={selected} />
-        </div>
-        <div className="product-detail__content">
-          <p className="eyebrow">Product detail</p>
-          <h3>{selected.title}</h3>
-          <div className="product-detail__line">
-            <span>{selected.category}</span>
-            <strong>{selected.price}</strong>
-          </div>
-          <p>{selected.description}</p>
-          {selected.options?.size && (
-            <div className="option-row">
-              <span>Sizes</span>
-              <div>{selected.options.size.map(size => <button key={size} type="button">{size}</button>)}</div>
-            </div>
-          )}
-          {selected.options?.color && (
-            <div className="option-row">
-              <span>Colours</span>
-              <div>{selected.options.color.map(color => <button key={color} type="button">{color}</button>)}</div>
-            </div>
-          )}
-          <div className="integration-note">
-            <strong>Monday launch setup</strong>
-            <p>
-              This product is prepared for Shopify checkout and {selected.fulfillmentType === 'gelato' ? 'Gelato fulfilment' : 'manual fulfilment'}.
-            </p>
-          </div>
-          <a href="#signup" className="btn btn--gold">Get Drop Alert</a>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function StorySection() {
-  return (
-    <section className="story-section" id="story">
-      <div className="story-inner">
-        <div className="story-image">
-          <img src={asset('/images/model-hoodie.png')} alt="Radiant 34 cream hoodie in golden light" loading="lazy" />
-        </div>
-        <div className="story-copy">
-          <p className="eyebrow">The meaning</p>
-          <h2 className="section-heading">A clothing label built around light, identity, and no shame.</h2>
-          <blockquote className="story-quote">
-            “Those who look to Him are radiant; their faces are never covered with shame.” <span>Psalm 34:5</span>
-          </blockquote>
-          <p>
-            Radiant 34 is for people who want Bible-inspired pieces that still feel clean, wearable, and modern. The clothes are not just merch. They are reminders: look up, step out, and live with the light God gives.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PrinciplesSection() {
-  return (
-    <section className="principles-section" id="vision">
-      <div className="container principles-head">
-        <p className="eyebrow">Brand foundation</p>
-        <h2 className="section-heading">Faith-led design for everyday life.</h2>
-      </div>
-      <div className="container principles-grid">
-        {PRINCIPLES.map((item, index) => (
-          <article className="principle-card" key={item.title}>
-            <span>{String(index + 1).padStart(2, '0')}</span>
-            <h3>{item.title}</h3>
-            <p>{item.copy}</p>
-          </article>
+      <div className="product-grid">
+        {filteredProducts.map((product) => (
+          <ProductCard
+            product={product}
+            onSelect={onSelect}
+            selected={selected.id === product.id}
+            key={product.id}
+          />
         ))}
       </div>
     </section>
@@ -457,62 +490,79 @@ function PrinciplesSection() {
 
 function LookbookSection() {
   return (
-    <section className="lookbook-section" id="lookbook">
-      <div className="lookbook-panel">
-        <div className="lookbook-copy">
-          <p className="eyebrow">Lookbook</p>
-          <h2>Warm light. Clean pieces. Scripture carried naturally.</h2>
-          <p>
-            The visual direction is lifestyle-led: sunlight, cream, gold, black, handwritten marks, and product imagery that makes the message feel alive.
-          </p>
-          <a href="#shop" className="btn btn--outline-cream">Shop Drop 001</a>
-        </div>
-        <div className="lookbook-image lookbook-image--one">
-          <img src={asset('/images/model-tees.png')} alt="Radiant 34 tees editorial image" loading="lazy" />
-        </div>
-        <div className="lookbook-image lookbook-image--two">
-          <img src={asset('/images/model-group.png')} alt="Radiant 34 group apparel editorial image" loading="lazy" />
-        </div>
+    <section className="lookbook">
+      <div className="lookbook-copy">
+        <p className="eyebrow">Lookbook</p>
+        <h2>Warm light, clean silhouettes, scripture carried naturally.</h2>
+        <p>
+          Shot the way testimony actually shows up in real life — not staged, not preachy. Golden
+          hour, city rooftops, people who look like they&apos;ve been somewhere and come out the other
+          side.
+        </p>
+      </div>
+      <img src={siteAssets.lookbookTees} alt="Radiant 34 tees editorial" loading="lazy" />
+      <img src={siteAssets.communityModels} alt="Radiant 34 group editorial" loading="lazy" />
+    </section>
+  );
+}
+
+function StoryBand() {
+  return (
+    <section className="about-section">
+      <div className="about-image">
+        <img src={siteAssets.storyModels} alt="Radiant 34 hoodie editorial" loading="lazy" />
+      </div>
+      <div className="about-copy">
+        <p className="eyebrow">Brand story</p>
+        <h2>Clothing shaped by Psalm 34:5.</h2>
+        <p>
+          Psalm 34 starts at the bottom: a cry, an answer, deliverance, then testimony.
+        </p>
+        <p>
+          Radiant 34 turns that same movement into premium everyday pieces people can wear, carry,
+          and be seen in.
+        </p>
       </div>
     </section>
   );
 }
 
-function LaunchSection() {
-  const [email, setEmail] = useState(() => localStorage.getItem('radiant34-email') || '');
-  const [done, setDone] = useState(Boolean(localStorage.getItem('radiant34-email')));
+function NewsletterBand() {
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(() => Boolean(localStorage.getItem('radiant34LaunchEmail')));
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (email.trim()) {
-      localStorage.setItem('radiant34-email', email.trim());
-      setDone(true);
-    }
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) return;
+    localStorage.setItem('radiant34LaunchEmail', trimmedEmail);
+    setSubmitted(true);
   };
 
   return (
-    <section className="launch-section" id="signup">
-      <div className="launch-inner">
-        <div>
-          <p className="eyebrow">Drop alerts</p>
-          <h2>Get the Monday launch alert.</h2>
-          <p>
-            Leave your email for the Drop 001 opening notice, product previews, and the first access announcement when Shopify checkout goes live.
-          </p>
-        </div>
-        {done ? (
-          <p className="email-thanks">Thank you. You will get the Drop 001 alert.</p>
+    <section className="launch-section">
+      <div className="launch-card">
+        <p className="eyebrow">Radiant Club</p>
+        <h2>First access, future stories, and the next release.</h2>
+        <p>
+          Join the early list for Drop 001, campaign notes, and the creative journey behind
+          Radiant 34.
+        </p>
+        {submitted ? (
+          <div className="thanks-message">
+            Thank you. You are on the Radiant 34 list.
+          </div>
         ) : (
           <form className="email-form" onSubmit={submit}>
             <input
               type="email"
               value={email}
-              onChange={event => setEmail(event.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               placeholder="Your email address"
+              aria-label="Email address"
               required
-              aria-label="Email address for Radiant 34 drop updates"
             />
-            <button type="submit">Get Alert</button>
+            <button type="submit">Join</button>
           </form>
         )}
       </div>
@@ -520,32 +570,665 @@ function LaunchSection() {
   );
 }
 
-function Footer() {
+function HomePage({ navigate, onSelect }: { navigate: (path: Page) => void; onSelect: (product: Product) => void }) {
+  return (
+    <>
+      <Hero navigate={navigate} />
+      <FeaturedProducts navigate={navigate} onSelect={onSelect} />
+      <StoryBand />
+      <section className="scripture-band">
+        <p className="eyebrow">Psalm 34:5</p>
+        <h2>Cry out. Be heard. Carry the testimony.</h2>
+      </section>
+      <LookbookSection />
+      <MissionPreview navigate={navigate} />
+      <NewsletterBand />
+    </>
+  );
+}
+
+function DropPage({ selected, onSelect }: { selected: Product; onSelect: (product: Product) => void }) {
+  return (
+    <>
+      <section className="page-hero page-hero--drop">
+        <img src={siteAssets.dropHero} alt="" aria-hidden="true" className="page-hero__bg" />
+        <p className="eyebrow">Drop 001</p>
+        <h1>DROP 001 - THOSE WHO LOOK</h1>
+        <p>
+          Inspired by Psalm 34:5.
+        </p>
+      </section>
+      <section className="campaign-statement">
+        <p className="eyebrow">Campaign statement</p>
+        <h2>Drop 001 begins with a single verse: Those who look to Him are radiant.</h2>
+        <p>
+          This first collection is built around deliverance, testimony, and the quiet confidence that
+          comes from looking to Christ.
+        </p>
+      </section>
+      <DropCollection selected={selected} onSelect={onSelect} />
+      <LookbookSection />
+      <section className="campaign-grid" aria-label="Drop 001 editorial images">
+        {siteAssets.lookbook.slice(0, 6).map((image, index) => (
+          <img src={image} alt={`Drop 001 campaign ${index + 1}`} loading="lazy" key={image} />
+        ))}
+      </section>
+    </>
+  );
+}
+
+function ProductPage({
+  product,
+  shopifyProduct,
+  onSelect,
+  navigate,
+}: {
+  product: Product;
+  shopifyProduct?: ShopifyProduct | null;
+  onSelect: (product: Product) => void;
+  navigate: (path: Page) => void;
+}) {
+  const relatedProducts = getDropProducts('Drop 001')
+    .filter((item) => item.id !== product.id)
+    .slice(0, 3);
+
+  return (
+    <>
+      <section className="product-page-hero">
+        <button className="back-link" type="button" onClick={() => navigate('/drop-001')}>
+          Back to Drop 001
+        </button>
+        <ProductDetail product={product} shopifyProduct={shopifyProduct} />
+      </section>
+      <section className="section-band drop-band">
+        <div className="section-head">
+          <p className="eyebrow">More from Drop 001</p>
+          <h2>Wear the testimony.</h2>
+        </div>
+        <div className="product-grid">
+          {relatedProducts.map((item) => (
+            <ProductCard product={item} onSelect={onSelect} key={item.id} />
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
+const money = (amount: string, currencyCode: string) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(Number(amount));
+
+const fallbackForShopifyProduct = (product: { handle: string; title: string }, index: number) =>
+  getProductByHandle(product.handle)
+  ?? getProducts().find((item) => product.title.toLowerCase().includes(item.title.split(' - ')[0].toLowerCase()))
+  ?? getProducts()[index % getProducts().length];
+
+const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduct => {
+  const fallback = fallbackForShopifyProduct(product, index);
+  const imageOverride = getRadiantProductImages(product);
+  const images = product.images?.nodes ?? [];
+  const variant = product.variants?.nodes.find((node) => node.availableForSale) ?? product.variants?.nodes[0];
+  const swatches = variant?.selectedOptions
+    .filter((option) => option.name.toLowerCase().includes('color') || option.name.toLowerCase().includes('colour'))
+    .map((option) => option.value) ?? [];
+
+  return {
+    id: product.id,
+    title: product.title,
+    handle: product.handle,
+    description: product.description || fallback.description,
+    createdAt: product.createdAt,
+    image: imageOverride?.primary ?? fallback.images[0] ?? product.featuredImage?.url ?? images[0]?.url,
+    hoverImage: imageOverride?.hover ?? fallback.hoverImage ?? images[1]?.url,
+    gallery: imageOverride?.gallery.length
+      ? imageOverride.gallery
+      : [
+        fallback.images[0],
+        fallback.hoverImage,
+        product.featuredImage?.url,
+        ...images.map((image) => image.url),
+      ].filter((image, galleryIndex, gallery): image is string => Boolean(image) && gallery.indexOf(image) === galleryIndex),
+    price: product.priceRange?.minVariantPrice
+      ? money(product.priceRange.minVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode)
+      : undefined,
+    category: product.productType || fallback.category,
+    tags: product.tags ?? [],
+    badges: fallback.badges,
+    swatches: swatches.length ? swatches : fallback.swatches,
+    variantId: variant?.id,
+  };
+};
+
+async function fetchShopifyProductByHandle(handle: string) {
+  const query = `
+    query RadiantProductByHandle($handle: String!) {
+      product(handle: $handle) {
+        id
+        title
+        handle
+        description
+        createdAt
+        productType
+        tags
+        featuredImage { url altText }
+        images(first: 4) {
+          nodes { url altText }
+        }
+        variants(first: 20) {
+          nodes {
+            id
+            availableForSale
+            selectedOptions { name value }
+          }
+        }
+        priceRange {
+          minVariantPrice { amount currencyCode }
+        }
+      }
+    }
+  `;
+
+  const data = await shopifyFetch<{ product: ShopifyProductNode | null }>(query, { handle });
+  return data.product ? toShopifyProduct(data.product) : null;
+}
+
+function ShopifyProducts({
+  onSelect,
+}: {
+  onSelect: (product: ShopifyProduct) => void;
+}) {
+  const [products, setProducts] = useState<ShopifyProduct[]>([]);
+  const [loading, setLoading] = useState(shopifyConfigured);
+  const [filter, setFilter] = useState('All');
+  const [sort, setSort] = useState('Featured');
+  const [cartMessage, setCartMessage] = useState('');
+
+  useEffect(() => {
+    void checkShopifyProxy();
+
+    if (!shopifyConfigured) {
+      logShopifyDebug('No active Shopify products returned. Check product status, sales channel publishing, and product images.');
+      return;
+    }
+
+    let mounted = true;
+    const query = `
+      query RadiantProducts {
+        products(first: 24) {
+          nodes {
+            id
+            title
+            handle
+            description
+            createdAt
+            productType
+            tags
+            featuredImage { url altText }
+            images(first: 4) {
+              nodes { url altText }
+            }
+            variants(first: 20) {
+              nodes {
+                id
+                availableForSale
+                selectedOptions { name value }
+              }
+            }
+            priceRange {
+              minVariantPrice { amount currencyCode }
+            }
+          }
+        }
+      }
+    `;
+
+    shopifyFetch<{
+      products: {
+        nodes: Array<{
+          id: string;
+          title: string;
+          handle: string;
+          description: string;
+          createdAt?: string;
+          productType?: string;
+          tags?: string[];
+          featuredImage?: { url: string; altText?: string };
+          images?: { nodes: Array<{ url: string; altText?: string }> };
+          variants?: {
+            nodes: Array<{
+              id: string;
+              availableForSale: boolean;
+              selectedOptions: Array<{ name: string; value: string }>;
+            }>;
+          };
+          priceRange?: { minVariantPrice?: { amount: string; currencyCode: string } };
+        }>;
+      };
+    }>(query)
+      .then((data) => {
+        if (!mounted) return;
+        logShopifyDebug('Product count returned', data.products.nodes.length);
+        if (!data.products.nodes.length) {
+          logShopifyDebug('No active Shopify products returned. Check product status, sales channel publishing, and product images.');
+        }
+        setProducts(
+          data.products.nodes.map((product, index) => toShopifyProduct(product, index)),
+        );
+      })
+      .catch((error) => {
+        if (!mounted) return;
+        logShopifyDebug('Shopify GraphQL errors', error instanceof Error ? error.message : error);
+        logShopifyDebug('No active Shopify products returned. Check product status, sales channel publishing, and product images.');
+        setProducts([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const visibleProducts = useMemo(() => {
+    const filtered = filter === 'All'
+      ? products
+      : products.filter((product) => {
+        const haystack = `${product.category} ${product.title} ${product.tags.join(' ')}`.toLowerCase();
+        return haystack.includes(filter.toLowerCase().replace(/s$/, ''));
+      });
+
+    return [...filtered].sort((a, b) => {
+      if (sort === 'A-Z') return a.title.localeCompare(b.title);
+      const aPrice = Number(a.price?.replace(/[^0-9.]/g, '') || 0);
+      const bPrice = Number(b.price?.replace(/[^0-9.]/g, '') || 0);
+      if (sort === 'Newest') return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
+      if (sort === 'Price Low to High') return aPrice - bPrice;
+      if (sort === 'Price High to Low') return bPrice - aPrice;
+      return 0;
+    });
+  }, [filter, products, sort]);
+
+  const quickAdd = async (product: ShopifyProduct, checkout = false) => {
+    if (!product.variantId) {
+      setCartMessage('This product needs a Shopify variant before it can be added.');
+      return;
+    }
+
+    try {
+      const cart = await addVariantToCart(product.variantId, 1);
+      setCartMessage(`${product.title} added to cart.`);
+      if (checkout) window.location.href = cart.checkoutUrl;
+    } catch (error) {
+      setCartMessage(error instanceof Error ? error.message : 'Unable to add product.');
+    }
+  };
+
+  if (loading) {
+    return <p className="shop-empty">Loading Radiant 34 products.</p>;
+  }
+
+  return (
+    <>
+      <div className="shop-controls">
+        <div className="filters" aria-label="Product filters">
+          {filterLabels.map((label) => (
+            <button
+              key={label}
+              className={filter === label ? 'selected' : ''}
+              type="button"
+              onClick={() => setFilter(label)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <label className="sort-control">
+          <span>Sort</span>
+          <select value={sort} onChange={(event) => setSort(event.target.value)}>
+            {sortLabels.map((label) => (
+              <option key={label} value={label}>{label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {cartMessage ? <p className="cart-message">{cartMessage}</p> : null}
+      {!visibleProducts.length ? <p className="shop-empty">The collection is being prepared. Check back soon.</p> : null}
+      <div className="product-grid product-grid--shop">
+        {visibleProducts.map((product) => (
+          <article className="shopify-card" key={product.id}>
+            <button
+              className="shopify-card__image"
+              type="button"
+              onClick={() => {
+                onSelect(product);
+              }}
+            >
+              {product.image ? <img src={product.image} alt={product.title} /> : null}
+              {product.hoverImage ? <img className="shopify-card__hover" src={product.hoverImage} alt="" loading="lazy" /> : null}
+              <span className="product-card__badges">
+                {product.badges.slice(0, 2).map((badge) => <span key={badge}>{badge}</span>)}
+              </span>
+              <span className="product-card__overlay">View product</span>
+            </button>
+            <div className="shopify-card__body">
+              <p className="product-card__category">{product.category || 'Radiant 34'}</p>
+              <h2>{product.title}</h2>
+              {product.description ? <p>{product.description}</p> : null}
+              <div className="shopify-card__meta">
+                {product.price ? <strong>{product.price}</strong> : null}
+                <span className="swatches" aria-label={`${product.title} colours`}>
+                  {product.swatches.map((swatch) => (
+                    <span
+                      style={{ backgroundColor: swatch.startsWith('#') ? swatch : swatch.toLowerCase().includes('black') ? '#11100d' : '#e9ddc8' }}
+                      key={swatch}
+                      title={swatch}
+                    />
+                  ))}
+                </span>
+              </div>
+              <div className="shopify-card__actions">
+                <button type="button" onClick={() => quickAdd(product)}>Quick Add</button>
+                <button type="button" onClick={() => quickAdd(product, true)}>Buy Now</button>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ShopPage({
+  onSelect,
+}: {
+  onSelect: (product: ShopifyProduct) => void;
+}) {
+  return (
+    <section className="section-band shop-band page-section shop-page">
+      <div className="section-head section-head--split">
+        <div>
+          <p className="eyebrow">Shop Drop 001</p>
+          <h1>Drop 001 — wearable testimony.</h1>
+        </div>
+        <p>
+          A focused collection shaped by Psalm 34: cried out, heard, delivered, carried.
+        </p>
+      </div>
+      <ShopifyProducts onSelect={onSelect} />
+    </section>
+  );
+}
+
+function LookbookPage() {
+  const lookbookStories = [
+    {
+      eyebrow: 'Those who look',
+      title: 'The testimony is worn before it is explained.',
+      copy: 'Psalm 34 starts with a cry and becomes an invitation. These pieces are made for the same movement: delivered, seen, and carried into ordinary rooms.',
+      image: siteAssets.lookbook[0],
+      alt: 'Radiant 34 cream tee editorial',
+    },
+    {
+      eyebrow: 'No shame',
+      title: 'Quiet front. Strong witness.',
+      copy: 'The clothes stay restrained because the message does not need to shout. A small mark, a clean silhouette, and the verse close enough to carry.',
+      image: siteAssets.lookbook[5],
+      alt: 'Radiant 34 Those Who Look back print editorial',
+    },
+    {
+      eyebrow: 'Everyday witness',
+      title: 'Built for rooftops, streets, church steps, and the walk home.',
+      copy: 'Not staged, not preachy. Just people wearing testimony in real light, after real life, with enough beauty to make someone look twice.',
+      image: siteAssets.lookbook[7],
+      alt: 'Radiant 34 hoodie and accessories editorial',
+    },
+  ];
+
+  return (
+    <>
+      <section className="lookbook-hero">
+        <img src={siteAssets.lookbook[9]} alt="Radiant 34 cap editorial" />
+        <div>
+          <p className="eyebrow">Lookbook</p>
+          <h1>Carry the light.</h1>
+        </div>
+      </section>
+      <section className="lookbook-editorial">
+        {lookbookStories.map((story) => (
+          <article className="lookbook-story" key={story.title}>
+            <div className="lookbook-story__copy">
+              <p className="eyebrow">{story.eyebrow}</p>
+              <h2>{story.title}</h2>
+              <p>{story.copy}</p>
+            </div>
+            <div className="lookbook-story__image">
+              <img src={story.image} alt={story.alt} loading="lazy" />
+            </div>
+          </article>
+        ))}
+      </section>
+    </>
+  );
+}
+
+function AboutPage() {
+  return (
+    <>
+      <section className="page-hero page-hero--editorial">
+        <div>
+          <p className="eyebrow">About Radiant 34</p>
+          <h1>A psalm, worn.</h1>
+          <p>
+            David wrote Psalm 34 after his lowest point — hiding, humiliated, pretending to be
+            someone else just to survive. Then he was delivered, and the first thing he did was tell
+            people: taste and see.
+          </p>
+        </div>
+        <img src={siteAssets.aboutHero} alt="Radiant 34 cream tee editorial" />
+      </section>
+      <StoryBand />
+      <section className="text-band">
+        <p className="eyebrow">Psalm 34:5</p>
+        <h2>Those who look to Him are radiant.</h2>
+        <p>
+          Radiant 34 exists to keep doing that. Every piece is a small act of testimony — worn by
+          people who&apos;ve been there, seen by people who haven&apos;t yet.
+        </p>
+      </section>
+    </>
+  );
+}
+
+function MissionPreview({ navigate }: { navigate: (path: Page) => void }) {
+  return (
+    <section className="mission-band">
+      <div>
+        <p className="eyebrow">Mission</p>
+        <h2>Clothing that helps the testimony travel.</h2>
+        <p>
+          Radiant 34 is not the message. It is a way to help it move through rooms, stories,
+          churches, mission fields, and the people already carrying it.
+        </p>
+        <button className="btn btn--outline" type="button" onClick={() => navigate('/mission')}>
+          Read the Mission
+        </button>
+      </div>
+      <img src={siteAssets.missionHero} alt="Radiant 34 hoodie and accessories editorial" loading="lazy" />
+    </section>
+  );
+}
+
+function MissionPage() {
+  return (
+    <>
+      <section className="page-hero page-hero--editorial">
+        <div>
+          <p className="eyebrow">Mission</p>
+          <h1>Clothing that funds the telling.</h1>
+          <p>
+            Radiant 34 isn&apos;t the message. It&apos;s a way to help it travel. A portion of every drop
+            goes toward the people already doing this work — in churches, on mission fields, and in
+            the studios and stories that carry it further than we can alone.
+          </p>
+        </div>
+        <img src={siteAssets.missionHero} alt="Radiant 34 black hoodie and accessories editorial" />
+      </section>
+      <section className="mission-grid">
+        <article>
+          <span>Churches</span>
+          <p>Backing the communities where people first cry out — and get heard.</p>
+        </article>
+        <article>
+          <span>Missionaries</span>
+          <p>Funding the ones carrying deliverance into hard places.</p>
+        </article>
+        <article>
+          <span>Biblical Media</span>
+          <p>Supporting storytellers turning testimony into something people can taste and see.</p>
+        </article>
+        <article>
+          <span>Creative Work</span>
+          <p>Investing in artists building things that carry the message further than words alone.</p>
+        </article>
+      </section>
+    </>
+  );
+}
+
+function ContactPage() {
+  return (
+    <>
+      <section className="page-hero page-hero--editorial">
+        <div>
+          <p className="eyebrow">Contact</p>
+          <h1>Join the Radiant 34 list.</h1>
+          <p>
+            Get first access to Drop 001, product notes, campaign images, and future mission updates.
+          </p>
+        </div>
+        <img src={siteAssets.contactHero} alt="Radiant 34 cap editorial" />
+      </section>
+      <NewsletterBand />
+    </>
+  );
+}
+
+function Footer({ navigate }: { navigate: (path: Page) => void }) {
   return (
     <footer className="site-footer">
-      <div className="container footer-inner">
-        <img src={asset('/images/logo-transparent.png')} alt="Radiant 34" />
-        <p>“Those who look to Him are radiant; their faces are never covered with shame.”</p>
-        <span>© 2026 Radiant 34. Bible-inspired clothing and everyday art.</span>
+      <div>
+        <img src={siteAssets.logo} alt="Radiant 34" />
+        <p>Those who look to Him are radiant; their faces are never covered with shame.</p>
       </div>
+      <nav aria-label="Footer navigation">
+        {footerItems.map((item) => (
+          <button type="button" key={item.path} onClick={() => navigate(item.path)}>
+            {item.label}
+          </button>
+        ))}
+      </nav>
+      <span>Every piece carries a verse. Every purchase carries the message further.</span>
+      <span>(c) 2026 Radiant 34. Bible-inspired clothing and everyday art.</span>
     </footer>
   );
 }
 
 function App() {
+  const products = getProducts();
+  const [page, setPage] = useState<Page>(getCurrentPage);
+  const [selectedProduct, setSelectedProduct] = useState<Product>(
+    getProductByHandle(getCurrentProductHandle() ?? 'psalm-34-tee') ?? products[0],
+  );
+  const [selectedShopifyProduct, setSelectedShopifyProduct] = useState<ShopifyProduct | null>(null);
+
+  const navigate = (path: Page) => {
+    window.history.pushState(null, '', path);
+    setPage(path);
+    if (path !== '/product') setSelectedShopifyProduct(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const selectProduct = (product: Product) => {
+    setSelectedShopifyProduct(null);
+    setSelectedProduct(product);
+    setPage('/product');
+    window.history.pushState(null, '', `/products/${product.handle}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const selectShopifyProduct = (product: ShopifyProduct) => {
+    setSelectedShopifyProduct(product);
+    setSelectedProduct(fallbackForShopifyProduct(product, 0));
+    setPage('/product');
+    window.history.pushState(null, '', `/products/${product.handle}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const syncPage = () => {
+      const nextPage = getCurrentPage();
+      setPage(nextPage);
+      if (nextPage === '/product') {
+        const product = getProductByHandle(getCurrentProductHandle() ?? '');
+        if (product) {
+          setSelectedShopifyProduct(null);
+          setSelectedProduct(product);
+        }
+      }
+    };
+    window.addEventListener('popstate', syncPage);
+    return () => window.removeEventListener('popstate', syncPage);
+  }, []);
+
+  useEffect(() => {
+    if (page !== '/product' || selectedShopifyProduct || !shopifyConfigured) return;
+    const handle = getCurrentProductHandle();
+    if (!handle) return;
+
+    let mounted = true;
+    fetchShopifyProductByHandle(handle)
+      .then((product) => {
+        if (!mounted || !product) return;
+        setSelectedShopifyProduct(product);
+        setSelectedProduct(fallbackForShopifyProduct(product, 0));
+      })
+      .catch((error) => {
+        logShopifyDebug('Product handle lookup failed', error instanceof Error ? error.message : error);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [page, selectedShopifyProduct]);
+
+  useEffect(() => {
+    document.title = page === '/product'
+      ? `${selectedProduct.title} | Radiant 34`
+      : pageTitles[page];
+  }, [page, selectedProduct]);
+
   return (
     <>
-      <Header />
+      <Header navigate={navigate} />
       <main>
-        <Hero />
-        <DropIntro />
-        <ShopSection />
-        <StorySection />
-        <PrinciplesSection />
-        <LookbookSection />
-        <LaunchSection />
+        {page === '/' ? <HomePage navigate={navigate} onSelect={selectProduct} /> : null}
+        {page === '/drop-001' ? <DropPage selected={selectedProduct} onSelect={selectProduct} /> : null}
+        {page === '/shop' ? <ShopPage onSelect={selectShopifyProduct} /> : null}
+        {page === '/product' ? (
+          <ProductPage
+            product={selectedProduct}
+            shopifyProduct={selectedShopifyProduct}
+            onSelect={selectProduct}
+            navigate={navigate}
+          />
+        ) : null}
+        {page === '/lookbook' ? <LookbookPage /> : null}
+        {page === '/about' ? <AboutPage /> : null}
+        {page === '/mission' ? <MissionPage /> : null}
+        {page === '/contact' ? <ContactPage /> : null}
       </main>
-      <Footer />
+      <Footer navigate={navigate} />
     </>
   );
 }
@@ -553,5 +1236,5 @@ function App() {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

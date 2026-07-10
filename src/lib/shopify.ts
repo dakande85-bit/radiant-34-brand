@@ -1,27 +1,143 @@
-// Shopify Storefront API — placeholder until env vars are configured.
-// Set VITE_SHOPIFY_STORE_DOMAIN and VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN in .env
+export const shopifyConfigured = true;
+export const shopifyDomainLoaded = true;
+export const shopifyTokenExists = false;
 
-const domain  = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN as string | undefined;
-const token   = import.meta.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN as string | undefined;
-const version = (import.meta.env.VITE_SHOPIFY_API_VERSION as string | undefined) ?? '2025-10';
+type ProxyResponse<T> = {
+  data?: T;
+  errors?: Array<{ message?: string }>;
+};
 
-export const shopifyConfigured = Boolean(domain && token);
-
-export async function shopifyFetch<T = unknown>(query: string, variables?: Record<string, unknown>): Promise<T> {
-  if (!shopifyConfigured) {
-    throw new Error('Shopify env vars not configured. Set VITE_SHOPIFY_STORE_DOMAIN and VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN.');
+export function logShopifyDebug(message: string, detail?: unknown) {
+  if (!import.meta.env.DEV) return;
+  if (detail === undefined) {
+    console.info(`[Radiant 34 Shopify] ${message}`);
+    return;
   }
-  const url = `https://${domain}/api/${version}/graphql.json`;
-  const res = await fetch(url, {
+  console.info(`[Radiant 34 Shopify] ${message}`, detail);
+}
+
+export async function checkShopifyProxy() {
+  if (!import.meta.env.DEV) return;
+
+  try {
+    const response = await fetch('/api/shopify-token');
+    const body = await response.json().catch(() => ({}));
+    logShopifyDebug('Proxy token route status', {
+      ok: response.ok,
+      domainLoaded: body.domainLoaded,
+      clientIdExists: body.clientIdExists,
+      clientSecretExists: body.clientSecretExists,
+      configured: body.configured,
+      tokenCached: body.tokenCached,
+    });
+  } catch (error) {
+    logShopifyDebug('Proxy token route failed', error instanceof Error ? error.message : error);
+  }
+}
+
+export async function shopifyFetch<T = unknown>(
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<T> {
+  const response = await fetch('/api/shopify-storefront', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': token!,
     },
     body: JSON.stringify({ query, variables }),
   });
-  if (!res.ok) throw new Error(`Shopify fetch failed: ${res.status} ${res.statusText}`);
-  const json = await res.json() as { data: T; errors?: unknown[] };
-  if (json.errors?.length) throw new Error(`Shopify GraphQL error: ${JSON.stringify(json.errors)}`);
+
+  const json = await response.json().catch(() => ({})) as ProxyResponse<T>;
+
+  if (!response.ok) {
+    throw new Error(json.errors?.[0]?.message ?? `Shopify proxy failed: ${response.status}`);
+  }
+
+  if (json.errors?.length) {
+    throw new Error(`Shopify GraphQL error: ${JSON.stringify(json.errors)}`);
+  }
+
+  if (!json.data) {
+    throw new Error('Shopify proxy returned no data.');
+  }
+
   return json.data;
+}
+
+export async function createCart(variantId: string, quantity = 1) {
+  const mutation = `
+    mutation CreateRadiantCart($variantId: ID!, $quantity: Int!) {
+      cartCreate(input: { lines: [{ merchandiseId: $variantId, quantity: $quantity }] }) {
+        cart {
+          id
+          checkoutUrl
+          totalQuantity
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const data = await shopifyFetch<{
+    cartCreate: {
+      cart?: { id: string; checkoutUrl: string; totalQuantity: number };
+      userErrors: Array<{ field?: string[]; message: string }>;
+    };
+  }>(mutation, { variantId, quantity });
+
+  if (data.cartCreate.userErrors.length || !data.cartCreate.cart) {
+    throw new Error(data.cartCreate.userErrors[0]?.message ?? 'Unable to create cart.');
+  }
+
+  localStorage.setItem('radiant34CartId', data.cartCreate.cart.id);
+  localStorage.setItem('radiant34CheckoutUrl', data.cartCreate.cart.checkoutUrl);
+  return data.cartCreate.cart;
+}
+
+export async function addToExistingCart(cartId: string, variantId: string, quantity = 1) {
+  const mutation = `
+    mutation AddRadiantCartLine($cartId: ID!, $variantId: ID!, $quantity: Int!) {
+      cartLinesAdd(cartId: $cartId, lines: [{ merchandiseId: $variantId, quantity: $quantity }]) {
+        cart {
+          id
+          checkoutUrl
+          totalQuantity
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const data = await shopifyFetch<{
+    cartLinesAdd: {
+      cart?: { id: string; checkoutUrl: string; totalQuantity: number };
+      userErrors: Array<{ field?: string[]; message: string }>;
+    };
+  }>(mutation, { cartId, variantId, quantity });
+
+  if (data.cartLinesAdd.userErrors.length || !data.cartLinesAdd.cart) {
+    throw new Error(data.cartLinesAdd.userErrors[0]?.message ?? 'Unable to update cart.');
+  }
+
+  localStorage.setItem('radiant34CartId', data.cartLinesAdd.cart.id);
+  localStorage.setItem('radiant34CheckoutUrl', data.cartLinesAdd.cart.checkoutUrl);
+  return data.cartLinesAdd.cart;
+}
+
+export async function addVariantToCart(variantId: string, quantity = 1) {
+  const cartId = localStorage.getItem('radiant34CartId');
+
+  if (!cartId) return createCart(variantId, quantity);
+
+  try {
+    return await addToExistingCart(cartId, variantId, quantity);
+  } catch {
+    return createCart(variantId, quantity);
+  }
 }

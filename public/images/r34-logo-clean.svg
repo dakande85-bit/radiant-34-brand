@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 250">
-<g fill="none" stroke-linecap="round" stroke-linejoin="round">
-<g stroke="#12100C" stroke-width="6">
-<path d="M173 30c-42 2-72 31-72 70 0 27 13 48 34 62 8 5 12 13 12 23h50c0-10 5-18 13-24 21-15 33-36 33-63 0-41-31-70-70-68Z"/>
-<path d="M150 185h47M154 202h39M160 218h28"/>
-<path d="M143 153c16 8 42 8 58 0" opacity=".55"/>
-</g>
-<g stroke="#D49A24" stroke-width="5">
-<path d="M173 8v-1M110 26l-12-18M238 26l13-18M72 74l-22-9M276 74l24-9M69 128l-26 6M278 127l26 7M94 176l-20 19M254 176l20 19"/>
-<path d="M134 62c10-17 28-27 49-26" opacity=".9"/>
-</g>
-</g>
-<text x="122" y="123" font-family="Georgia, Times New Roman, serif" font-size="70" font-style="italic" font-weight="700" fill="#D49A24">34</text>
-<text x="70" y="222" font-family="Brush Script MT, Comic Sans MS, cursive" font-size="76" font-weight="700" fill="#12100C" transform="rotate(-8 170 215)">Radiant</text>
-<path d="M82 232c60 12 129 10 204-18" fill="none" stroke="#12100C" stroke-width="7" stroke-linecap="round"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#12100C" stroke-width="6">
+      <path d="M173 30c-42 2-72 31-72 70 0 27 13 48 34 62 8 5 12 13 12 23h50c0-10 5-18 13-24 21-15 33-36 33-63 0-41-31-70-70-68Z"/>
+      <path d="M150 185h47M154 202h39M160 218h28"/>
+      <path d="M143 153c16 8 42 8 58 0" opacity=".55"/>
+    </g>
+    <g stroke="#D49A24" stroke-width="5">
+      <path d="M173 8v-1M110 26l-12-18M238 26l13-18M72 74l-22-9M276 74l24-9M69 128l-26 6M278 127l26 7M94 176l-20 19M254 176l20 19"/>
+      <path d="M134 62c10-17 28-27 49-26" opacity=".9"/>
+    </g>
+  </g>
+  <text x="122" y="123" font-family="Georgia, Times New Roman, serif" font-size="70" font-style="italic" font-weight="700" fill="#D49A24">34</text>
+  <text x="70" y="222" font-family="Brush Script MT, Comic Sans MS, cursive" font-size="76" font-weight="700" fill="#12100C" transform="rotate(-8 170 215)">Radiant</text>
+  <path d="M82 232c60 12 129 10 204-18" fill="none" stroke="#12100C" stroke-width="7" stroke-linecap="round"/>
 </svg>

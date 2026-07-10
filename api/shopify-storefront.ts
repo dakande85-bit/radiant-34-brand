@@ -24,6 +24,13 @@ type AdminProduct = {
   tags?: string[];
   featuredMedia?: { preview?: { image?: AdminImage | null } | null } | null;
   media?: { nodes?: Array<{ preview?: { image?: AdminImage | null } | null }> };
+  variants?: {
+    nodes?: Array<{
+      id: string;
+      availableForSale?: boolean;
+      selectedOptions?: Array<{ name: string; value: string }>;
+    }>;
+  };
   priceRangeV2?: { minVariantPrice?: { amount: string; currencyCode: string } };
 };
 
@@ -34,9 +41,6 @@ const isProductListQuery = (query: string) =>
 
 const isProductHandleQuery = (query: string) =>
   /\bproduct\s*\(\s*handle\s*:/.test(query) || /\bproductByHandle\s*\(/.test(query);
-
-const isCartMutation = (query: string) =>
-  /\bcart(Create|LinesAdd)\s*\(/.test(query);
 
 const buildStorefrontHeaders = () => {
   const headers: Record<string, string> = {
@@ -64,6 +68,7 @@ const adminProductSelection = `
   tags
   featuredMedia { preview { image { url altText } } }
   media(first: 4) { nodes { preview { image { url altText } } } }
+  variants(first: 20) { nodes { id availableForSale selectedOptions { name value } } }
   priceRangeV2 { minVariantPrice { amount currencyCode } }
 `;
 
@@ -86,7 +91,11 @@ const toStorefrontProduct = (product: AdminProduct) => {
       nodes: images.map((image) => ({ url: image.url, altText: image.altText ?? undefined })),
     },
     variants: {
-      nodes: [],
+      nodes: product.variants?.nodes?.map((variant) => ({
+        id: variant.id,
+        availableForSale: variant.availableForSale ?? true,
+        selectedOptions: variant.selectedOptions ?? [],
+      })) ?? [],
     },
     priceRange: {
       minVariantPrice: product.priceRangeV2?.minVariantPrice,
@@ -206,11 +215,6 @@ export default async function handler(req: any, res: any) {
         return res.status(200).json(payload);
       }
 
-      if (isCartMutation(body.query)) {
-        return res.status(503).json({
-          errors: [{ message: 'Shopify checkout is not live yet.' }],
-        });
-      }
     }
 
     const storefrontUrl = `https://${domain}/api/${version}/graphql.json`;

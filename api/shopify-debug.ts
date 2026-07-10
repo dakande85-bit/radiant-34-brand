@@ -51,6 +51,93 @@ async function getAdminProductCount(accessToken: string) {
   };
 }
 
+async function getAdminProductsWithVariants(accessToken: string) {
+  const productResponse = await fetch(`https://${getShopifyDomain()}/admin/api/${getShopifyApiVersion()}/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-Shopify-Access-Token': accessToken,
+    },
+    body: JSON.stringify({
+      query: `query RadiantDebugProductsWithVariants {
+        products(first: 20) {
+          nodes {
+            title
+            handle
+            variants(first: 5) {
+              nodes {
+                id
+                availableForSale
+              }
+            }
+          }
+        }
+      }`,
+      variables: {},
+    }),
+  });
+
+  const productPayload = await productResponse.json().catch(() => ({}));
+  const productNodes = productPayload.data?.products?.nodes ?? [];
+
+  return {
+    ok: productResponse.ok && !productPayload.errors?.length,
+    status: productResponse.status,
+    products: productNodes as Array<{
+      title: string;
+      handle: string;
+      variants?: { nodes?: Array<{ id: string; availableForSale?: boolean }> };
+    }>,
+    errors: productPayload.errors ?? [],
+  };
+}
+
+async function testTokenlessCart(variantId?: string) {
+  if (!variantId) {
+    return {
+      attempted: false,
+      ok: false,
+      status: null,
+      reason: 'No variant ID available',
+    };
+  }
+
+  const response = await fetch(`https://${getShopifyDomain()}/api/${getShopifyApiVersion()}/graphql.json`, {
+    method: 'POST',
+    headers: storefrontHeaders(),
+    body: JSON.stringify({
+      query: `mutation RadiantDebugCart($variantId: ID!, $quantity: Int!) {
+        cartCreate(input: { lines: [{ merchandiseId: $variantId, quantity: $quantity }] }) {
+          cart {
+            id
+            checkoutUrl
+            totalQuantity
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }`,
+      variables: { variantId, quantity: 1 },
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  const userErrors = payload.data?.cartCreate?.userErrors ?? [];
+
+  return {
+    attempted: true,
+    ok: response.ok && !payload.errors?.length && userErrors.length === 0 && Boolean(payload.data?.cartCreate?.cart?.checkoutUrl),
+    status: response.status,
+    cartCreated: Boolean(payload.data?.cartCreate?.cart?.id),
+    checkoutUrlReturned: Boolean(payload.data?.cartCreate?.cart?.checkoutUrl),
+    userErrors,
+    errors: payload.errors ?? [],
+  };
+}
+
 async function getStorefrontProductCount() {
   const productResponse = await fetch(`https://${getShopifyDomain()}/api/${getShopifyApiVersion()}/graphql.json`, {
     method: 'POST',
@@ -116,16 +203,33 @@ export default async function handler(req: any, res: any) {
     clientIdExists: Boolean(process.env.SHOPIFY_CLIENT_ID),
     clientSecretExists: Boolean(process.env.SHOPIFY_CLIENT_SECRET),
     configured: hasShopifyServerCredentials(),
-    storefrontAccessTokenExists: Boolean(process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN),
+    storefrontTokenExists: Boolean(process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN),
     localProductCount: 6,
     adminProductCount: 0,
     storefrontProductCount: 0,
+    matchedProductCount: 0,
+    variantIdCount: 0,
   };
 
   try {
     const token = await getShopifyAccessToken();
     const admin = await getAdminProductCount(token.accessToken);
-    const storefront = diagnostic.storefrontAccessTokenExists
+    const adminWithVariants = await getAdminProductsWithVariants(token.accessToken);
+    const localHandles = [
+      'premium-unisex-crewneck-t-shirt-bella-canvas-3001-white',
+      'radiant-hoodie',
+      'classic-tee',
+      'everyday-tank',
+      'radiant-water-bottle',
+      'radiant-backpack',
+    ];
+    const matchedProducts = adminWithVariants.products.filter((product) => localHandles.includes(product.handle));
+    const firstVariantId = adminWithVariants.products
+      .flatMap((product) => product.variants?.nodes ?? [])
+      .find((variant) => variant.id)?.id;
+    const variantIdCount = matchedProducts.filter((product) => product.variants?.nodes?.some((variant) => variant.id)).length;
+    const cartTest = await testTokenlessCart(firstVariantId);
+    const storefront = diagnostic.storefrontTokenExists
       ? await getStorefrontProductCount()
       : null;
 
@@ -141,10 +245,14 @@ export default async function handler(req: any, res: any) {
       adminProducts: admin.products,
       adminErrors: admin.errors,
       storefrontRequestStatus: storefront?.status ?? null,
+      storefrontTokenExists: diagnostic.storefrontTokenExists,
       storefrontProductCount: storefront?.productCount ?? 0,
       storefrontProductTitles: storefront?.productTitles ?? [],
       storefrontProducts: storefront?.products ?? [],
       storefrontErrors: storefront?.errors ?? [],
+      matchedProductCount: matchedProducts.length,
+      variantIdCount,
+      storefrontCartTokenlessTest: cartTest,
     });
   } catch (error) {
     const tokenError = error instanceof ShopifyTokenError ? error : null;

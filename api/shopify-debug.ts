@@ -1,23 +1,104 @@
 /// <reference types="node" />
 
 import {
+  getShopifyAccessToken,
   getShopifyApiVersion,
   getShopifyDomain,
+  hasShopifyServerCredentials,
+  ShopifyTokenError,
 } from './_shopifyAuth.js';
 
-const buildStorefrontHeaders = () => {
+const storefrontHeaders = () => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
 
-  const storefrontToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
-  if (storefrontToken) {
-    headers['X-Shopify-Storefront-Access-Token'] = storefrontToken;
+  if (process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN) {
+    headers['X-Shopify-Storefront-Access-Token'] = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
   }
 
   return headers;
 };
+
+async function getAdminProductCount(accessToken: string) {
+  const productResponse = await fetch(`https://${getShopifyDomain()}/admin/api/${getShopifyApiVersion()}/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-Shopify-Access-Token': accessToken,
+    },
+    body: JSON.stringify({
+      query: 'query RadiantDebugProducts { products(first: 20) { nodes { id title handle } } }',
+      variables: {},
+    }),
+  });
+
+  const productPayload = await productResponse.json().catch(() => ({}));
+  const productNodes = productPayload.data?.products?.nodes ?? [];
+
+  return {
+    ok: productResponse.ok && !productPayload.errors?.length,
+    status: productResponse.status,
+    productCount: productNodes.length,
+    productTitles: productNodes.map((product: { title: string }) => product.title),
+    products: productNodes.map((product: { title: string; handle: string }) => ({
+      title: product.title,
+      handle: product.handle,
+    })),
+    errors: productPayload.errors ?? [],
+  };
+}
+
+async function getStorefrontProductCount() {
+  const productResponse = await fetch(`https://${getShopifyDomain()}/api/${getShopifyApiVersion()}/graphql.json`, {
+    method: 'POST',
+    headers: storefrontHeaders(),
+    body: JSON.stringify({
+      query: `query RadiantDebugProducts {
+        products(first: 20) {
+          nodes {
+            id
+            title
+            handle
+            availableForSale
+            variants(first: 5) {
+              nodes {
+                id
+                availableForSale
+              }
+            }
+          }
+        }
+      }`,
+      variables: {},
+    }),
+  });
+
+  const productPayload = await productResponse.json().catch(() => ({}));
+  const productNodes = productPayload.data?.products?.nodes ?? [];
+
+  return {
+    ok: productResponse.ok && !productPayload.errors?.length,
+    status: productResponse.status,
+    productCount: productNodes.length,
+    productTitles: productNodes.map((product: { title: string }) => product.title),
+    products: productNodes.map((product: {
+      title: string;
+      handle: string;
+      availableForSale: boolean;
+      variants?: { nodes?: Array<{ id: string; availableForSale: boolean }> };
+    }) => ({
+      title: product.title,
+      handle: product.handle,
+      availableForSale: product.availableForSale,
+      variantCount: product.variants?.nodes?.length ?? 0,
+      availableVariantCount: product.variants?.nodes?.filter((variant) => variant.availableForSale).length ?? 0,
+    })),
+    errors: productPayload.errors ?? [],
+  };
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'GET') {
@@ -32,66 +113,48 @@ export default async function handler(req: any, res: any) {
     domainLoaded: Boolean(getShopifyDomain()),
     shopifyDomain: getShopifyDomain(),
     apiVersion: getShopifyApiVersion(),
+    clientIdExists: Boolean(process.env.SHOPIFY_CLIENT_ID),
+    clientSecretExists: Boolean(process.env.SHOPIFY_CLIENT_SECRET),
+    configured: hasShopifyServerCredentials(),
     storefrontAccessTokenExists: Boolean(process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN),
     localProductCount: 6,
-    shopifyProductCount: 0,
-    shopifyErrors: [] as unknown[],
+    adminProductCount: 0,
+    storefrontProductCount: 0,
   };
 
   try {
-    const productResponse = await fetch(`https://${getShopifyDomain()}/api/${getShopifyApiVersion()}/graphql.json`, {
-      method: 'POST',
-      headers: buildStorefrontHeaders(),
-      body: JSON.stringify({
-        query: `query RadiantDebugProducts {
-          products(first: 20) {
-            nodes {
-              id
-              title
-              handle
-              availableForSale
-              variants(first: 5) {
-                nodes {
-                  id
-                  availableForSale
-                }
-              }
-            }
-          }
-        }`,
-        variables: {},
-      }),
-    });
-
-    const productPayload = await productResponse.json().catch(() => ({}));
-    const productNodes = productPayload.data?.products?.nodes ?? [];
+    const token = await getShopifyAccessToken();
+    const admin = await getAdminProductCount(token.accessToken);
+    const storefront = diagnostic.storefrontAccessTokenExists
+      ? await getStorefrontProductCount()
+      : null;
 
     return res.status(200).json({
       ...diagnostic,
-      ok: productResponse.ok && !productPayload.errors?.length,
-      storefrontRequestStatus: productResponse.status,
-      shopifyProductCount: productNodes.length,
-      shopifyProductTitles: productNodes.map((product: { title: string }) => product.title),
-      shopifyProducts: productNodes.map((product: {
-        title: string;
-        handle: string;
-        availableForSale: boolean;
-        variants?: { nodes?: Array<{ id: string; availableForSale: boolean }> };
-      }) => ({
-        title: product.title,
-        handle: product.handle,
-        availableForSale: product.availableForSale,
-        variantCount: product.variants?.nodes?.length ?? 0,
-        availableVariantCount: product.variants?.nodes?.filter((variant) => variant.availableForSale).length ?? 0,
-      })),
-      shopifyErrors: productPayload.errors ?? [],
+      ok: admin.ok || Boolean(storefront?.ok),
+      tokenRequestStatus: 200,
+      tokenCached: true,
+      tokenExpiresAt: new Date(token.expiresAt).toISOString(),
+      adminRequestStatus: admin.status,
+      adminProductCount: admin.productCount,
+      adminProductTitles: admin.productTitles,
+      adminProducts: admin.products,
+      adminErrors: admin.errors,
+      storefrontRequestStatus: storefront?.status ?? null,
+      storefrontProductCount: storefront?.productCount ?? 0,
+      storefrontProductTitles: storefront?.productTitles ?? [],
+      storefrontProducts: storefront?.products ?? [],
+      storefrontErrors: storefront?.errors ?? [],
     });
   } catch (error) {
+    const tokenError = error instanceof ShopifyTokenError ? error : null;
     return res.status(200).json({
       ...diagnostic,
       ok: false,
-      storefrontReachable: false,
-      storefrontError: error instanceof Error ? error.message : 'Unknown Shopify Storefront error',
+      tokenRequestStatus: tokenError?.status ?? null,
+      shopifyErrorCode: tokenError?.shopifyErrorCode ?? null,
+      shopifyErrorDescription: tokenError?.shopifyErrorDescription ?? null,
+      tokenError: error instanceof Error ? error.message : 'Unknown Shopify error',
     });
   }
 }

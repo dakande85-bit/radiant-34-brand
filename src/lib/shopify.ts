@@ -7,6 +7,38 @@ type ProxyResponse<T> = {
   errors?: Array<{ message?: string }>;
 };
 
+const shopifyCheckoutDomain = 'xagsqp-u0.myshopify.com';
+
+type ShopifyCart = {
+  id: string;
+  checkoutUrl: string;
+  totalQuantity: number;
+};
+
+function normalizeCheckoutUrl(checkoutUrl: string) {
+  try {
+    const url = new URL(checkoutUrl);
+    if (url.hostname === window.location.hostname && url.pathname.startsWith('/cart/')) {
+      url.hostname = shopifyCheckoutDomain;
+      url.protocol = 'https:';
+    }
+    return url.toString();
+  } catch {
+    return checkoutUrl;
+  }
+}
+
+function storeCart(cart: ShopifyCart) {
+  const normalizedCart = {
+    ...cart,
+    checkoutUrl: normalizeCheckoutUrl(cart.checkoutUrl),
+  };
+
+  localStorage.setItem('radiant34CartId', normalizedCart.id);
+  localStorage.setItem('radiant34CheckoutUrl', normalizedCart.checkoutUrl);
+  return normalizedCart;
+}
+
 export function logShopifyDebug(message: string, detail?: unknown) {
   if (!import.meta.env.DEV) return;
   if (detail === undefined) {
@@ -83,7 +115,7 @@ export async function createCart(variantId: string, quantity = 1) {
 
   const data = await shopifyFetch<{
     cartCreate: {
-      cart?: { id: string; checkoutUrl: string; totalQuantity: number };
+      cart?: ShopifyCart;
       userErrors: Array<{ field?: string[]; message: string }>;
     };
   }>(mutation, { variantId, quantity });
@@ -92,9 +124,7 @@ export async function createCart(variantId: string, quantity = 1) {
     throw new Error(data.cartCreate.userErrors[0]?.message ?? 'Unable to create cart.');
   }
 
-  localStorage.setItem('radiant34CartId', data.cartCreate.cart.id);
-  localStorage.setItem('radiant34CheckoutUrl', data.cartCreate.cart.checkoutUrl);
-  return data.cartCreate.cart;
+  return storeCart(data.cartCreate.cart);
 }
 
 export async function addToExistingCart(cartId: string, variantId: string, quantity = 1) {
@@ -116,7 +146,7 @@ export async function addToExistingCart(cartId: string, variantId: string, quant
 
   const data = await shopifyFetch<{
     cartLinesAdd: {
-      cart?: { id: string; checkoutUrl: string; totalQuantity: number };
+      cart?: ShopifyCart;
       userErrors: Array<{ field?: string[]; message: string }>;
     };
   }>(mutation, { cartId, variantId, quantity });
@@ -125,9 +155,7 @@ export async function addToExistingCart(cartId: string, variantId: string, quant
     throw new Error(data.cartLinesAdd.userErrors[0]?.message ?? 'Unable to update cart.');
   }
 
-  localStorage.setItem('radiant34CartId', data.cartLinesAdd.cart.id);
-  localStorage.setItem('radiant34CheckoutUrl', data.cartLinesAdd.cart.checkoutUrl);
-  return data.cartLinesAdd.cart;
+  return storeCart(data.cartLinesAdd.cart);
 }
 
 export async function addVariantToCart(variantId: string, quantity = 1) {

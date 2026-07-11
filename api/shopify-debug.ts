@@ -179,12 +179,11 @@ async function getStorefrontProductForCart(handle: string) {
 }
 
 const localProductMap = [
-  { title: 'Psalm 34 Tee', handle: 'premium-unisex-crewneck-t-shirt-bella-canvas-3001-white' },
-  { title: 'Radiant Hoodie', handle: 'radiant-hoodie' },
-  { title: 'Classic Tee', handle: 'classic-tee' },
-  { title: 'Everyday Tank', handle: 'everyday-tank' },
-  { title: 'Radiant Water Bottle', handle: 'radiant-water-bottle' },
-  { title: 'Radiant Backpack', handle: 'radiant-backpack' },
+  { title: 'Psalm 34 Tee', handle: 'premium-unisex-crewneck-t-shirt-bella-canvas-3001' },
+  { title: 'Radiant Hoodie', handle: 'unisex-hoodie' },
+  { title: 'Radiant Backpack', handle: 'minimalist-backpack' },
+  { title: 'Radiant Duffle Bag', handle: 'duffle-bag' },
+  { title: 'Radiant Mug', handle: 'white-glossy-mug' },
 ];
 
 async function getStorefrontProductCount() {
@@ -253,15 +252,17 @@ export default async function handler(req: any, res: any) {
     clientSecretExists: Boolean(process.env.SHOPIFY_CLIENT_SECRET),
     configured: hasShopifyServerCredentials(),
     storefrontTokenExists: Boolean(process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN),
-    localProductCount: 6,
+    localProductCount: localProductMap.length,
+    activeShopifyProductCount: 0,
     adminProductCount: 0,
     storefrontProductCount: 0,
     matchedProductCount: 0,
     adminVariantIdCount: 0,
     storefrontVariantIdCount: 0,
     storefrontVisibleProductHandles: [] as string[],
-    cartEnabledProductTitles: [] as string[],
-    cartDisabledProductTitles: [] as string[],
+    checkoutEnabledProductTitles: [] as string[],
+    checkoutDisabledProductTitles: [] as string[],
+    matchedHandles: [] as string[],
     lastCartError: null as unknown,
   };
 
@@ -314,11 +315,15 @@ export default async function handler(req: any, res: any) {
         .filter((check) => check.result.ok)
         .map((check) => check.localHandle),
       matchedProductCount: matchedProducts.length,
+      activeShopifyProductCount: matchedProducts.length,
+      storefrontVisibleProductCount: storefrontChecks.filter((check) => check.result.ok).length,
       storefrontVariantIdCount: cartEnabled.length,
-      cartEnabledProductTitles: cartEnabled.map((check) => check.localTitle),
-      cartDisabledProductTitles: storefrontChecks
+      checkoutEnabledProductCount: cartEnabled.length,
+      checkoutEnabledProductTitles: cartEnabled.map((check) => check.localTitle),
+      checkoutDisabledProductTitles: storefrontChecks
         .filter((check) => !cartEnabled.includes(check))
         .map((check) => check.localTitle),
+      matchedHandles: matchedProducts.map((product) => product.handle),
       lastCartError,
       storefrontCartTokenlessTest: cartTest,
     });

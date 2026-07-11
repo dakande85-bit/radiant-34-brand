@@ -18,6 +18,15 @@ export const radiantProductImages: Record<string, RadiantProductImageSet> = {
       productImage('psalm-34-tee-detail.jpg'),
     ],
   },
+  'premium-unisex-crewneck-t-shirt-bella-canvas-3001': {
+    primary: productImage('psalm-34-tee-primary.jpg'),
+    hover: productImage('psalm-34-tee-hover.jpg'),
+    gallery: [
+      productImage('psalm-34-tee-primary.jpg'),
+      productImage('psalm-34-tee-hover.jpg'),
+      productImage('psalm-34-tee-detail.jpg'),
+    ],
+  },
   'psalm-34-tee': {
     primary: productImage('psalm-34-tee-primary.jpg'),
     hover: productImage('psalm-34-tee-hover.jpg'),
@@ -161,20 +170,6 @@ export const radiantProductImages: Record<string, RadiantProductImageSet> = {
       productImage('radiant-backpack-hover.jpg'),
     ],
   },
-  'duffle-bag': {
-    primary: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
-    hover: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
-    gallery: [
-      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
-    ],
-  },
-  'white-glossy-mug': {
-    primary: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-view-6a52535d7767d.jpg?v=1783780195',
-    hover: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-view-6a52535d7767d.jpg?v=1783780195',
-    gallery: [
-      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-view-6a52535d7767d.jpg?v=1783780195',
-    ],
-  },
 };
 
 export const radiantProductImageFallbacks: Record<string, RadiantProductImageSet> = {
@@ -182,11 +177,8 @@ export const radiantProductImageFallbacks: Record<string, RadiantProductImageSet
   sweatshirt: radiantProductImages['unisex-hoodie'],
   tank: radiantProductImages['everyday-tank'],
   bottle: radiantProductImages['radiant-water-bottle'],
-  drinkware: radiantProductImages['white-glossy-mug'],
-  mug: radiantProductImages['white-glossy-mug'],
   backpack: radiantProductImages['minimalist-backpack'],
   bag: radiantProductImages['minimalist-backpack'],
-  duffle: radiantProductImages['duffle-bag'],
   tote: radiantProductImages['minimalist-backpack'],
   tee: radiantProductImages['psalm-34-tee'],
   't-shirt': radiantProductImages['psalm-34-tee'],

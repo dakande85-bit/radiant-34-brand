@@ -3,12 +3,13 @@ const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+
 export type RadiantProduct = {
   title: string;
   handle: string;
-  displayHandle?: string;
+  displayHandle: string;
   price: string;
   productType: string;
   badge: string;
   status: string;
   description: string;
+  useShopifyImages?: boolean;
   images: {
     primary: string;
     hover: string;
@@ -21,9 +22,9 @@ const productImage = (filename: string) => asset(`/images/products/${filename}`)
 export const radiantProducts: RadiantProduct[] = [
   {
     title: 'Psalm 34 Tee',
-    handle: 'premium-unisex-crewneck-t-shirt-bella-canvas-3001-white',
+    handle: 'premium-unisex-crewneck-t-shirt-bella-canvas-3001',
     displayHandle: 'psalm-34-tee',
-    price: '€14.87',
+    price: 'EUR 14.87',
     productType: 'T-Shirt',
     badge: 'Drop 001',
     status: 'Available',
@@ -42,7 +43,7 @@ export const radiantProducts: RadiantProduct[] = [
     title: 'Radiant Hoodie',
     handle: 'unisex-hoodie',
     displayHandle: 'radiant-hoodie',
-    price: '€30',
+    price: 'EUR 30',
     productType: 'Hoodie',
     badge: 'Drop 001',
     status: 'Available',
@@ -61,7 +62,7 @@ export const radiantProducts: RadiantProduct[] = [
     title: 'Radiant Backpack',
     handle: 'minimalist-backpack',
     displayHandle: 'radiant-backpack',
-    price: '€44',
+    price: 'EUR 44',
     productType: 'Bag',
     badge: 'Everyday Carry',
     status: 'Available',
@@ -79,34 +80,32 @@ export const radiantProducts: RadiantProduct[] = [
     title: 'Radiant Duffle Bag',
     handle: 'duffle-bag',
     displayHandle: 'radiant-duffle-bag',
-    price: '€70',
+    price: 'EUR 70',
     productType: 'Bag',
     badge: 'Travel',
     status: 'Available',
     description: 'A spacious everyday duffle for training, travel, and weekends away.',
+    useShopifyImages: true,
     images: {
-      primary: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
-      hover: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
-      gallery: [
-        'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
-      ],
+      primary: productImage('radiant-backpack-primary.jpg'),
+      hover: productImage('radiant-backpack-hover.jpg'),
+      gallery: [],
     },
   },
   {
     title: 'Radiant Mug',
     handle: 'white-glossy-mug',
     displayHandle: 'radiant-mug',
-    price: '€10',
+    price: 'EUR 10',
     productType: 'Drinkware',
     badge: 'Everyday',
     status: 'Available',
     description: 'A simple everyday mug carrying the Radiant 34 message into daily life.',
+    useShopifyImages: true,
     images: {
-      primary: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-view-6a52535d7767d.jpg?v=1783780195',
-      hover: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-view-6a52535d7767d.jpg?v=1783780195',
-      gallery: [
-        'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-view-6a52535d7767d.jpg?v=1783780195',
-      ],
+      primary: productImage('radiant-water-bottle-primary.jpg'),
+      hover: productImage('radiant-water-bottle-hover.jpg'),
+      gallery: [],
     },
   },
 ];

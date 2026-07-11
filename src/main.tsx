@@ -109,8 +109,6 @@ const filterLabels = ['All', 'Tees', 'Hoodies', 'Tanks', 'Accessories'];
 
 const sortLabels = ['Featured', 'Newest', 'Price Low to High', 'Price High to Low'];
 
-const ACTIVE_SHOPIFY_HANDLE = 'premium-unisex-crewneck-t-shirt-bella-canvas-3001-white';
-
 const getCurrentPage = (): Page => {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
   if (path.startsWith('/products/')) return '/product';
@@ -296,13 +294,17 @@ function ProductDetail({
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
-    setSelectedSize(product.options?.size?.[0] ?? '');
+    const primaryOptionName = getPrimaryVariantOptionName(shopifyProduct);
+    const primaryOptionValues = getVariantOptionValues(shopifyProduct, primaryOptionName ?? '');
+    setSelectedSize(primaryOptionValues[0] ?? product.options?.size?.[0] ?? '');
     setSelectedColor(product.options?.color?.[0] ?? '');
-  }, [product]);
+  }, [product, shopifyProduct]);
 
   const title = shopifyProduct?.title ?? product.title;
   const description = shopifyProduct?.description ?? product.description;
-  const selectedVariant = findVariantForSize(shopifyProduct, selectedSize);
+  const primaryOptionName = getPrimaryVariantOptionName(shopifyProduct);
+  const primaryOptionValues = getVariantOptionValues(shopifyProduct, primaryOptionName ?? '');
+  const selectedVariant = findVariantForOption(shopifyProduct, primaryOptionName, selectedSize);
   const canCheckoutSelectedVariant = Boolean(selectedVariant?.id);
   const selectedSizeUnavailable = Boolean(shopifyProduct?.storefrontVariantId) && !canCheckoutSelectedVariant;
   const galleryImages = (shopifyProduct?.gallery?.length
@@ -318,7 +320,7 @@ function ProductDetail({
     if (isAdding) return;
 
     if (!selectedVariant?.id) {
-      setPurchaseMessage(shopifyProduct?.storefrontVariantId ? 'This size is currently unavailable.' : 'Preparing release.');
+      setPurchaseMessage(shopifyProduct?.storefrontVariantId ? 'This size is currently unavailable.' : 'Unavailable.');
       return;
     }
 
@@ -358,11 +360,11 @@ function ProductDetail({
         {shopifyProduct?.price ? <strong className="product-price">{shopifyProduct.price}</strong> : null}
         <p className="product-description">{description}</p>
         <p className="product-description">{product.story}</p>
-        {product.options?.size ? (
+        {primaryOptionName && primaryOptionValues.length > 1 ? (
           <div className="selector-group">
-            <span>Size</span>
+            <span>{primaryOptionName}</span>
             <div>
-              {product.options.size.map((size) => (
+              {primaryOptionValues.map((size) => (
                 <button
                   type="button"
                   key={size}
@@ -415,7 +417,7 @@ function ProductDetail({
             </>
           ) : (
             <button className="btn btn--gold" type="button" disabled>
-              Preparing release
+              Unavailable
             </button>
           )}
         </div>
@@ -442,7 +444,7 @@ function ProductDetail({
         <ul className="detail-notes size-guide">
           <li>Size guide: relaxed unisex fit on tees and hoodies.</li>
           <li>Colour selected: {selectedColor || 'One colour'}.</li>
-          <li>Size selected: {selectedSize || 'One size'}.</li>
+          <li>{primaryOptionName ?? 'Option'} selected: {selectedSize || 'One size'}.</li>
         </ul>
       </div>
     </section>
@@ -742,16 +744,57 @@ const findVariantForSize = (product: ShopifyProduct | null | undefined, size: st
   return matchedVariant ?? (variantsHaveSize ? null : variants[0]);
 };
 
+const getVariantOptionValues = (product: ShopifyProduct | null | undefined, optionName: string) =>
+  Array.from(new Set(
+    product?.variants
+      ?.filter((variant) => variant.availableForSale)
+      .map((variant) => selectedOptionValue(variant, optionName))
+      .filter((value): value is string => Boolean(value)) ?? [],
+  ));
+
+const getPrimaryVariantOptionName = (product: ShopifyProduct | null | undefined) => {
+  const optionNames = Array.from(new Set(
+    product?.variants
+      ?.flatMap((variant) => variant.selectedOptions.map((option) => option.name))
+      .filter(Boolean) ?? [],
+  ));
+  return optionNames.find((name) => name.toLowerCase() === 'size') ?? optionNames[0] ?? null;
+};
+
+const findVariantForOption = (
+  product: ShopifyProduct | null | undefined,
+  optionName: string | null,
+  optionValue: string,
+) => {
+  const variants = product?.variants?.filter((variant) => variant.availableForSale) ?? [];
+  if (!variants.length) return null;
+  if (!optionName || !optionValue) return variants[0];
+
+  const normalizedValue = optionValue.trim().toLowerCase();
+  const variantsHaveOption = variants.some((variant) => Boolean(selectedOptionValue(variant, optionName)));
+  const matchedVariant = variants.find((variant) =>
+    selectedOptionValue(variant, optionName)?.trim().toLowerCase() === normalizedValue);
+
+  return matchedVariant ?? (variantsHaveOption ? null : variants[0]);
+};
+
+const findRadiantProductByShopifyHandle = (handle: string) =>
+  radiantProducts.find((product) => product.handle === handle);
+
+const findRadiantProductByDisplayHandle = (handle: string) =>
+  radiantProducts.find((product) => product.displayHandle === handle || product.handle === handle);
+
 const fallbackForShopifyProduct = (product: { handle: string; title: string }, index: number) =>
   getProductByHandle(product.handle)
   ?? getProducts().find((item) => product.title.toLowerCase().includes(item.title.split(' - ')[0].toLowerCase()))
   ?? getProducts()[index % getProducts().length];
 
 const getLocalRadiantProductByHandle = (handle: string) =>
-  radiantProducts.find((product) => product.handle === handle || product.displayHandle === handle);
+  findRadiantProductByDisplayHandle(handle);
 
 const toLocalShopProduct = (product: RadiantProduct): ShopifyProduct => {
   const fallback = fallbackForShopifyProduct(product, 0);
+  const useShopifyImages = Boolean(product.useShopifyImages);
 
   return {
     id: `local-${product.handle}`,
@@ -759,9 +802,9 @@ const toLocalShopProduct = (product: RadiantProduct): ShopifyProduct => {
     handle: product.displayHandle ?? product.handle,
     shopifyHandle: product.handle,
     description: product.description,
-    image: product.images.primary,
-    hoverImage: product.images.hover,
-    gallery: product.images.gallery,
+    image: useShopifyImages ? undefined : product.images.primary,
+    hoverImage: useShopifyImages ? undefined : product.images.hover,
+    gallery: useShopifyImages ? [] : product.images.gallery,
     price: product.price,
     category: product.productType,
     tags: [product.badge, product.productType, product.status],
@@ -776,7 +819,8 @@ const localShopProducts = () => radiantProducts.map(toLocalShopProduct);
 
 const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduct => {
   const fallback = fallbackForShopifyProduct(product, index);
-  const imageOverride = getRadiantProductImages(product);
+  const localRadiantProduct = findRadiantProductByShopifyHandle(product.handle);
+  const imageOverride = localRadiantProduct?.useShopifyImages ? null : getRadiantProductImages(product);
   const images = product.images?.nodes ?? [];
   const variants = product.variants?.nodes ?? [];
   const variant = variants.find((node) => node.availableForSale) ?? variants[0];
@@ -812,7 +856,7 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
     adminVariantId: product.adminVariantId,
     storefrontVariantId: product.storefrontVariantId ?? variant?.id,
     canCheckout: product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id),
-    status: (product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id)) ? undefined : 'Preparing release',
+    status: (product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id)) ? undefined : 'Unavailable',
     variants,
   };
 };
@@ -820,29 +864,32 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
 const mergeLocalProductsWithShopify = (localProducts: ShopifyProduct[], shopifyProducts: ShopifyProduct[]) => {
   const shopifyByHandle = new Map(shopifyProducts.map((product) => [product.handle, product]));
 
-  return localProducts.map((localProduct) => {
+  return localProducts.flatMap((localProduct) => {
     const originalHandle = radiantProducts.find((product) =>
       (product.displayHandle ?? product.handle) === localProduct.handle)?.handle;
     const shopifyProduct = shopifyByHandle.get(originalHandle ?? localProduct.handle)
       ?? shopifyByHandle.get(localProduct.handle);
 
-    if (!shopifyProduct) return localProduct;
-    const canUseCheckout = originalHandle === ACTIVE_SHOPIFY_HANDLE && Boolean(shopifyProduct.storefrontVariantId);
+    if (!shopifyProduct) return [];
+    const canUseCheckout = Boolean(shopifyProduct.storefrontVariantId) && Boolean(shopifyProduct.canCheckout);
 
-    return {
+    return [{
       ...localProduct,
       id: shopifyProduct.id,
       price: shopifyProduct.price ?? localProduct.price,
       createdAt: shopifyProduct.createdAt,
       tags: Array.from(new Set([...localProduct.tags, ...shopifyProduct.tags])),
-      variantId: canUseCheckout ? shopifyProduct.storefrontVariantId : undefined,
+      variantId: shopifyProduct.storefrontVariantId,
       adminVariantId: shopifyProduct.adminVariantId,
-      storefrontVariantId: canUseCheckout ? shopifyProduct.storefrontVariantId : undefined,
+      storefrontVariantId: shopifyProduct.storefrontVariantId,
       canCheckout: canUseCheckout,
       shopifyHandle: originalHandle ?? localProduct.shopifyHandle ?? localProduct.handle,
-      status: canUseCheckout ? undefined : localProduct.status,
-      variants: canUseCheckout ? shopifyProduct.variants : [],
-    };
+      status: canUseCheckout ? undefined : 'Unavailable',
+      variants: shopifyProduct.variants ?? [],
+      image: localProduct.image ?? shopifyProduct.image,
+      hoverImage: localProduct.hoverImage ?? shopifyProduct.hoverImage,
+      gallery: localProduct.gallery.length ? localProduct.gallery : shopifyProduct.gallery,
+    }];
   });
 };
 
@@ -887,8 +934,9 @@ function ShopifyProducts({
   onSelect: (product: ShopifyProduct) => void;
   onCartChanged: () => void;
 }) {
-  const [products, setProducts] = useState<ShopifyProduct[]>(localShopProducts);
-  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState<ShopifyProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [shopError, setShopError] = useState('');
   const [filter, setFilter] = useState('All');
   const [sort, setSort] = useState('Featured');
   const [cartMessage, setCartMessage] = useState('');
@@ -899,11 +947,15 @@ function ShopifyProducts({
     void checkShopifyProxy();
     const localProducts = localShopProducts();
     console.log('Radiant local product count:', radiantProducts.length);
-    setProducts(localProducts);
+    setProducts([]);
+    setShopError('');
+    setLoading(true);
 
     if (!shopifyConfigured) {
       console.log('Shopify product count:', 0);
-      console.log('Final rendered product count:', localProducts.length);
+      console.log('Final rendered product count:', 0);
+      setShopError("We're having trouble loading the shop. Please refresh and try again.");
+      setLoading(false);
       return;
     }
 
@@ -968,7 +1020,7 @@ function ShopifyProducts({
         const shopifyProducts = data.products.nodes.map((product, index) => toShopifyProduct(product, index));
         const finalProducts = shopifyProducts.length
           ? mergeLocalProductsWithShopify(localProducts, shopifyProducts)
-          : localProducts;
+          : [];
 
         console.log('Shopify product count:', shopifyProducts.length);
         console.log('Final rendered product count:', finalProducts.length);
@@ -977,14 +1029,18 @@ function ShopifyProducts({
           logShopifyDebug('No active Shopify products returned. Check product status, sales channel publishing, and product images.');
         }
         setProducts(finalProducts);
+        if (!finalProducts.length) {
+          setShopError("We're having trouble loading the shop. Please refresh and try again.");
+        }
       })
       .catch((error) => {
         if (!mounted) return;
         console.log('Shopify product count:', 0);
-        console.log('Final rendered product count:', localProducts.length);
-        console.error('Shopify failed, using local Radiant products', error);
+        console.log('Final rendered product count:', 0);
+        console.error('Shopify failed', error);
         logShopifyDebug('Shopify GraphQL errors', error instanceof Error ? error.message : error);
-        setProducts(localProducts);
+        setProducts([]);
+        setShopError("We're having trouble loading the shop. Please refresh and try again.");
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -1017,8 +1073,13 @@ function ShopifyProducts({
   const quickAdd = async (product: ShopifyProduct, checkout = false) => {
     if (addingHandle) return;
 
+    if ((product.variants?.length ?? 0) > 1) {
+      onSelect(product);
+      return;
+    }
+
     if (!product.storefrontVariantId) {
-      const errorText = 'Preparing release.';
+      const errorText = 'Unavailable.';
       setCartMessage(errorText);
       setLastCartError(errorText);
       return;
@@ -1044,6 +1105,10 @@ function ShopifyProducts({
 
   if (loading) {
     return <p className="shop-empty">Loading Radiant 34 products.</p>;
+  }
+
+  if (shopError) {
+    return <p className="shop-empty">{shopError}</p>;
   }
 
   return (
@@ -1113,14 +1178,14 @@ function ShopifyProducts({
               {product.storefrontVariantId ? (
                 <>
                   <button type="button" disabled={addingHandle === product.handle} onClick={() => quickAdd(product)}>
-                    {addingHandle === product.handle ? 'Adding...' : 'Quick Add'}
+                    {addingHandle === product.handle ? 'Adding...' : (product.variants?.length ?? 0) > 1 ? 'Choose Options' : 'Quick Add'}
                   </button>
                   <button type="button" disabled={addingHandle === product.handle} onClick={() => quickAdd(product, true)}>
-                    {addingHandle === product.handle ? 'Opening...' : 'Buy Now'}
+                    {addingHandle === product.handle ? 'Opening...' : (product.variants?.length ?? 0) > 1 ? 'Select to Buy' : 'Buy Now'}
                   </button>
                 </>
               ) : (
-                <button type="button" disabled>Preparing release</button>
+                <button type="button" disabled>Unavailable</button>
               )}
             </div>
           </article>
@@ -1155,13 +1220,17 @@ function ShopPage({
 
 function cartLineTitle(line: ShopifyCartLine) {
   const handle = line.merchandise?.product?.handle;
-  if (handle === ACTIVE_SHOPIFY_HANDLE) return 'Psalm 34 Tee';
+  const radiantProduct = handle ? findRadiantProductByShopifyHandle(handle) : null;
+  if (radiantProduct) return radiantProduct.title;
   return line.merchandise?.product?.title ?? 'Radiant 34 item';
 }
 
 function cartLineImage(line: ShopifyCartLine) {
   const handle = line.merchandise?.product?.handle;
-  const radiantImage = handle ? getRadiantProductImages({ handle, title: cartLineTitle(line) })?.primary : undefined;
+  const radiantProduct = handle ? findRadiantProductByShopifyHandle(handle) : null;
+  const radiantImage = handle && !radiantProduct?.useShopifyImages
+    ? getRadiantProductImages({ handle, title: cartLineTitle(line) })?.primary
+    : undefined;
   return radiantImage
     ?? line.merchandise?.image?.url
     ?? line.merchandise?.product?.featuredImage?.url

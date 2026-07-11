@@ -44,6 +44,7 @@ type StorefrontProductForCart = {
       id: string;
       title: string;
       availableForSale: boolean;
+      selectedOptions?: Array<{ name: string; value: string }>;
     }>;
   };
 };
@@ -101,6 +102,10 @@ const fetchStorefrontProductForCart = async (domain: string, version: string, ha
                 id
                 title
                 availableForSale
+                selectedOptions {
+                  name
+                  value
+                }
               }
             }
           }
@@ -125,18 +130,16 @@ const fetchStorefrontProductForCart = async (domain: string, version: string, ha
   return (payload.data?.product ?? null) as StorefrontProductForCart | null;
 };
 
-const getSafeStorefrontVariant = (product: StorefrontProductForCart | null) => {
-  if (!product?.availableForSale) return null;
-  return product.variants?.nodes?.find((variant) => variant.availableForSale) ?? null;
-};
-
 const toStorefrontProduct = (product: AdminProduct, storefrontProduct: StorefrontProductForCart | null = null) => {
   const featuredImage = product.featuredMedia?.preview?.image ?? null;
   const images = product.media?.nodes
     ?.map((node) => node.preview?.image)
     .filter((image): image is AdminImage => Boolean(image?.url)) ?? [];
   const adminVariant = product.variants?.nodes?.find((variant) => variant.availableForSale) ?? product.variants?.nodes?.[0] ?? null;
-  const storefrontVariant = getSafeStorefrontVariant(storefrontProduct);
+  const storefrontVariants = storefrontProduct?.availableForSale
+    ? storefrontProduct.variants?.nodes ?? []
+    : [];
+  const storefrontVariant = storefrontVariants.find((variant) => variant.availableForSale) ?? null;
 
   return {
     id: product.id,
@@ -151,11 +154,12 @@ const toStorefrontProduct = (product: AdminProduct, storefrontProduct: Storefron
       nodes: images.map((image) => ({ url: image.url, altText: image.altText ?? undefined })),
     },
     variants: {
-      nodes: storefrontVariant ? [{
-        id: storefrontVariant.id,
-        availableForSale: true,
-        selectedOptions: [],
-      }] : [],
+      nodes: storefrontVariants.map((variant) => ({
+        id: variant.id,
+        title: variant.title,
+        availableForSale: variant.availableForSale,
+        selectedOptions: variant.selectedOptions ?? [],
+      })),
     },
     adminVariantId: adminVariant?.id,
     storefrontVariantId: storefrontVariant?.id,

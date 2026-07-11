@@ -14,10 +14,20 @@ import { getRadiantProductImages } from './data/radiantProductImages';
 import { radiantProducts, type RadiantProduct } from './data/radiantProducts';
 import {
   addVariantToCart,
+  buyNowVariant,
   checkShopifyProxy,
+  clearRadiantCart,
+  ensureRadiantCartVersion,
+  getCart,
+  getStoredCartId,
+  installClearRadiantCartDev,
   logShopifyDebug,
+  removeCartLine,
   shopifyConfigured,
   shopifyFetch,
+  type ShopifyCart,
+  type ShopifyCartLine,
+  updateCartLine,
 } from './lib/shopify';
 
 type Page = '/' | '/drop-001' | '/shop' | '/lookbook' | '/about' | '/mission' | '/contact' | '/product';
@@ -42,6 +52,14 @@ type ShopifyProduct = {
   shopifyHandle?: string;
   gallery: string[];
   status?: string;
+  variants?: ShopifyVariant[];
+};
+
+type ShopifyVariant = {
+  id: string;
+  title?: string;
+  availableForSale: boolean;
+  selectedOptions: Array<{ name: string; value: string }>;
 };
 
 type ShopifyProductNode = {
@@ -55,11 +73,7 @@ type ShopifyProductNode = {
   featuredImage?: { url: string; altText?: string };
   images?: { nodes: Array<{ url: string; altText?: string }> };
   variants?: {
-    nodes: Array<{
-      id: string;
-      availableForSale: boolean;
-      selectedOptions: Array<{ name: string; value: string }>;
-    }>;
+    nodes: ShopifyVariant[];
   };
   adminVariantId?: string;
   storefrontVariantId?: string;
@@ -96,7 +110,6 @@ const filterLabels = ['All', 'Tees', 'Hoodies', 'Tanks', 'Accessories'];
 const sortLabels = ['Featured', 'Newest', 'Price Low to High', 'Price High to Low'];
 
 const ACTIVE_SHOPIFY_HANDLE = 'premium-unisex-crewneck-t-shirt-bella-canvas-3001-white';
-const BUILD_MARKER = 'e996 product-card-view-fix';
 
 const getCurrentPage = (): Page => {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
@@ -110,7 +123,15 @@ const getCurrentProductHandle = () => {
   return match ? decodeURIComponent(match[1]) : null;
 };
 
-function Header({ navigate }: { navigate: (path: Page) => void }) {
+function Header({
+  navigate,
+  cartCount,
+  onCartOpen,
+}: {
+  navigate: (path: Page) => void;
+  cartCount: number;
+  onCartOpen: () => void;
+}) {
   const [open, setOpen] = useState(false);
 
   const go = (path: Page) => {
@@ -149,6 +170,7 @@ function Header({ navigate }: { navigate: (path: Page) => void }) {
           ))}
           <div className="mobile-nav-actions">
             <button type="button" onClick={() => go('/shop')}>Search</button>
+            <button type="button" onClick={onCartOpen}>Cart ({cartCount})</button>
             <button type="button" onClick={() => go('/contact')}>Get Drop Alert</button>
           </div>
         </nav>
@@ -156,6 +178,9 @@ function Header({ navigate }: { navigate: (path: Page) => void }) {
         <div className="header-actions" aria-label="Shop actions">
           <button className="header-search" type="button" onClick={() => go('/shop')}>
             Search
+          </button>
+          <button className="header-search header-cart" type="button" onClick={onCartOpen} aria-label={`Open cart with ${cartCount} items`}>
+            Cart <span>{cartCount}</span>
           </button>
           <button className="header-cta" type="button" onClick={() => go('/contact')}>
             Get Drop Alert
@@ -255,11 +280,20 @@ function ProductCard({
   );
 }
 
-function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyProduct?: ShopifyProduct | null }) {
+function ProductDetail({
+  product,
+  shopifyProduct,
+  onCartChanged,
+}: {
+  product: Product;
+  shopifyProduct?: ShopifyProduct | null;
+  onCartChanged: () => void;
+}) {
   const [selectedSize, setSelectedSize] = useState(product.options?.size?.[0] ?? '');
   const [selectedColor, setSelectedColor] = useState(product.options?.color?.[0] ?? '');
   const [quantity, setQuantity] = useState(1);
   const [purchaseMessage, setPurchaseMessage] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
     setSelectedSize(product.options?.size?.[0] ?? '');
@@ -268,6 +302,9 @@ function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyP
 
   const title = shopifyProduct?.title ?? product.title;
   const description = shopifyProduct?.description ?? product.description;
+  const selectedVariant = findVariantForSize(shopifyProduct, selectedSize);
+  const canCheckoutSelectedVariant = Boolean(selectedVariant?.id);
+  const selectedSizeUnavailable = Boolean(shopifyProduct?.storefrontVariantId) && !canCheckoutSelectedVariant;
   const galleryImages = (shopifyProduct?.gallery?.length
     ? shopifyProduct.gallery
     : [
@@ -278,17 +315,25 @@ function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyP
     ]).filter((image, index, images): image is string => Boolean(image) && images.indexOf(image) === index);
 
   const buyProduct = async (checkout = false) => {
-    if (!shopifyProduct?.storefrontVariantId) {
-      setPurchaseMessage('Preparing release.');
+    if (isAdding) return;
+
+    if (!selectedVariant?.id) {
+      setPurchaseMessage(shopifyProduct?.storefrontVariantId ? 'This size is currently unavailable.' : 'Preparing release.');
       return;
     }
 
     try {
-      const cart = await addVariantToCart(shopifyProduct.storefrontVariantId, quantity);
+      setIsAdding(true);
+      const cart = checkout
+        ? await buyNowVariant(selectedVariant.id, quantity)
+        : await addVariantToCart(selectedVariant.id, quantity);
       setPurchaseMessage(`${title} added to cart.`);
+      if (!checkout) onCartChanged();
       if (checkout) window.location.href = cart.checkoutUrl;
     } catch (error) {
       setPurchaseMessage(error instanceof Error ? error.message : 'Unable to add product.');
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -361,11 +406,11 @@ function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyP
         <div className="purchase-actions">
           {shopifyProduct?.storefrontVariantId ? (
             <>
-              <button className="btn btn--gold" type="button" onClick={() => buyProduct(false)}>
-                Add to Cart
+              <button className="btn btn--gold" type="button" disabled={!canCheckoutSelectedVariant || isAdding} onClick={() => buyProduct(false)}>
+                {isAdding ? 'Adding...' : 'Add to Cart'}
               </button>
-              <button className="btn btn--outline" type="button" onClick={() => buyProduct(true)}>
-                Buy Now
+              <button className="btn btn--outline" type="button" disabled={!canCheckoutSelectedVariant || isAdding} onClick={() => buyProduct(true)}>
+                {isAdding ? 'Opening...' : 'Buy Now'}
               </button>
             </>
           ) : (
@@ -374,6 +419,7 @@ function ProductDetail({ product, shopifyProduct }: { product: Product; shopifyP
             </button>
           )}
         </div>
+        {selectedSizeUnavailable ? <p className="cart-message">This size is currently unavailable.</p> : null}
         {purchaseMessage ? <p className="cart-message">{purchaseMessage}</p> : null}
         <div className="product-accordions">
           <details open>
@@ -642,11 +688,13 @@ function ProductPage({
   shopifyProduct,
   onSelect,
   navigate,
+  onCartChanged,
 }: {
   product: Product;
   shopifyProduct?: ShopifyProduct | null;
   onSelect: (product: Product) => void;
   navigate: (path: Page) => void;
+  onCartChanged: () => void;
 }) {
   const relatedProducts = getDropProducts('Drop 001')
     .filter((item) => item.id !== product.id)
@@ -658,7 +706,7 @@ function ProductPage({
         <button className="back-link" type="button" onClick={() => navigate('/drop-001')}>
           Back to Drop 001
         </button>
-        <ProductDetail product={product} shopifyProduct={shopifyProduct} />
+        <ProductDetail product={product} shopifyProduct={shopifyProduct} onCartChanged={onCartChanged} />
       </section>
       <section className="section-band drop-band">
         <div className="section-head">
@@ -677,6 +725,22 @@ function ProductPage({
 
 const money = (amount: string, currencyCode: string) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(Number(amount));
+
+const selectedOptionValue = (variant: ShopifyVariant | undefined, optionName: string) =>
+  variant?.selectedOptions.find((option) => option.name.toLowerCase() === optionName.toLowerCase())?.value;
+
+const findVariantForSize = (product: ShopifyProduct | null | undefined, size: string) => {
+  const variants = product?.variants?.filter((variant) => variant.availableForSale) ?? [];
+  if (!variants.length) return null;
+  if (!size) return variants[0];
+
+  const normalizedSize = size.trim().toLowerCase();
+  const variantsHaveSize = variants.some((variant) => Boolean(selectedOptionValue(variant, 'Size')));
+  const matchedVariant = variants.find((variant) =>
+    selectedOptionValue(variant, 'Size')?.trim().toLowerCase() === normalizedSize);
+
+  return matchedVariant ?? (variantsHaveSize ? null : variants[0]);
+};
 
 const fallbackForShopifyProduct = (product: { handle: string; title: string }, index: number) =>
   getProductByHandle(product.handle)
@@ -704,6 +768,7 @@ const toLocalShopProduct = (product: RadiantProduct): ShopifyProduct => {
     badges: [product.badge, product.status],
     swatches: fallback.swatches,
     status: product.status,
+    variants: [],
   };
 };
 
@@ -713,7 +778,8 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
   const fallback = fallbackForShopifyProduct(product, index);
   const imageOverride = getRadiantProductImages(product);
   const images = product.images?.nodes ?? [];
-  const variant = product.variants?.nodes.find((node) => node.availableForSale) ?? product.variants?.nodes[0];
+  const variants = product.variants?.nodes ?? [];
+  const variant = variants.find((node) => node.availableForSale) ?? variants[0];
   const swatches = variant?.selectedOptions
     .filter((option) => option.name.toLowerCase().includes('color') || option.name.toLowerCase().includes('colour'))
     .map((option) => option.value) ?? [];
@@ -747,6 +813,7 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
     storefrontVariantId: product.storefrontVariantId ?? variant?.id,
     canCheckout: product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id),
     status: (product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id)) ? undefined : 'Preparing release',
+    variants,
   };
 };
 
@@ -774,6 +841,7 @@ const mergeLocalProductsWithShopify = (localProducts: ShopifyProduct[], shopifyP
       canCheckout: canUseCheckout,
       shopifyHandle: originalHandle ?? localProduct.shopifyHandle ?? localProduct.handle,
       status: canUseCheckout ? undefined : localProduct.status,
+      variants: canUseCheckout ? shopifyProduct.variants : [],
     };
   });
 };
@@ -796,6 +864,7 @@ async function fetchShopifyProductByHandle(handle: string) {
         variants(first: 20) {
           nodes {
             id
+            title
             availableForSale
             selectedOptions { name value }
           }
@@ -813,8 +882,10 @@ async function fetchShopifyProductByHandle(handle: string) {
 
 function ShopifyProducts({
   onSelect,
+  onCartChanged,
 }: {
   onSelect: (product: ShopifyProduct) => void;
+  onCartChanged: () => void;
 }) {
   const [products, setProducts] = useState<ShopifyProduct[]>(localShopProducts);
   const [loading, setLoading] = useState(false);
@@ -822,6 +893,7 @@ function ShopifyProducts({
   const [sort, setSort] = useState('Featured');
   const [cartMessage, setCartMessage] = useState('');
   const [lastCartError, setLastCartError] = useState('');
+  const [addingHandle, setAddingHandle] = useState<string | null>(null);
 
   useEffect(() => {
     void checkShopifyProxy();
@@ -853,10 +925,11 @@ function ShopifyProducts({
             }
             variants(first: 20) {
               nodes {
-                id
-                availableForSale
-                selectedOptions { name value }
-              }
+              id
+              title
+              availableForSale
+              selectedOptions { name value }
+            }
             }
             priceRange {
               minVariantPrice { amount currencyCode }
@@ -881,6 +954,7 @@ function ShopifyProducts({
           variants?: {
             nodes: Array<{
               id: string;
+              title?: string;
               availableForSale: boolean;
               selectedOptions: Array<{ name: string; value: string }>;
             }>;
@@ -941,6 +1015,8 @@ function ShopifyProducts({
   }, [filter, products, sort]);
 
   const quickAdd = async (product: ShopifyProduct, checkout = false) => {
+    if (addingHandle) return;
+
     if (!product.storefrontVariantId) {
       const errorText = 'Preparing release.';
       setCartMessage(errorText);
@@ -949,22 +1025,26 @@ function ShopifyProducts({
     }
 
     try {
+      setAddingHandle(product.handle);
       setLastCartError('');
-      const cart = await addVariantToCart(product.storefrontVariantId, 1);
+      const cart = checkout
+        ? await buyNowVariant(product.storefrontVariantId, 1)
+        : await addVariantToCart(product.storefrontVariantId, 1);
       setCartMessage(`${product.title} added to cart.`);
+      if (!checkout) onCartChanged();
       if (checkout) window.location.href = cart.checkoutUrl;
     } catch (error) {
       const errorText = error instanceof Error ? error.message : 'Unable to add product.';
       setCartMessage(errorText);
       setLastCartError(errorText);
+    } finally {
+      setAddingHandle(null);
     }
   };
 
   if (loading) {
     return <p className="shop-empty">Loading Radiant 34 products.</p>;
   }
-
-  const activeProduct = products.find((product) => product.shopifyHandle === ACTIVE_SHOPIFY_HANDLE);
 
   return (
     <>
@@ -1032,8 +1112,12 @@ function ShopifyProducts({
             <div className="shopify-card__actions">
               {product.storefrontVariantId ? (
                 <>
-                  <button type="button" onClick={() => quickAdd(product)}>Quick Add</button>
-                  <button type="button" onClick={() => quickAdd(product, true)}>Buy Now</button>
+                  <button type="button" disabled={addingHandle === product.handle} onClick={() => quickAdd(product)}>
+                    {addingHandle === product.handle ? 'Adding...' : 'Quick Add'}
+                  </button>
+                  <button type="button" disabled={addingHandle === product.handle} onClick={() => quickAdd(product, true)}>
+                    {addingHandle === product.handle ? 'Opening...' : 'Buy Now'}
+                  </button>
                 </>
               ) : (
                 <button type="button" disabled>Preparing release</button>
@@ -1042,23 +1126,16 @@ function ShopifyProducts({
           </article>
         ))}
       </div>
-      <aside className="shop-diagnostic" aria-label="Temporary shop diagnostic">
-        <strong>Shop Diagnostic</strong>
-        <span>build commit: {BUILD_MARKER}</span>
-        <span>active Shopify handle found: {activeProduct ? 'true' : 'false'}</span>
-        <span>storefrontVariantId: {activeProduct?.storefrontVariantId ?? 'none'}</span>
-        <span>availableForSale: {activeProduct?.storefrontVariantId ? 'true' : 'false'}</span>
-        <span>last cart error: {lastCartError || 'none'}</span>
-      </aside>
-      <p className="build-marker">Build: {BUILD_MARKER}</p>
     </>
   );
 }
 
 function ShopPage({
   onSelect,
+  onCartChanged,
 }: {
   onSelect: (product: ShopifyProduct) => void;
+  onCartChanged: () => void;
 }) {
   return (
     <section className="section-band shop-band page-section shop-page">
@@ -1071,8 +1148,151 @@ function ShopPage({
           A focused collection shaped by Psalm 34: cried out, heard, delivered, carried.
         </p>
       </div>
-      <ShopifyProducts onSelect={onSelect} />
+      <ShopifyProducts onSelect={onSelect} onCartChanged={onCartChanged} />
     </section>
+  );
+}
+
+function cartLineTitle(line: ShopifyCartLine) {
+  const handle = line.merchandise?.product?.handle;
+  if (handle === ACTIVE_SHOPIFY_HANDLE) return 'Psalm 34 Tee';
+  return line.merchandise?.product?.title ?? 'Radiant 34 item';
+}
+
+function cartLineImage(line: ShopifyCartLine) {
+  const handle = line.merchandise?.product?.handle;
+  const radiantImage = handle ? getRadiantProductImages({ handle, title: cartLineTitle(line) })?.primary : undefined;
+  return radiantImage
+    ?? line.merchandise?.image?.url
+    ?? line.merchandise?.product?.featuredImage?.url
+    ?? siteAssets.heroModel;
+}
+
+function cartLineSize(line: ShopifyCartLine) {
+  return line.merchandise?.selectedOptions?.find((option) => option.name.toLowerCase() === 'size')?.value;
+}
+
+function CartDrawer({
+  open,
+  onClose,
+  onCartChanged,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCartChanged: () => void;
+}) {
+  const [cart, setCart] = useState<ShopifyCart | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [updatingLine, setUpdatingLine] = useState<string | null>(null);
+
+  const loadCart = async () => {
+    const cartId = getStoredCartId();
+    if (!cartId) {
+      setCart(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setMessage('');
+      setCart(await getCart(cartId));
+    } catch (error) {
+      setCart(null);
+      setMessage(error instanceof Error ? error.message : 'Your cart expired. A new cart has been created.');
+      onCartChanged();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) void loadCart();
+  }, [open]);
+
+  const replaceCart = (nextCart: ShopifyCart) => {
+    setCart(nextCart);
+    onCartChanged();
+  };
+
+  const updateLine = async (line: ShopifyCartLine, quantity: number) => {
+    if (!cart?.id || updatingLine) return;
+
+    try {
+      setUpdatingLine(line.id);
+      setMessage('');
+      const nextCart = quantity <= 0
+        ? await removeCartLine(cart.id, line.id)
+        : await updateCartLine(cart.id, line.id, quantity);
+      replaceCart(nextCart);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Checkout is temporarily unavailable. Please try again.');
+      await loadCart();
+    } finally {
+      setUpdatingLine(null);
+    }
+  };
+
+  const lines = cart?.lines?.nodes ?? [];
+  const subtotal = cart?.cost?.subtotalAmount
+    ? money(cart.cost.subtotalAmount.amount, cart.cost.subtotalAmount.currencyCode)
+    : undefined;
+
+  return (
+    <div className={`cart-shell${open ? ' cart-shell--open' : ''}`} aria-hidden={!open}>
+      <button className="cart-backdrop" type="button" aria-label="Close cart" onClick={onClose} />
+      <aside className="cart-drawer" aria-label="Shopping cart">
+        <div className="cart-drawer__head">
+          <div>
+            <p className="eyebrow">Radiant 34</p>
+            <h2>Your cart</h2>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close cart">Close</button>
+        </div>
+
+        {loading ? <p className="shop-empty">Loading cart.</p> : null}
+        {message ? <p className="cart-message">{message}</p> : null}
+        {!loading && !lines.length ? <p className="shop-empty">Your cart is empty.</p> : null}
+
+        <div className="cart-lines">
+          {lines.map((line) => (
+            <article className="cart-line" key={line.id}>
+              <img src={cartLineImage(line)} alt={cartLineTitle(line)} />
+              <div>
+                <strong>{cartLineTitle(line)}</strong>
+                {cartLineSize(line) ? <span>Size {cartLineSize(line)}</span> : null}
+                {line.cost?.totalAmount ? (
+                  <span>{money(line.cost.totalAmount.amount, line.cost.totalAmount.currencyCode)}</span>
+                ) : null}
+                <div className="cart-line__controls">
+                  <button type="button" disabled={updatingLine === line.id} onClick={() => updateLine(line, line.quantity - 1)}>-</button>
+                  <strong>{line.quantity}</strong>
+                  <button type="button" disabled={updatingLine === line.id} onClick={() => updateLine(line, line.quantity + 1)}>+</button>
+                  <button type="button" disabled={updatingLine === line.id} onClick={() => updateLine(line, 0)}>Remove</button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="cart-drawer__foot">
+          <div>
+            <span>Subtotal</span>
+            <strong>{subtotal ?? '$0.00'}</strong>
+          </div>
+          <button
+            className="btn btn--gold"
+            type="button"
+            disabled={!cart?.checkoutUrl || !lines.length}
+            onClick={() => {
+              if (cart?.checkoutUrl) window.location.href = cart.checkoutUrl;
+            }}
+          >
+            Checkout
+          </button>
+        </div>
+      </aside>
+    </div>
   );
 }
 
@@ -1257,6 +1477,24 @@ function App() {
     getProductByHandle(getCurrentProductHandle() ?? 'psalm-34-tee') ?? products[0],
   );
   const [selectedShopifyProduct, setSelectedShopifyProduct] = useState<ShopifyProduct | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+
+  const refreshCartCount = async () => {
+    const cartId = getStoredCartId();
+    if (!cartId) {
+      setCartCount(0);
+      return;
+    }
+
+    try {
+      const cart = await getCart(cartId);
+      setCartCount(cart.totalQuantity ?? 0);
+    } catch {
+      clearRadiantCart();
+      setCartCount(0);
+    }
+  };
 
   const navigate = (path: Page) => {
     window.history.pushState(null, '', path);
@@ -1280,6 +1518,12 @@ function App() {
     window.history.pushState(null, '', `/products/${product.handle}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    ensureRadiantCartVersion();
+    installClearRadiantCartDev();
+    void refreshCartCount();
+  }, []);
 
   useEffect(() => {
     const syncPage = () => {
@@ -1352,17 +1596,18 @@ function App() {
 
   return (
     <>
-      <Header navigate={navigate} />
+      <Header navigate={navigate} cartCount={cartCount} onCartOpen={() => setCartOpen(true)} />
       <main>
         {page === '/' ? <HomePage navigate={navigate} onSelect={selectProduct} /> : null}
         {page === '/drop-001' ? <DropPage selected={selectedProduct} onSelect={selectProduct} /> : null}
-        {page === '/shop' ? <ShopPage onSelect={selectShopifyProduct} /> : null}
+        {page === '/shop' ? <ShopPage onSelect={selectShopifyProduct} onCartChanged={refreshCartCount} /> : null}
         {page === '/product' ? (
           <ProductPage
             product={selectedProduct}
             shopifyProduct={selectedShopifyProduct}
             onSelect={selectProduct}
             navigate={navigate}
+            onCartChanged={refreshCartCount}
           />
         ) : null}
         {page === '/lookbook' ? <LookbookPage /> : null}
@@ -1370,6 +1615,7 @@ function App() {
         {page === '/mission' ? <MissionPage /> : null}
         {page === '/contact' ? <ContactPage /> : null}
       </main>
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} onCartChanged={refreshCartCount} />
       <Footer navigate={navigate} />
     </>
   );

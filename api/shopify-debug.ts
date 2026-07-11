@@ -285,6 +285,8 @@ export default async function handler(req: any, res: any) {
       check.result.product?.availableForSale
       && check.result.product.variants?.nodes?.some((variant) => variant.availableForSale),
     );
+    const activeStorefrontProducts = storefront.products.filter((product) =>
+      product.availableForSale && product.availableVariantCount > 0);
     const firstStorefrontVariantId = cartEnabled
       .flatMap((check) => check.result.product?.variants?.nodes ?? [])
       .find((variant) => variant.availableForSale)?.id;
@@ -311,18 +313,17 @@ export default async function handler(req: any, res: any) {
       storefrontProductTitles: storefront.productTitles,
       storefrontProducts: storefront.products,
       storefrontErrors: storefront.errors,
-      storefrontVisibleProductHandles: storefrontChecks
-        .filter((check) => check.result.ok)
-        .map((check) => check.localHandle),
+      storefrontVisibleProductHandles: activeStorefrontProducts.map((product) => product.handle),
       matchedProductCount: matchedProducts.length,
-      activeShopifyProductCount: matchedProducts.length,
-      storefrontVisibleProductCount: storefrontChecks.filter((check) => check.result.ok).length,
-      storefrontVariantIdCount: cartEnabled.length,
-      checkoutEnabledProductCount: cartEnabled.length,
-      checkoutEnabledProductTitles: cartEnabled.map((check) => check.localTitle),
-      checkoutDisabledProductTitles: storefrontChecks
-        .filter((check) => !cartEnabled.includes(check))
-        .map((check) => check.localTitle),
+      activeShopifyProductCount: activeStorefrontProducts.length,
+      storefrontVisibleProductCount: activeStorefrontProducts.length,
+      storefrontVariantIdCount: activeStorefrontProducts.length,
+      checkoutEnabledProductCount: activeStorefrontProducts.length,
+      checkoutEnabledProductTitles: activeStorefrontProducts.map((product) =>
+        localProductMap.find((item) => item.handle === product.handle)?.title ?? product.title),
+      checkoutDisabledProductTitles: storefront.products
+        .filter((product) => !activeStorefrontProducts.includes(product))
+        .map((product) => product.title),
       matchedHandles: matchedProducts.map((product) => product.handle),
       lastCartError,
       storefrontCartTokenlessTest: cartTest,

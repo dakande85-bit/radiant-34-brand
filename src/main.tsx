@@ -11,7 +11,13 @@ import {
   getProductsByCategory,
 } from './data/products';
 import { getRadiantProductImages } from './data/radiantProductImages';
-import { radiantProducts, type RadiantProduct } from './data/radiantProducts';
+import {
+  brandOverrides,
+  getBrandOverrideByPublicHandle,
+  getBrandOverrideByShopifyHandle,
+  shopifyHandleForPublicHandle,
+  type BrandOverride,
+} from './data/brandOverrides';
 import {
   addVariantToCart,
   buyNowVariant,
@@ -30,7 +36,7 @@ import {
   updateCartLine,
 } from './lib/shopify';
 
-type Page = '/' | '/drop-001' | '/shop' | '/lookbook' | '/about' | '/mission' | '/contact' | '/product';
+type Page = '/' | '/drop-001' | '/shop' | '/lookbook' | '/about' | '/mission' | '/contact' | '/product' | '/admin/reviews';
 
 type ShopifyProduct = {
   id: string;
@@ -53,6 +59,24 @@ type ShopifyProduct = {
   gallery: string[];
   status?: string;
   variants?: ShopifyVariant[];
+  reviewSummary?: ReviewSummary;
+  drop001?: boolean;
+};
+
+type ReviewSummary = {
+  averageRating: number;
+  reviewCount: number;
+};
+
+type ProductReview = {
+  id: string;
+  product_handle: string;
+  rating: number;
+  title?: string;
+  body: string;
+  customer_name: string;
+  verified_purchase?: boolean;
+  created_at?: string;
 };
 
 type ShopifyVariant = {
@@ -90,13 +114,14 @@ const pageTitles: Record<Page, string> = {
   '/mission': 'Mission | Radiant 34',
   '/contact': 'Contact | Radiant 34',
   '/product': 'Product | Radiant 34',
+  '/admin/reviews': 'Review Admin | Radiant 34',
 };
 
 const navItems: { label: string; path: Page }[] = [
   { label: 'Shop', path: '/shop' },
   { label: 'Drop 001', path: '/drop-001' },
   { label: 'Lookbook', path: '/lookbook' },
-  { label: 'About', path: '/about' },
+  { label: 'Our Story', path: '/about' },
   { label: 'Mission', path: '/mission' },
 ];
 
@@ -105,14 +130,14 @@ const footerItems: { label: string; path: Page }[] = [
   { label: 'Contact', path: '/contact' },
 ];
 
-const filterLabels = ['All', 'Tees', 'Hoodies', 'Tanks', 'Accessories'];
+const filterLabels = ['All', 'Tees', 'Hoodies', 'Tanks', 'Bags', 'Drinkware', 'Accessories'];
 
 const sortLabels = ['Featured', 'Newest', 'Price Low to High', 'Price High to Low'];
 
 const getCurrentPage = (): Page => {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
   if (path.startsWith('/products/')) return '/product';
-  const validPages: Page[] = ['/', '/drop-001', '/shop', '/lookbook', '/about', '/mission', '/contact'];
+  const validPages: Page[] = ['/', '/drop-001', '/shop', '/lookbook', '/about', '/mission', '/contact', '/admin/reviews'];
   return validPages.includes(path as Page) ? (path as Page) : '/';
 };
 
@@ -446,7 +471,121 @@ function ProductDetail({
           <li>Colour selected: {selectedColor || 'One colour'}.</li>
           <li>{primaryOptionName ?? 'Option'} selected: {selectedSize || 'One size'}.</li>
         </ul>
+        {shopifyProduct ? <ProductReviews product={shopifyProduct} /> : null}
       </div>
+    </section>
+  );
+}
+
+function ProductReviews({ product }: { product: ShopifyProduct }) {
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [summary, setSummary] = useState<ReviewSummary | undefined>(product.reviewSummary);
+  const [unavailable, setUnavailable] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', rating: '5', title: '', body: '', order: '' });
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    setUnavailable(false);
+    setMessage('');
+
+    Promise.all([
+      fetch(`/api/reviews?product_handle=${encodeURIComponent(product.shopifyHandle ?? product.handle)}`),
+      fetchReviewSummaries(),
+    ])
+      .then(async ([reviewsResponse, summaries]) => {
+        if (!reviewsResponse.ok) throw new Error('Reviews are temporarily unavailable');
+        const reviewBody = await reviewsResponse.json();
+        if (reviewBody.unavailable) throw new Error('Reviews are temporarily unavailable');
+        if (!mounted) return;
+        setReviews(reviewBody.reviews ?? []);
+        setSummary(summaries[product.shopifyHandle ?? product.handle]);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setUnavailable(true);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [product.handle, product.shopifyHandle]);
+
+  const submitReview = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setMessage('');
+    setUnavailable(false);
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_handle: product.shopifyHandle ?? product.handle,
+          shopify_product_id: product.id,
+          customer_name: form.name,
+          customer_email: form.email,
+          rating: Number(form.rating),
+          title: form.title,
+          body: form.body,
+          order_reference: form.order,
+        }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || body.unavailable) throw new Error(body.error ?? 'Reviews are temporarily unavailable');
+      setMessage('Thank you. Your review will appear after approval.');
+      setForm({ name: '', email: '', rating: '5', title: '', body: '', order: '' });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Reviews are temporarily unavailable');
+      setUnavailable(true);
+    }
+  };
+
+  const breakdown = [5, 4, 3, 2, 1].map((rating) => ({
+    rating,
+    count: reviews.filter((review) => review.rating === rating).length,
+  }));
+
+  return (
+    <section className="reviews-panel" aria-label={`${product.title} reviews`}>
+      <div className="reviews-panel__head">
+        <div>
+          <p className="eyebrow">Customer reviews</p>
+          <h3>Reviews</h3>
+        </div>
+        <ReviewSummaryLine summary={summary} />
+      </div>
+      {unavailable ? <p className="cart-message">Reviews are temporarily unavailable</p> : null}
+      {summary?.reviewCount ? (
+        <div className="review-breakdown">
+          {breakdown.map((row) => (
+            <span key={row.rating}>{row.rating} star: {row.count}</span>
+          ))}
+        </div>
+      ) : null}
+      <div className="review-list">
+        {reviews.map((review) => (
+          <article key={review.id} className="review-item">
+            <strong>{reviewStars(review.rating)} {review.title}</strong>
+            <p>{review.body}</p>
+            <span>{review.customer_name}{review.verified_purchase ? ' - Verified purchase' : ''}</span>
+          </article>
+        ))}
+      </div>
+      <form className="review-form" onSubmit={submitReview}>
+        <h4>Write a review</h4>
+        <div className="review-form__grid">
+          <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Name" required />
+          <input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="Email" required />
+          <select value={form.rating} onChange={(event) => setForm({ ...form, rating: event.target.value })} aria-label="Rating">
+            {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}
+          </select>
+          <input value={form.order} onChange={(event) => setForm({ ...form, order: event.target.value })} placeholder="Order reference (optional)" />
+        </div>
+        <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Review title" />
+        <textarea value={form.body} onChange={(event) => setForm({ ...form, body: event.target.value })} placeholder="Your review" minLength={10} required />
+        <button className="btn btn--gold" type="submit">Submit review</button>
+        {message ? <p className="cart-message">{message}</p> : null}
+      </form>
     </section>
   );
 }
@@ -509,14 +648,11 @@ function FeaturedProducts({ navigate, onSelect }: { navigate: (path: Page) => vo
 }
 
 function DropCollection({
-  selected,
-  onSelect,
+  navigate,
 }: {
-  selected: Product;
-  onSelect: (product: Product) => void;
+  navigate: (path: Page) => void;
 }) {
-  const [filter, setFilter] = useState('All');
-  const filteredProducts = useMemo(() => getProductsByCategory(filter), [filter]);
+  const dropItems = Object.values(brandOverrides).filter((override) => override.drop001);
 
   return (
     <section className="section-band shop-band">
@@ -530,26 +666,20 @@ function DropCollection({
           in the Radiant 34 world.
         </p>
       </div>
-      <div className="filters" aria-label="Product filters">
-        {filterLabels.map((label) => (
-          <button
-            key={label}
-            className={filter === label ? 'selected' : ''}
-            type="button"
-            onClick={() => setFilter(label)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className="product-grid">
-        {filteredProducts.map((product) => (
-          <ProductCard
-            product={product}
-            onSelect={onSelect}
-            selected={selected.id === product.id}
-            key={product.id}
-          />
+      <div className="drop-strip">
+        {dropItems.map((item) => (
+          <article className="drop-strip__item" key={item.publicHandle}>
+            {item.primaryImage ? <img src={item.primaryImage} alt={item.publicTitle} /> : null}
+            <span>{item.badge ?? 'Drop 001'}</span>
+            <strong>{item.publicTitle}</strong>
+            <p>{item.description}</p>
+            <button type="button" onClick={() => {
+              window.history.pushState(null, '', `/products/${item.publicHandle}`);
+              navigate('/product');
+            }}>
+              View Product
+            </button>
+          </article>
         ))}
       </div>
     </section>
@@ -655,7 +785,7 @@ function HomePage({ navigate, onSelect }: { navigate: (path: Page) => void; onSe
   );
 }
 
-function DropPage({ selected, onSelect }: { selected: Product; onSelect: (product: Product) => void }) {
+function DropPage({ navigate }: { navigate: (path: Page) => void }) {
   return (
     <>
       <section className="page-hero page-hero--drop">
@@ -674,7 +804,7 @@ function DropPage({ selected, onSelect }: { selected: Product; onSelect: (produc
           comes from looking to Christ.
         </p>
       </section>
-      <DropCollection selected={selected} onSelect={onSelect} />
+      <DropCollection navigate={navigate} />
       <LookbookSection />
       <section className="campaign-grid" aria-label="Drop 001 editorial images">
         {siteAssets.lookbook.slice(0, 6).map((image, index) => (
@@ -778,11 +908,26 @@ const findVariantForOption = (
   return matchedVariant ?? (variantsHaveOption ? null : variants[0]);
 };
 
-const findRadiantProductByShopifyHandle = (handle: string) =>
-  radiantProducts.find((product) => product.handle === handle);
+const reviewStars = (rating: number) => {
+  const rounded = Math.round(rating);
+  return '★★★★★'.slice(0, rounded) + '☆☆☆☆☆'.slice(0, Math.max(0, 5 - rounded));
+};
 
-const findRadiantProductByDisplayHandle = (handle: string) =>
-  radiantProducts.find((product) => product.displayHandle === handle || product.handle === handle);
+function ReviewSummaryLine({ summary }: { summary?: ReviewSummary }) {
+  if (!summary?.reviewCount) return <span className="review-summary review-summary--empty">No reviews yet</span>;
+  return (
+    <span className="review-summary">
+      <span aria-hidden="true">{reviewStars(summary.averageRating)}</span> {summary.averageRating.toFixed(1)} ({summary.reviewCount})
+    </span>
+  );
+}
+
+async function fetchReviewSummaries() {
+  const response = await fetch('/api/reviews/summary');
+  if (!response.ok) throw new Error('Reviews are temporarily unavailable');
+  const data = await response.json();
+  return (data.summaries ?? {}) as Record<string, ReviewSummary>;
+}
 
 const fallbackForShopifyProduct = (product: { handle: string; title: string }, index: number) =>
   getProductByHandle(product.handle)
@@ -790,37 +935,54 @@ const fallbackForShopifyProduct = (product: { handle: string; title: string }, i
   ?? getProducts()[index % getProducts().length];
 
 const getLocalRadiantProductByHandle = (handle: string) =>
-  findRadiantProductByDisplayHandle(handle);
+  getBrandOverrideByPublicHandle(handle);
 
-const toLocalShopProduct = (product: RadiantProduct): ShopifyProduct => {
-  const fallback = fallbackForShopifyProduct(product, 0);
-  const useShopifyImages = Boolean(product.useShopifyImages);
+const uniqueImages = (images: Array<string | undefined>) =>
+  images.filter((image, index, gallery): image is string => Boolean(image) && gallery.indexOf(image) === index).slice(0, 8);
+
+const categoryForProduct = (product: ShopifyProductNode, fallbackCategory: string) => {
+  const signals = `${product.productType ?? ''} ${product.title} ${product.handle}`.toLowerCase();
+  if (signals.includes('hoodie') || signals.includes('sweatshirt')) return 'Hoodie';
+  if (signals.includes('tank')) return 'Tank';
+  if (signals.includes('tee') || signals.includes('t-shirt') || signals.includes('shirt')) return 'T-Shirt';
+  if (signals.includes('mug') || signals.includes('bottle') || signals.includes('drink')) return 'Drinkware';
+  if (signals.includes('bag') || signals.includes('backpack') || signals.includes('duffle') || signals.includes('tote')) return 'Bag';
+  if (signals.includes('case')) return 'Accessories';
+  return product.productType || fallbackCategory || 'Radiant 34';
+};
+
+const applyBrandOverride = (
+  product: ShopifyProduct,
+  override: BrandOverride | null,
+  shopifyImages: Array<string | undefined>,
+) => {
+  if (!override) return product;
+
+  const brandedGallery = override.useShopifyImages
+    ? uniqueImages(shopifyImages)
+    : uniqueImages([
+      override.primaryImage,
+      override.hoverImage,
+      ...(override.gallery ?? []),
+      ...shopifyImages,
+    ]);
 
   return {
-    id: `local-${product.handle}`,
-    title: product.title,
-    handle: product.displayHandle ?? product.handle,
-    shopifyHandle: product.handle,
-    description: product.description,
-    image: useShopifyImages ? undefined : product.images.primary,
-    hoverImage: useShopifyImages ? undefined : product.images.hover,
-    gallery: useShopifyImages ? [] : product.images.gallery,
-    price: product.price,
-    category: product.productType,
-    tags: [product.badge, product.productType, product.status],
-    badges: [product.badge, product.status],
-    swatches: fallback.swatches,
-    status: product.status,
-    variants: [],
+    ...product,
+    title: override.publicTitle,
+    handle: override.publicHandle,
+    description: override.description ?? product.description,
+    badges: [override.badge ?? product.badges[0] ?? 'Radiant 34'],
+    image: override.useShopifyImages ? product.image : override.primaryImage ?? product.image,
+    hoverImage: override.useShopifyImages ? product.hoverImage : override.hoverImage ?? product.hoverImage,
+    gallery: brandedGallery.length ? brandedGallery : product.gallery,
+    drop001: override.drop001 ?? product.drop001,
   };
 };
 
-const localShopProducts = () => radiantProducts.map(toLocalShopProduct);
-
 const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduct => {
   const fallback = fallbackForShopifyProduct(product, index);
-  const localRadiantProduct = findRadiantProductByShopifyHandle(product.handle);
-  const imageOverride = localRadiantProduct?.useShopifyImages ? null : getRadiantProductImages(product);
+  const override = getBrandOverrideByShopifyHandle(product.handle);
   const images = product.images?.nodes ?? [];
   const variants = product.variants?.nodes ?? [];
   const variant = variants.find((node) => node.availableForSale) ?? variants[0];
@@ -828,29 +990,26 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
     .filter((option) => option.name.toLowerCase().includes('color') || option.name.toLowerCase().includes('colour'))
     .map((option) => option.value) ?? [];
 
-  return {
+  const shopifyGallery = uniqueImages([
+    product.featuredImage?.url,
+    ...images.map((image) => image.url),
+  ]);
+  const baseProduct = {
     id: product.id,
     title: product.title,
     handle: product.handle,
     shopifyHandle: product.handle,
-    description: product.description || fallback.description,
+    description: product.description || fallback.description || '',
     createdAt: product.createdAt,
-    image: imageOverride?.primary ?? fallback.images[0] ?? product.featuredImage?.url ?? images[0]?.url,
-    hoverImage: imageOverride?.hover ?? fallback.hoverImage ?? images[1]?.url,
-    gallery: imageOverride?.gallery.length
-      ? imageOverride.gallery
-      : [
-        fallback.images[0],
-        fallback.hoverImage,
-        product.featuredImage?.url,
-        ...images.map((image) => image.url),
-      ].filter((image, galleryIndex, gallery): image is string => Boolean(image) && gallery.indexOf(image) === galleryIndex),
+    image: product.featuredImage?.url ?? images[0]?.url,
+    hoverImage: images[1]?.url,
+    gallery: shopifyGallery,
     price: product.priceRange?.minVariantPrice
       ? money(product.priceRange.minVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode)
       : undefined,
-    category: product.productType || fallback.category,
+    category: categoryForProduct(product, fallback.category),
     tags: product.tags ?? [],
-    badges: fallback.badges,
+    badges: ['Radiant 34'],
     swatches: swatches.length ? swatches : fallback.swatches,
     variantId: product.storefrontVariantId ?? variant?.id,
     adminVariantId: product.adminVariantId,
@@ -858,39 +1017,9 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
     canCheckout: product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id),
     status: (product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id)) ? undefined : 'Unavailable',
     variants,
+    drop001: Boolean(override?.drop001),
   };
-};
-
-const mergeLocalProductsWithShopify = (localProducts: ShopifyProduct[], shopifyProducts: ShopifyProduct[]) => {
-  const shopifyByHandle = new Map(shopifyProducts.map((product) => [product.handle, product]));
-
-  return localProducts.flatMap((localProduct) => {
-    const originalHandle = radiantProducts.find((product) =>
-      (product.displayHandle ?? product.handle) === localProduct.handle)?.handle;
-    const shopifyProduct = shopifyByHandle.get(originalHandle ?? localProduct.handle)
-      ?? shopifyByHandle.get(localProduct.handle);
-
-    if (!shopifyProduct) return [];
-    const canUseCheckout = Boolean(shopifyProduct.storefrontVariantId) && Boolean(shopifyProduct.canCheckout);
-
-    return [{
-      ...localProduct,
-      id: shopifyProduct.id,
-      price: shopifyProduct.price ?? localProduct.price,
-      createdAt: shopifyProduct.createdAt,
-      tags: Array.from(new Set([...localProduct.tags, ...shopifyProduct.tags])),
-      variantId: shopifyProduct.storefrontVariantId,
-      adminVariantId: shopifyProduct.adminVariantId,
-      storefrontVariantId: shopifyProduct.storefrontVariantId,
-      canCheckout: canUseCheckout,
-      shopifyHandle: originalHandle ?? localProduct.shopifyHandle ?? localProduct.handle,
-      status: canUseCheckout ? undefined : 'Unavailable',
-      variants: shopifyProduct.variants ?? [],
-      image: localProduct.image ?? shopifyProduct.image,
-      hoverImage: localProduct.hoverImage ?? shopifyProduct.hoverImage,
-      gallery: localProduct.gallery.length ? localProduct.gallery : shopifyProduct.gallery,
-    }];
-  });
+  return applyBrandOverride(baseProduct, override, shopifyGallery);
 };
 
 async function fetchShopifyProductByHandle(handle: string) {
@@ -939,14 +1068,14 @@ function ShopifyProducts({
   const [shopError, setShopError] = useState('');
   const [filter, setFilter] = useState('All');
   const [sort, setSort] = useState('Featured');
+  const [search, setSearch] = useState('');
   const [cartMessage, setCartMessage] = useState('');
   const [lastCartError, setLastCartError] = useState('');
   const [addingHandle, setAddingHandle] = useState<string | null>(null);
 
   useEffect(() => {
     void checkShopifyProxy();
-    const localProducts = localShopProducts();
-    console.log('Radiant local product count:', radiantProducts.length);
+    console.log('Radiant override count:', Object.keys(brandOverrides).length);
     setProducts([]);
     setShopError('');
     setLoading(true);
@@ -1018,9 +1147,7 @@ function ShopifyProducts({
       .then((data) => {
         if (!mounted) return;
         const shopifyProducts = data.products.nodes.map((product, index) => toShopifyProduct(product, index));
-        const finalProducts = shopifyProducts.length
-          ? mergeLocalProductsWithShopify(localProducts, shopifyProducts)
-          : [];
+        const finalProducts = shopifyProducts.filter((product) => product.canCheckout || product.storefrontVariantId);
 
         console.log('Shopify product count:', shopifyProducts.length);
         console.log('Final rendered product count:', finalProducts.length);
@@ -1032,6 +1159,17 @@ function ShopifyProducts({
         if (!finalProducts.length) {
           setShopError("We're having trouble loading the shop. Please refresh and try again.");
         }
+        fetchReviewSummaries()
+          .then((summaries) => {
+            if (!mounted) return;
+            setProducts((items) => items.map((item) => ({
+              ...item,
+              reviewSummary: summaries[item.shopifyHandle ?? item.handle],
+            })));
+          })
+          .catch(() => {
+            logShopifyDebug('Reviews are temporarily unavailable');
+          });
       })
       .catch((error) => {
         if (!mounted) return;
@@ -1052,6 +1190,7 @@ function ShopifyProducts({
   }, []);
 
   const visibleProducts = useMemo(() => {
+    const searched = search.trim().toLowerCase();
     const filtered = filter === 'All'
       ? products
       : products.filter((product) => {
@@ -1059,7 +1198,12 @@ function ShopifyProducts({
         return haystack.includes(filter.toLowerCase().replace(/s$/, ''));
       });
 
-    return [...filtered].sort((a, b) => {
+    const searchedProducts = searched
+      ? filtered.filter((product) =>
+        `${product.title} ${product.description} ${product.category} ${product.tags.join(' ')}`.toLowerCase().includes(searched))
+      : filtered;
+
+    return [...searchedProducts].sort((a, b) => {
       if (sort === 'A-Z') return a.title.localeCompare(b.title);
       const aPrice = Number(a.price?.replace(/[^0-9.]/g, '') || 0);
       const bPrice = Number(b.price?.replace(/[^0-9.]/g, '') || 0);
@@ -1068,7 +1212,7 @@ function ShopifyProducts({
       if (sort === 'Price High to Low') return bPrice - aPrice;
       return 0;
     });
-  }, [filter, products, sort]);
+  }, [filter, products, search, sort]);
 
   const quickAdd = async (product: ShopifyProduct, checkout = false) => {
     if (addingHandle) return;
@@ -1114,6 +1258,10 @@ function ShopifyProducts({
   return (
     <>
       <div className="shop-controls">
+        <label className="shop-search">
+          <span>Search</span>
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search products" />
+        </label>
         <div className="filters" aria-label="Product filters">
           {filterLabels.map((label) => (
             <button
@@ -1136,7 +1284,7 @@ function ShopifyProducts({
         </label>
       </div>
       {cartMessage ? <p className="cart-message">{cartMessage}</p> : null}
-      {!visibleProducts.length ? <p className="shop-empty">The collection is being prepared. Check back soon.</p> : null}
+      {!visibleProducts.length ? <p className="shop-empty">No products match this filter.</p> : null}
       <div className="product-grid product-grid--shop">
         {visibleProducts.map((product) => (
           <article className="shopify-card" key={product.id}>
@@ -1158,6 +1306,7 @@ function ShopifyProducts({
               <span className="shopify-card__body">
                 <span className="product-card__category">{product.category || 'Radiant 34'}</span>
                 <strong>{product.title}</strong>
+                <ReviewSummaryLine summary={product.reviewSummary} />
                 {product.description ? <span className="shopify-card__description">{product.description}</span> : null}
                 <span className="shopify-card__meta">
                   {product.price ? <span className="shopify-card__price">{product.price}</span> : null}
@@ -1220,15 +1369,15 @@ function ShopPage({
 
 function cartLineTitle(line: ShopifyCartLine) {
   const handle = line.merchandise?.product?.handle;
-  const radiantProduct = handle ? findRadiantProductByShopifyHandle(handle) : null;
-  if (radiantProduct) return radiantProduct.title;
+  const override = handle ? getBrandOverrideByShopifyHandle(handle) : null;
+  if (override) return override.publicTitle;
   return line.merchandise?.product?.title ?? 'Radiant 34 item';
 }
 
 function cartLineImage(line: ShopifyCartLine) {
   const handle = line.merchandise?.product?.handle;
-  const radiantProduct = handle ? findRadiantProductByShopifyHandle(handle) : null;
-  const radiantImage = handle && !radiantProduct?.useShopifyImages
+  const override = handle ? getBrandOverrideByShopifyHandle(handle) : null;
+  const radiantImage = handle && !override?.useShopifyImages
     ? getRadiantProductImages({ handle, title: cartLineTitle(line) })?.primary
     : undefined;
   return radiantImage
@@ -1422,23 +1571,30 @@ function AboutPage() {
     <>
       <section className="page-hero page-hero--editorial">
         <div>
-          <p className="eyebrow">About Radiant 34</p>
+          <p className="eyebrow">OUR STORY</p>
           <h1>A psalm, worn.</h1>
-          <p>
-            David wrote Psalm 34 after his lowest point — hiding, humiliated, pretending to be
-            someone else just to survive. Then he was delivered, and the first thing he did was tell
-            people: taste and see.
-          </p>
+          <p>Radiant 34 began with one verse:</p>
+          <p>"Those who look to Him are radiant; their faces are never covered with shame." - Psalm 34:5</p>
         </div>
         <img src={siteAssets.aboutHero} alt="Radiant 34 cream tee editorial" />
       </section>
-      <StoryBand />
       <section className="text-band">
-        <p className="eyebrow">Psalm 34:5</p>
-        <h2>Those who look to Him are radiant.</h2>
+        <p className="eyebrow">OUR STORY</p>
+        <h2>A psalm, worn.</h2>
         <p>
-          Radiant 34 exists to keep doing that. Every piece is a small act of testimony — worn by
-          people who&apos;ve been there, seen by people who haven&apos;t yet.
+          Psalm 34 is not a polished story written from a comfortable place. It is a testimony shaped by fear,
+          pressure, deliverance and praise. Someone cried out, God answered, and the experience became a message
+          for others: taste and see that the Lord is good.
+        </p>
+        <p>Radiant 34 carries that movement into everyday life.</p>
+        <p>
+          We create clothing, objects and visual stories rooted in Scripture - not as decoration, but as testimony.
+          The aim is not to make faith louder for the sake of attention. It is to make biblical truth present in
+          the rooms, streets, workplaces, gyms, churches and conversations where people actually live.
+        </p>
+        <p>
+          Every piece begins with the Word. Every collection points beyond itself. Every purchase helps carry the
+          message further.
         </p>
       </section>
     </>
@@ -1469,32 +1625,27 @@ function MissionPage() {
     <>
       <section className="page-hero page-hero--editorial">
         <div>
-          <p className="eyebrow">Mission</p>
-          <h1>Clothing that funds the telling.</h1>
+          <p className="eyebrow">OUR MISSION</p>
+          <h1>Clothing that carries the testimony.</h1>
           <p>
-            Radiant 34 isn&apos;t the message. It&apos;s a way to help it travel. A portion of every drop
-            goes toward the people already doing this work — in churches, on mission fields, and in
-            the studios and stories that carry it further than we can alone.
+            Radiant 34 exists to create premium, Scripture-rooted products that help people wear their faith
+            naturally, share biblical truth courageously and support the work of telling others about Jesus Christ.
           </p>
         </div>
         <img src={siteAssets.missionHero} alt="Radiant 34 black hoodie and accessories editorial" />
       </section>
       <section className="mission-grid">
         <article>
-          <span>Churches</span>
-          <p>Backing the communities where people first cry out — and get heard.</p>
+          <span>1. WEAR THE WORD</span>
+          <p>Create thoughtful everyday pieces inspired by Scripture, designed to be worn and used beyond Sunday.</p>
         </article>
         <article>
-          <span>Missionaries</span>
-          <p>Funding the ones carrying deliverance into hard places.</p>
+          <span>2. SHARE THE GOSPEL</span>
+          <p>Use clothing, art, media and conversation to bring biblical truth into places traditional Christian communication may not reach.</p>
         </article>
         <article>
-          <span>Biblical Media</span>
-          <p>Supporting storytellers turning testimony into something people can taste and see.</p>
-        </article>
-        <article>
-          <span>Creative Work</span>
-          <p>Investing in artists building things that carry the message further than words alone.</p>
+          <span>3. STRENGTHEN THE CHURCH</span>
+          <p>Build a brand that can support Christian missions, churches, charities, teachers of truth and people serving communities in practical ways.</p>
         </article>
       </section>
     </>
@@ -1516,6 +1667,76 @@ function ContactPage() {
       </section>
       <NewsletterBand />
     </>
+  );
+}
+
+function AdminReviewsPage() {
+  const [adminKey, setAdminKey] = useState('');
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [message, setMessage] = useState('');
+
+  const loadReviews = async () => {
+    setMessage('');
+    try {
+      const response = await fetch('/api/reviews/admin?status=pending', {
+        headers: { 'X-Admin-Review-Key': adminKey },
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? 'Unable to load reviews');
+      setReviews(body.reviews ?? []);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to load reviews');
+    }
+  };
+
+  const moderate = async (id: string, action: 'approve' | 'reject') => {
+    setMessage('');
+    try {
+      const response = await fetch('/api/reviews/admin', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Review-Key': adminKey,
+        },
+        body: JSON.stringify({ id, action }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? 'Unable to update review');
+      setReviews((items) => items.filter((review) => review.id !== id));
+      setMessage(`Review ${action === 'approve' ? 'approved' : 'rejected'}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to update review');
+    }
+  };
+
+  return (
+    <section className="section-band page-section admin-reviews">
+      <div className="section-head section-head--split">
+        <div>
+          <p className="eyebrow">Review Admin</p>
+          <h1>Moderate customer reviews.</h1>
+        </div>
+        <p>Reviews remain pending until approved. The admin key is checked only by the server.</p>
+      </div>
+      <div className="admin-key-row">
+        <input type="password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} placeholder="Admin review key" />
+        <button className="btn btn--gold" type="button" onClick={loadReviews}>Load pending</button>
+      </div>
+      {message ? <p className="cart-message">{message}</p> : null}
+      <div className="review-list">
+        {reviews.map((review) => (
+          <article className="review-item" key={review.id}>
+            <strong>{review.product_handle} - {reviewStars(review.rating)} {review.title}</strong>
+            <p>{review.body}</p>
+            <span>{review.customer_name}</span>
+            <div className="shopify-card__actions">
+              <button type="button" onClick={() => review.id && moderate(review.id, 'approve')}>Approve</button>
+              <button type="button" onClick={() => review.id && moderate(review.id, 'reject')}>Reject</button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1600,11 +1821,11 @@ function App() {
       setPage(nextPage);
       if (nextPage === '/product') {
         const handle = getCurrentProductHandle() ?? '';
-        const localProduct = getLocalRadiantProductByHandle(handle);
-        if (localProduct) {
-          const shopProduct = toLocalShopProduct(localProduct);
-          setSelectedShopifyProduct(shopProduct);
-          setSelectedProduct(fallbackForShopifyProduct(shopProduct, 0));
+        const localOverride = getLocalRadiantProductByHandle(handle);
+        if (localOverride) {
+          const shopifyHandle = shopifyHandleForPublicHandle(handle);
+          setSelectedShopifyProduct(null);
+          setSelectedProduct(fallbackForShopifyProduct({ handle: shopifyHandle, title: localOverride.publicTitle }, 0));
           return;
         }
         const product = getProductByHandle(handle);
@@ -1623,17 +1844,16 @@ function App() {
     const handle = getCurrentProductHandle();
     if (!handle) return;
 
-    const localProduct = getLocalRadiantProductByHandle(handle);
-    const shopifyLookupHandle = localProduct?.handle ?? handle;
+    const localOverride = getLocalRadiantProductByHandle(handle);
+    const shopifyLookupHandle = shopifyHandleForPublicHandle(handle);
     const currentProductStillMatches = selectedShopifyProduct
       && (selectedShopifyProduct.handle === handle || selectedShopifyProduct.shopifyHandle === shopifyLookupHandle);
 
     if (currentProductStillMatches && selectedShopifyProduct?.storefrontVariantId) return;
 
-    if (localProduct && !currentProductStillMatches) {
-      const shopProduct = toLocalShopProduct(localProduct);
-      setSelectedShopifyProduct(shopProduct);
-      setSelectedProduct(fallbackForShopifyProduct(shopProduct, 0));
+    if (localOverride && !currentProductStillMatches) {
+      setSelectedShopifyProduct(null);
+      setSelectedProduct(fallbackForShopifyProduct({ handle: shopifyLookupHandle, title: localOverride.publicTitle }, 0));
     }
 
     if (!shopifyConfigured) return;
@@ -1642,11 +1862,8 @@ function App() {
     fetchShopifyProductByHandle(shopifyLookupHandle)
       .then((product) => {
         if (!mounted || !product) return;
-        const displayProduct = localProduct
-          ? mergeLocalProductsWithShopify([toLocalShopProduct(localProduct)], [product])[0]
-          : product;
-        setSelectedShopifyProduct(displayProduct);
-        setSelectedProduct(fallbackForShopifyProduct(displayProduct, 0));
+        setSelectedShopifyProduct(product);
+        setSelectedProduct(fallbackForShopifyProduct(product, 0));
       })
       .catch((error) => {
         logShopifyDebug('Product handle lookup failed', error instanceof Error ? error.message : error);
@@ -1668,7 +1885,7 @@ function App() {
       <Header navigate={navigate} cartCount={cartCount} onCartOpen={() => setCartOpen(true)} />
       <main>
         {page === '/' ? <HomePage navigate={navigate} onSelect={selectProduct} /> : null}
-        {page === '/drop-001' ? <DropPage selected={selectedProduct} onSelect={selectProduct} /> : null}
+        {page === '/drop-001' ? <DropPage navigate={navigate} /> : null}
         {page === '/shop' ? <ShopPage onSelect={selectShopifyProduct} onCartChanged={refreshCartCount} /> : null}
         {page === '/product' ? (
           <ProductPage
@@ -1683,6 +1900,7 @@ function App() {
         {page === '/about' ? <AboutPage /> : null}
         {page === '/mission' ? <MissionPage /> : null}
         {page === '/contact' ? <ContactPage /> : null}
+        {page === '/admin/reviews' ? <AdminReviewsPage /> : null}
       </main>
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} onCartChanged={refreshCartCount} />
       <Footer navigate={navigate} />
@@ -1695,3 +1913,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>,
 );
+
+
+

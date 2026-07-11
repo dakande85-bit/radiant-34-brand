@@ -1,0 +1,38 @@
+/* Launch-safe overrides. Keep this file additive; do not replace product sync logic. */
+.shopify-card__image,
+.product-card__image,
+.product-detail__media,
+.product-gallery__main {
+  background: #fffaf0;
+  overflow: hidden;
+}
+
+.shopify-card__image img,
+.product-card__image img,
+.product-detail__media img,
+.product-gallery__main img,
+.product-gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+.shopify-card__image,
+.product-card__image {
+  aspect-ratio: 4 / 5;
+  padding: clamp(10px, 1.5vw, 22px);
+}
+
+.shopify-card__hover {
+  inset: 0;
+  padding: inherit;
+  object-fit: contain !important;
+}
+
+@media (max-width: 760px) {
+  .shopify-card__image,
+  .product-card__image {
+    padding: 10px;
+  }
+}

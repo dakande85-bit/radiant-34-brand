@@ -78,6 +78,15 @@ export const radiantProductImages: Record<string, RadiantProductImageSet> = {
       productImage('radiant-hoodie-detail.jpg'),
     ],
   },
+  'unisex-hoodie': {
+    primary: productImage('radiant-hoodie-primary.jpg'),
+    hover: productImage('radiant-hoodie-hover.jpg'),
+    gallery: [
+      productImage('radiant-hoodie-primary.jpg'),
+      productImage('radiant-hoodie-hover.jpg'),
+      productImage('radiant-hoodie-detail.jpg'),
+    ],
+  },
   'radiant-34-hoodie-bone': {
     primary: productImage('radiant-hoodie-primary.jpg'),
     hover: productImage('radiant-hoodie-hover.jpg'),
@@ -144,17 +153,41 @@ export const radiantProductImages: Record<string, RadiantProductImageSet> = {
       productImage('radiant-backpack-hover.jpg'),
     ],
   },
+  'minimalist-backpack': {
+    primary: productImage('radiant-backpack-primary.jpg'),
+    hover: productImage('radiant-backpack-hover.jpg'),
+    gallery: [
+      productImage('radiant-backpack-primary.jpg'),
+      productImage('radiant-backpack-hover.jpg'),
+    ],
+  },
+  'duffle-bag': {
+    primary: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
+    hover: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
+    gallery: [
+      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
+    ],
+  },
+  'white-glossy-mug': {
+    primary: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-view-6a52535d7767d.jpg?v=1783780195',
+    hover: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-view-6a52535d7767d.jpg?v=1783780195',
+    gallery: [
+      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-view-6a52535d7767d.jpg?v=1783780195',
+    ],
+  },
 };
 
 export const radiantProductImageFallbacks: Record<string, RadiantProductImageSet> = {
-  hoodie: radiantProductImages['radiant-hoodie'],
-  sweatshirt: radiantProductImages['radiant-hoodie'],
+  hoodie: radiantProductImages['unisex-hoodie'],
+  sweatshirt: radiantProductImages['unisex-hoodie'],
   tank: radiantProductImages['everyday-tank'],
   bottle: radiantProductImages['radiant-water-bottle'],
-  drinkware: radiantProductImages['radiant-water-bottle'],
-  backpack: radiantProductImages['radiant-backpack'],
-  bag: radiantProductImages['radiant-backpack'],
-  tote: radiantProductImages['radiant-backpack'],
+  drinkware: radiantProductImages['white-glossy-mug'],
+  mug: radiantProductImages['white-glossy-mug'],
+  backpack: radiantProductImages['minimalist-backpack'],
+  bag: radiantProductImages['minimalist-backpack'],
+  duffle: radiantProductImages['duffle-bag'],
+  tote: radiantProductImages['minimalist-backpack'],
   tee: radiantProductImages['psalm-34-tee'],
   't-shirt': radiantProductImages['psalm-34-tee'],
   tshirt: radiantProductImages['psalm-34-tee'],

@@ -1240,7 +1240,7 @@ function CartDrawer({
 
   return (
     <div className={`cart-shell${open ? ' cart-shell--open' : ''}`} aria-hidden={!open}>
-      <button className="cart-backdrop" type="button" aria-label="Close cart" onClick={onClose} />
+      <button className="cart-backdrop" type="button" aria-label="Dismiss cart" onClick={onClose} />
       <aside className="cart-drawer" aria-label="Shopping cart">
         <div className="cart-drawer__head">
           <div>

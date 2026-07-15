@@ -14,6 +14,13 @@ These rules apply to Codex and every automated coding agent.
 - When adding a newly published product, append it to both manifests without removing existing products.
 - Never replace either manifest with an older version.
 
+## Approved design references
+- Read `docs/radiant-design-library.md` before creating artwork, product mockups or campaign images.
+- Reference designs by their IDs, such as `R34-D005` or `R34-D013`.
+- The design library is inspiration and approved direction; product mockups must still match the exact Shopify/Gelato product shape, colour, proportions and print area.
+- Generate standalone files for primary, hover, lifestyle, detail and alternate views. Never substitute a collage or contact sheet for website product media.
+- Verify every scripture reference before publishing. Use Revelation 19:16 for the `Jesus Is King` reference, not Revelation 19:18.
+
 ## Customer-facing rules
 - Never expose Gelato, Printful, Bella + Canvas or supplier template names.
 - Use Radiant product names and descriptions.

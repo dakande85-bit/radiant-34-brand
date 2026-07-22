@@ -18,8 +18,14 @@ export const brandOverrides: Record<string, BrandOverride> = {
   'unisex-hoodie': {
     publicTitle: 'Radiant 34 Signature Hoodie',
     publicHandle: 'radiant-signature-hoodie',
-    description: 'An everyday hoodie inspired by Psalm 34:5 and designed to carry the Radiant 34 message with confidence.',
+    description: 'A premium cream hoodie inspired by Psalm 34:5 and designed to carry the Radiant 34 message with quiet confidence.',
     badge: 'Drop 001',
+    primaryImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-signature-hoodie-cream-primary_128d2f24-8bd2-4f6b-bdcc-bd432ee36ee6.png?v=1784758611',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-signature-hoodie-cream-model-hover_8fe38a13-35e6-44f8-8554-039940f4e9a8.png?v=1784758612',
+    gallery: [
+      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-signature-hoodie-cream-primary_128d2f24-8bd2-4f6b-bdcc-bd432ee36ee6.png?v=1784758611',
+      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-signature-hoodie-cream-model-hover_8fe38a13-35e6-44f8-8554-039940f4e9a8.png?v=1784758612',
+    ],
     useShopifyImages: true,
     drop001: true,
   },

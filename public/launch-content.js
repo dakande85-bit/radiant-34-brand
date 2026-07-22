@@ -1,5 +1,5 @@
 (() => {
-  const HOMEPAGE_PSALM_MODEL = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-homepage-psalm-model.jpg?v=1784760824';
+  const HOMEPAGE_PSALM_MODEL = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-homepage-black-hoodie-model.png?v=1784761665';
 
   const text = (node) => node?.textContent?.trim() ?? '';
 
@@ -30,7 +30,7 @@
         height:100% !important;
         min-height:560px !important;
         object-fit:cover !important;
-        object-position:center !important;
+        object-position:center 38% !important;
       }
       .r34-psalm-editorial .eyebrow { letter-spacing:.18em; }
       .r34-psalm-editorial h2 { max-width:12ch; }
@@ -94,7 +94,7 @@
 
     if (images[0]) {
       images[0].src = HOMEPAGE_PSALM_MODEL;
-      images[0].alt = 'Radiant 34 model wearing a cream Scripture-inspired T-shirt at golden hour';
+      images[0].alt = 'Radiant 34 model wearing a black hoodie and cap holding a black water bottle';
       images[0].removeAttribute('srcset');
     }
     images.slice(1).forEach((image) => image.remove());

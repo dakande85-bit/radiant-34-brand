@@ -1,5 +1,5 @@
 (() => {
-  const HOMEPAGE_BLACK_MALE_MODEL = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-homepage-black-male-cream-tee.png?v=1784762090';
+  const HOMEPAGE_BLACK_MALE_MODEL = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-homepage-black-male-cream-tee_875dd493-88c1-48c5-b511-9f9fd3bcb00d.png?v=1784762298';
   const HOMEPAGE_BRUNETTE_MODEL = '/images/radiant-editorial-02.png';
 
   const text = (node) => node?.textContent?.trim() ?? '';

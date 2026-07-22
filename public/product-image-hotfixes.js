@@ -1,6 +1,8 @@
 (() => {
-  const productPath = '/products/his-peace-calmed-a-storm-mug';
+  const publicPath = '/products/his-peace-calmed-a-storm-mug';
+  const shopifyPath = '/products/white-11oz-ceramic-mug-1';
   const correctImage = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-his-peace-calmed-a-storm-mug-primary.png?v=1784714241';
+  const productTitle = 'Radiant 34 His Peace Calmed a Storm Mug';
   const badImageTokens = [
     'afd73426-1e13-4c7f-ac6f-fd124a6d0974',
     'radiant34-his-peace-calmed-a-storm-correct-hover',
@@ -10,24 +12,44 @@
     if (!img) return;
     if (img.getAttribute('src') !== correctImage) img.setAttribute('src', correctImage);
     img.removeAttribute('srcset');
-    img.setAttribute('alt', 'Radiant 34 His Peace Calmed a Storm white ceramic mug');
+    img.setAttribute('alt', `${productTitle} white ceramic mug`);
+  };
+
+  const fixProductLinks = () => {
+    document.querySelectorAll('a[href]').forEach((link) => {
+      const href = link.getAttribute('href') || '';
+      if (
+        href === shopifyPath ||
+        href.endsWith(shopifyPath) ||
+        href.includes('white-11oz-ceramic-mug-1')
+      ) {
+        link.setAttribute('href', publicPath);
+      }
+    });
+
+    if (window.location.pathname === shopifyPath) {
+      window.history.replaceState({}, '', publicPath);
+    }
   };
 
   const fixImages = () => {
+    fixProductLinks();
+
     document.querySelectorAll('img').forEach((img) => {
       const src = img.currentSrc || img.getAttribute('src') || '';
       if (badImageTokens.some((token) => src.includes(token))) applyImage(img);
     });
 
-    document.querySelectorAll(`a[href="${productPath}"], a[href$="${productPath}"]`).forEach((link) => {
+    document.querySelectorAll(`a[href="${publicPath}"], a[href$="${publicPath}"]`).forEach((link) => {
       const card = link.closest('.shopify-card, .product-card, article, li, div');
       if (!card) return;
       card.querySelectorAll('img').forEach(applyImage);
     });
 
-    if (window.location.pathname === productPath) {
+    if (window.location.pathname === publicPath) {
       const main = document.querySelector('main');
       if (!main) return;
+
       const heading = Array.from(main.querySelectorAll('h1, h2')).find((node) =>
         node.textContent?.toLowerCase().includes('his peace calmed a storm')
       );
@@ -61,7 +83,7 @@
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['src', 'srcset'],
+    attributeFilter: ['src', 'srcset', 'href'],
   });
 
   window.addEventListener('popstate', queueFix);

@@ -1,24 +1,7 @@
 (() => {
-  const text = (node) => node?.textContent?.trim() ?? '';
+  const HOMEPAGE_PSALM_MODEL = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-homepage-psalm-model.jpg?v=1784760824';
 
-  const homepageMockups = [
-    {
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-signature-hoodie-hover.png?v=1784706366',
-      alt: 'Radiant 34 hoodie lifestyle mockup',
-    },
-    {
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-backpack-hover.png?v=1784706394',
-      alt: 'Radiant 34 backpack lifestyle mockup',
-    },
-    {
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-duffle-bag-hover.png?v=1784706416',
-      alt: 'Radiant 34 duffle bag lifestyle mockup',
-    },
-    {
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-mug-hover.png?v=1784706439',
-      alt: 'Radiant 34 mug lifestyle mockup',
-    },
-  ];
+  const text = (node) => node?.textContent?.trim() ?? '';
 
   const replaceExactText = (from, to) => {
     document.querySelectorAll('a, button, h1, h2, p, span').forEach((node) => {
@@ -32,41 +15,29 @@
     });
   };
 
-  const installHomepageMockupStyles = () => {
-    if (document.getElementById('r34-homepage-mockup-styles')) return;
+  const installHomepageStyles = () => {
+    if (document.getElementById('r34-homepage-launch-styles')) return;
     const style = document.createElement('style');
-    style.id = 'r34-homepage-mockup-styles';
+    style.id = 'r34-homepage-launch-styles';
     style.textContent = `
-      .r34-home-mockup-grid {
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:18px;
+      .r34-psalm-editorial {
+        display:grid !important;
+        grid-template-columns:minmax(280px,.85fr) minmax(420px,1.15fr) !important;
+        align-items:stretch !important;
       }
-      .r34-home-mockup {
-        margin:0;
-        overflow:hidden;
-        border-radius:14px;
-        background:#efe4d2;
-        aspect-ratio:4/5;
-      }
-      .r34-home-mockup img {
-        width:100%;
-        height:100%;
-        object-fit:cover;
-        display:block;
-      }
-      .r34-psalm-editorial [data-r34-secondary-image] { display:none !important; }
-      .r34-psalm-editorial .lookbook-grid,
-      .r34-psalm-editorial .lookbook-images,
-      .r34-psalm-editorial .campaign-grid {
-        grid-template-columns:1fr !important;
+      .r34-psalm-editorial > img {
+        width:100% !important;
+        height:100% !important;
+        min-height:560px !important;
+        object-fit:cover !important;
+        object-position:center !important;
       }
       .r34-psalm-editorial .eyebrow { letter-spacing:.18em; }
-      .r34-psalm-editorial h2 { max-width:11ch; }
+      .r34-psalm-editorial h2 { max-width:12ch; }
       .r34-psalm-editorial p { max-width:42ch; }
-      @media (max-width:720px) {
-        .r34-home-mockup-grid { grid-template-columns:1fr 1fr; gap:10px; }
-        .r34-home-mockup { border-radius:10px; }
+      @media (max-width:820px) {
+        .r34-psalm-editorial { grid-template-columns:1fr !important; }
+        .r34-psalm-editorial > img { min-height:460px !important; }
       }
     `;
     document.head.appendChild(style);
@@ -77,69 +48,65 @@
       const label = text(link).toLowerCase();
       if (label === 'lookbook' || label === 'mission') link.remove();
     });
-
     replaceExactText('Get Drop Alert', 'Contact');
   };
 
-  const mockupMarkup = (item) => `
-    <figure class="r34-home-mockup">
-      <img src="${item.image}" alt="${item.alt}" loading="lazy">
-    </figure>`;
+  const updateHeroCopy = () => {
+    const hero = document.querySelector('main .hero');
+    if (!hero) return;
 
-  const refinePsalmEditorial = () => {
-    const section = Array.from(document.querySelectorAll('main section')).find((item) => {
-      const content = text(item);
-      return content.includes('Warm light, clean silhouettes') || content.includes('scripture carried naturally');
+    const intro = hero.querySelector('.hero-copy > p:not(.eyebrow)');
+    if (intro) {
+      intro.textContent = 'Faith for everyday life. Radiant 34 creates clothing and essentials inspired by Scripture — designed to carry hope, courage and light wherever you go.';
+    }
+  };
+
+  const removeHomepageProducts = () => {
+    document.querySelectorAll('main .drop-band').forEach((section) => {
+      section.remove();
     });
 
+    document.querySelectorAll('.r34-home-mockup-grid, .r34-home-mockup').forEach((node) => {
+      const section = node.closest('section');
+      if (section) section.remove();
+      else node.remove();
+    });
+  };
+
+  const updatePsalmEditorial = () => {
+    const section = document.querySelector('main .lookbook');
     if (!section) return;
+
     section.hidden = false;
     section.classList.add('r34-psalm-editorial');
 
     const eyebrow = section.querySelector('.eyebrow');
     const heading = section.querySelector('h2');
-    const paragraphs = Array.from(section.querySelectorAll('p')).filter((node) => node !== eyebrow);
+    const paragraphs = Array.from(section.querySelectorAll('.lookbook-copy > p')).filter((node) => node !== eyebrow);
     const images = Array.from(section.querySelectorAll('img'));
 
-    if (eyebrow) eyebrow.textContent = 'Inspired by Psalm 34';
-    if (heading) heading.textContent = 'Those who look to Him are radiant.';
+    if (eyebrow) eyebrow.textContent = 'Psalm 34:5';
+    if (heading) heading.textContent = 'Look to Him. Walk without shame.';
     if (paragraphs[0]) {
-      paragraphs[0].textContent = 'Psalm 34 is the testimony of someone who cried out, was heard, and came through the other side without shame.';
+      paragraphs[0].textContent = 'For ordinary days and difficult seasons: turn your eyes toward God. Courage, peace and identity begin there.';
     }
-    if (paragraphs[1]) {
-      paragraphs[1].textContent = 'Radiant 34 carries that message into everyday life — faith for ordinary moments, courage for difficult seasons, and hope that points back to Christ.';
-    }
+    paragraphs.slice(1).forEach((paragraph) => paragraph.remove());
 
-    images.forEach((image, index) => {
-      if (index > 0) image.closest('figure, div')?.setAttribute('data-r34-secondary-image', 'true');
-    });
+    if (images[0]) {
+      images[0].src = HOMEPAGE_PSALM_MODEL;
+      images[0].alt = 'Radiant 34 model wearing a cream Scripture-inspired T-shirt at golden hour';
+      images[0].removeAttribute('srcset');
+    }
+    images.slice(1).forEach((image) => image.remove());
   };
 
   const restructureHome = () => {
     if (window.location.pathname !== '/') return;
 
-    installHomepageMockupStyles();
-    const featuredSection = document.querySelector('.drop-band');
-    if (featuredSection) {
-      const eyebrow = featuredSection.querySelector('.eyebrow');
-      const heading = featuredSection.querySelector('h2');
-      const intro = featuredSection.querySelector('.section-head p:last-child');
-      const actions = featuredSection.querySelector('.center-actions');
-      const grid = featuredSection.querySelector('.product-grid');
-
-      if (eyebrow) eyebrow.textContent = 'Radiant 34 in everyday life';
-      if (heading) heading.textContent = 'Faith carried naturally.';
-      if (intro) intro.textContent = 'A visual introduction to the world of Radiant 34. Explore the full collection in the Shop.';
-      if (actions) actions.hidden = true;
-
-      if (grid && grid.dataset.r34Mockups !== 'true') {
-        grid.className = 'r34-home-mockup-grid';
-        grid.innerHTML = homepageMockups.map(mockupMarkup).join('');
-        grid.dataset.r34Mockups = 'true';
-      }
-    }
-
-    refinePsalmEditorial();
+    installHomepageStyles();
+    updateHeroCopy();
+    removeHomepageProducts();
+    updatePsalmEditorial();
     hideSectionContaining('Clothing that funds the telling');
 
     const story = document.querySelector('.about-section');
@@ -206,8 +173,8 @@
       const blocks = document.querySelectorAll('main p');
       const copy = [
         'Radiant 34 began with one verse: “Those who look to Him are radiant; their faces are never covered with shame.” — Psalm 34:5.',
-        'Psalm 34 is a testimony written from the other side of fear, shame and deliverance. Radiant 34 turns that testimony into clothing and everyday pieces designed to carry Scripture naturally into real life.',
-        'Every collection begins with the Bible. Every design is created to point beyond the product and back to Jesus Christ — with confidence, clarity and no compromise.',
+        'Radiant 34 creates clothing and everyday pieces inspired by Scripture, designed to carry faith naturally into real life.',
+        'Every collection begins with the Bible. Every design points beyond the product and back to Jesus Christ.',
       ];
       blocks.forEach((node, index) => { if (copy[index]) node.textContent = copy[index]; });
     }

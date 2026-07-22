@@ -1,5 +1,8 @@
 (() => {
   const SELECTED_CLASS = 'r34-shop-category-card--selected';
+  const HIDDEN_CLASS = 'r34-shop-force-hidden';
+
+  const text = (node) => node?.textContent?.trim() ?? '';
 
   const installStyles = () => {
     if (document.getElementById('r34-shop-category-bottom-styles')) return;
@@ -7,6 +10,20 @@
     const style = document.createElement('style');
     style.id = 'r34-shop-category-bottom-styles';
     style.textContent = `
+      /* Product controls and product cards must not render before a category click. */
+      .shop-page:not([data-r34-category-open="true"]) .shop-controls,
+      .shop-page:not([data-r34-category-open="true"]) .product-grid--shop,
+      .shop-page:not([data-r34-category-open="true"]) .cart-message,
+      .shop-page:not([data-r34-category-open="true"]) .r34-shop-results-heading,
+      .r34-shop-force-hidden {
+        display:none !important;
+      }
+
+      /* Keep the category thumbnails visible after selection. */
+      .shop-page[data-r34-category-open="true"] .r34-shop-categories {
+        display:block !important;
+      }
+
       .r34-shop-category-card--selected {
         outline:3px solid #b98529 !important;
         outline-offset:3px;
@@ -41,11 +58,22 @@
     document.head.appendChild(style);
   };
 
-  const text = (node) => node?.textContent?.trim() ?? '';
+  const setResultsVisible = (shopPage, visible) => {
+    const controls = shopPage.querySelector('.shop-controls');
+    const productGrid = shopPage.querySelector('.product-grid--shop');
+    const cartMessage = shopPage.querySelector('.cart-message');
+    const resultsHeading = shopPage.querySelector('.r34-shop-results-heading');
+
+    [controls, productGrid, cartMessage, resultsHeading].forEach((node) => {
+      if (!node) return;
+      node.classList.toggle(HIDDEN_CLASS, !visible);
+      if (visible) node.removeAttribute('hidden');
+    });
+  };
 
   const ensureResultsHeading = (shopPage, selectedCard) => {
     const controls = shopPage.querySelector('.shop-controls');
-    if (!controls) return;
+    if (!controls) return null;
 
     let heading = shopPage.querySelector('.r34-shop-results-heading');
     if (!heading) {
@@ -61,30 +89,37 @@
       <h2>${category}</h2>
       ${description ? `<p>${description}</p>` : ''}
     `;
-    heading.hidden = false;
+    heading.classList.remove(HIDDEN_CLASS);
+    heading.removeAttribute('hidden');
+    return heading;
   };
 
-  const keepCategoriesAboveProducts = (shopPage, selectedCard) => {
+  const openCategory = (shopPage, selectedCard) => {
     const chooser = shopPage.querySelector('.r34-shop-categories');
-    const controls = shopPage.querySelector('.shop-controls');
-    const productGrid = shopPage.querySelector('.product-grid--shop');
     const backButton = shopPage.querySelector('.r34-shop-back');
 
     shopPage.dataset.r34CategoryOpen = 'true';
-    if (chooser) chooser.hidden = false;
-    if (controls) controls.hidden = false;
-    if (productGrid) productGrid.hidden = false;
-    if (backButton) backButton.hidden = true;
+    if (chooser) {
+      chooser.hidden = false;
+      chooser.style.removeProperty('display');
+    }
+    if (backButton) backButton.classList.add(HIDDEN_CLASS);
 
     shopPage.querySelectorAll('.r34-shop-category-card').forEach((card) => {
-      card.classList.toggle(SELECTED_CLASS, card === selectedCard);
-      card.setAttribute('aria-pressed', card === selectedCard ? 'true' : 'false');
+      const selected = card === selectedCard;
+      card.classList.toggle(SELECTED_CLASS, selected);
+      card.setAttribute('aria-pressed', selected ? 'true' : 'false');
     });
 
-    ensureResultsHeading(shopPage, selectedCard);
+    const heading = ensureResultsHeading(shopPage, selectedCard);
+    setResultsVisible(shopPage, true);
+
+    window.setTimeout(() => {
+      heading?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
   };
 
-  const enforceInitialState = () => {
+  const enforceState = () => {
     if (window.location.pathname !== '/shop') return;
 
     installStyles();
@@ -92,19 +127,22 @@
     if (!shopPage) return;
 
     const chooser = shopPage.querySelector('.r34-shop-categories');
-    const controls = shopPage.querySelector('.shop-controls');
-    const productGrid = shopPage.querySelector('.product-grid--shop');
     const backButton = shopPage.querySelector('.r34-shop-back');
-    const resultsHeading = shopPage.querySelector('.r34-shop-results-heading');
+    const selectedCard = shopPage.querySelector(`.${SELECTED_CLASS}`);
+    const isOpen = shopPage.dataset.r34CategoryOpen === 'true' && Boolean(selectedCard);
 
-    if (shopPage.dataset.r34CategoryOpen !== 'true') {
+    if (!isOpen) {
+      shopPage.dataset.r34CategoryOpen = 'false';
+      if (chooser) {
+        chooser.hidden = false;
+        chooser.style.removeProperty('display');
+      }
+      if (backButton) backButton.classList.add(HIDDEN_CLASS);
+      setResultsVisible(shopPage, false);
+    } else {
       if (chooser) chooser.hidden = false;
-      if (controls) controls.hidden = true;
-      if (productGrid) productGrid.hidden = true;
-      if (backButton) backButton.hidden = true;
-      if (resultsHeading) resultsHeading.hidden = true;
-    } else if (backButton) {
-      backButton.hidden = true;
+      if (backButton) backButton.classList.add(HIDDEN_CLASS);
+      setResultsVisible(shopPage, true);
     }
   };
 
@@ -115,7 +153,8 @@
     const shopPage = card.closest('.shop-page');
     if (!shopPage) return;
 
-    window.setTimeout(() => keepCategoriesAboveProducts(shopPage, card), 0);
+    /* Run after the original category handler has filtered the React products. */
+    window.setTimeout(() => openCategory(shopPage, card), 20);
   }, true);
 
   let queued = false;
@@ -124,11 +163,16 @@
     queued = true;
     requestAnimationFrame(() => {
       queued = false;
-      enforceInitialState();
+      enforceState();
     });
   };
 
-  new MutationObserver(queue).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(queue).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
   window.addEventListener('popstate', queue);
+  document.addEventListener('DOMContentLoaded', queue);
+  installStyles();
   queue();
 })();

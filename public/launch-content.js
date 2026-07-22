@@ -55,6 +55,15 @@
         object-fit:cover;
         display:block;
       }
+      .r34-psalm-editorial [data-r34-secondary-image] { display:none !important; }
+      .r34-psalm-editorial .lookbook-grid,
+      .r34-psalm-editorial .lookbook-images,
+      .r34-psalm-editorial .campaign-grid {
+        grid-template-columns:1fr !important;
+      }
+      .r34-psalm-editorial .eyebrow { letter-spacing:.18em; }
+      .r34-psalm-editorial h2 { max-width:11ch; }
+      .r34-psalm-editorial p { max-width:42ch; }
       @media (max-width:720px) {
         .r34-home-mockup-grid { grid-template-columns:1fr 1fr; gap:10px; }
         .r34-home-mockup { border-radius:10px; }
@@ -76,6 +85,35 @@
     <figure class="r34-home-mockup">
       <img src="${item.image}" alt="${item.alt}" loading="lazy">
     </figure>`;
+
+  const refinePsalmEditorial = () => {
+    const section = Array.from(document.querySelectorAll('main section')).find((item) => {
+      const content = text(item);
+      return content.includes('Warm light, clean silhouettes') || content.includes('scripture carried naturally');
+    });
+
+    if (!section) return;
+    section.hidden = false;
+    section.classList.add('r34-psalm-editorial');
+
+    const eyebrow = section.querySelector('.eyebrow');
+    const heading = section.querySelector('h2');
+    const paragraphs = Array.from(section.querySelectorAll('p')).filter((node) => node !== eyebrow);
+    const images = Array.from(section.querySelectorAll('img'));
+
+    if (eyebrow) eyebrow.textContent = 'Inspired by Psalm 34';
+    if (heading) heading.textContent = 'Those who look to Him are radiant.';
+    if (paragraphs[0]) {
+      paragraphs[0].textContent = 'Psalm 34 is the testimony of someone who cried out, was heard, and came through the other side without shame.';
+    }
+    if (paragraphs[1]) {
+      paragraphs[1].textContent = 'Radiant 34 carries that message into everyday life — faith for ordinary moments, courage for difficult seasons, and hope that points back to Christ.';
+    }
+
+    images.forEach((image, index) => {
+      if (index > 0) image.closest('figure, div')?.setAttribute('data-r34-secondary-image', 'true');
+    });
+  };
 
   const restructureHome = () => {
     if (window.location.pathname !== '/') return;
@@ -101,7 +139,7 @@
       }
     }
 
-    hideSectionContaining('Warm light, clean silhouettes');
+    refinePsalmEditorial();
     hideSectionContaining('Clothing that funds the telling');
 
     const story = document.querySelector('.about-section');

@@ -1,5 +1,6 @@
 (() => {
-  const HOMEPAGE_PSALM_MODEL = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-homepage-black-hoodie-model.png?v=1784761665';
+  const HOMEPAGE_BLACK_MALE_MODEL = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-homepage-black-male-cream-tee.png?v=1784762090';
+  const HOMEPAGE_BRUNETTE_MODEL = '/images/radiant-editorial-02.png';
 
   const text = (node) => node?.textContent?.trim() ?? '';
 
@@ -22,22 +23,29 @@
     style.textContent = `
       .r34-psalm-editorial {
         display:grid !important;
-        grid-template-columns:minmax(280px,.85fr) minmax(420px,1.15fr) !important;
+        grid-template-columns:minmax(260px,.8fr) repeat(2,minmax(260px,1fr)) !important;
         align-items:stretch !important;
+        gap:18px !important;
       }
       .r34-psalm-editorial > img {
         width:100% !important;
         height:100% !important;
         min-height:560px !important;
         object-fit:cover !important;
-        object-position:center 38% !important;
+        object-position:center !important;
       }
       .r34-psalm-editorial .eyebrow { letter-spacing:.18em; }
       .r34-psalm-editorial h2 { max-width:12ch; }
       .r34-psalm-editorial p { max-width:42ch; }
-      @media (max-width:820px) {
-        .r34-psalm-editorial { grid-template-columns:1fr !important; }
+      @media (max-width:980px) {
+        .r34-psalm-editorial { grid-template-columns:1fr 1fr !important; }
+        .r34-psalm-editorial .lookbook-copy { grid-column:1 / -1; }
         .r34-psalm-editorial > img { min-height:460px !important; }
+      }
+      @media (max-width:680px) {
+        .r34-psalm-editorial { grid-template-columns:1fr !important; }
+        .r34-psalm-editorial .lookbook-copy { grid-column:auto; }
+        .r34-psalm-editorial > img { min-height:420px !important; }
       }
     `;
     document.head.appendChild(style);
@@ -93,11 +101,15 @@
     paragraphs.slice(1).forEach((paragraph) => paragraph.remove());
 
     if (images[0]) {
-      images[0].src = HOMEPAGE_PSALM_MODEL;
-      images[0].alt = 'Radiant 34 model wearing a black hoodie and cap holding a black water bottle';
+      images[0].src = HOMEPAGE_BLACK_MALE_MODEL;
+      images[0].alt = 'Black male model wearing the cream Radiant 34 T-shirt';
       images[0].removeAttribute('srcset');
     }
-    images.slice(1).forEach((image) => image.remove());
+    if (images[1]) {
+      images[1].src = HOMEPAGE_BRUNETTE_MODEL;
+      images[1].alt = 'White brunette model wearing a Radiant 34 T-shirt';
+      images[1].removeAttribute('srcset');
+    }
   };
 
   const restructureHome = () => {

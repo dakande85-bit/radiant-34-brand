@@ -37,6 +37,33 @@
       .r34-psalm-editorial .eyebrow { letter-spacing:.18em; }
       .r34-psalm-editorial h2 { max-width:12ch; }
       .r34-psalm-editorial p { max-width:42ch; }
+
+      .site-footer {
+        background:#f7efe0 !important;
+        color:#11100d !important;
+        border-top:1px solid rgba(185,133,41,.22) !important;
+      }
+      .site-footer img {
+        width:110px !important;
+        height:auto !important;
+        max-height:none !important;
+        object-fit:contain !important;
+        opacity:1 !important;
+        filter:none !important;
+      }
+      .site-footer p {
+        color:#2b241a !important;
+      }
+      .site-footer nav button {
+        color:#11100d !important;
+      }
+      .site-footer nav button:hover {
+        color:#b98529 !important;
+      }
+      .site-footer span {
+        color:#74654e !important;
+      }
+
       @media (max-width:980px) {
         .r34-psalm-editorial { grid-template-columns:1fr 1fr !important; }
         .r34-psalm-editorial .lookbook-copy { grid-column:1 / -1; }
@@ -46,6 +73,7 @@
         .r34-psalm-editorial { grid-template-columns:1fr !important; }
         .r34-psalm-editorial .lookbook-copy { grid-column:auto; }
         .r34-psalm-editorial > img { min-height:420px !important; }
+        .site-footer img { width:96px !important; }
       }
     `;
     document.head.appendChild(style);
@@ -56,6 +84,12 @@
       const label = text(link).toLowerCase();
       if (label === 'lookbook' || label === 'mission') link.remove();
     });
+
+    const allowedFooterLinks = new Set(['shop', 'drop 001', 'our story', 'contact']);
+    document.querySelectorAll('.site-footer nav button').forEach((button) => {
+      if (!allowedFooterLinks.has(text(button).toLowerCase())) button.remove();
+    });
+
     replaceExactText('Get Drop Alert', 'Contact');
   };
 
@@ -115,7 +149,6 @@
   const restructureHome = () => {
     if (window.location.pathname !== '/') return;
 
-    installHomepageStyles();
     updateHeroCopy();
     removeHomepageProducts();
     updatePsalmEditorial();
@@ -193,6 +226,7 @@
   };
 
   const applyLaunchContent = () => {
+    installHomepageStyles();
     simplifyNavigation();
     restructureHome();
     restructureDrop();

@@ -55,6 +55,8 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'radiant-ringer-tee',
     description: 'A vintage-inspired ringer tee with clean Radiant 34 identity.',
     badge: 'Drop 001',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant-ringer-tee-hover.png?v=1784709515',
+    useShopifyImages: true,
     drop001: true,
   },
   'womens-cropped-sweatshirt-bella-canvas-7503': {
@@ -76,6 +78,15 @@ export const brandOverrides: Record<string, BrandOverride> = {
       productImage('radiant-hoodie-hover.jpg'),
       productImage('radiant-hoodie-detail.jpg'),
     ],
+    drop001: true,
+  },
+  'classic-unisex-pullover-hoodie-gildan®-18500-white': {
+    publicTitle: 'Radiant 34 White Hoodie',
+    publicHandle: 'radiant-white-hoodie',
+    description: 'A clean everyday hoodie inspired by Psalm 34:5.',
+    badge: 'Drop 001',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant-white-hoodie-hover.png?v=1784709618',
+    useShopifyImages: true,
     drop001: true,
   },
   'classic-tote-bag': {
@@ -115,6 +126,7 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'radiant-mug',
     description: 'A simple everyday mug carrying the Radiant 34 message into daily life.',
     badge: 'Everyday',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant-mug-hover.png?v=1784709737',
     useShopifyImages: true,
   },
   'tough-case': {
@@ -122,6 +134,15 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'radiant-tough-case',
     description: 'A protective phone case carrying the Radiant 34 mark into everyday use.',
     badge: 'Everyday',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant-phone-case-hover.png?v=1784709547',
+    useShopifyImages: true,
+  },
+  'radiant-34-keychain-charm-double-sided-number-keyring-gift': {
+    publicTitle: 'Radiant 34 Keyring',
+    publicHandle: 'radiant-keyring',
+    description: 'A small everyday reminder of Psalm 34:5.',
+    badge: 'Accessories',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant-keyring-hover.png?v=1784709580',
     useShopifyImages: true,
   },
   'white-11oz-ceramic-mug': {
@@ -164,6 +185,7 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'with-jesus-all-things-are-possible-mug',
     description: 'A confident daily statement of faith: with Jesus, all things are possible.',
     badge: 'Drinkware',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/with-jesus-all-things-are-possible-mug-hover.png?v=1784709659',
     useShopifyImages: true,
   },
   'white-11oz-ceramic-mug-6': {
@@ -185,6 +207,7 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'jesus-is-my-refuge-mug',
     description: 'A steady reminder that Jesus is a place of refuge, strength and peace.',
     badge: 'Drinkware',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/jesus-is-my-refuge-mug-hover.png?v=1784709684',
     useShopifyImages: true,
   },
   'white-11oz-ceramic-mug-9': {
@@ -199,6 +222,7 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'radiant-scripture-tough-case',
     description: 'Protection with purpose: a durable phone case carrying a bold faith-centred design.',
     badge: 'Accessories',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant-scripture-tough-case-hover.png?v=1784709712',
     useShopifyImages: true,
   },
 };

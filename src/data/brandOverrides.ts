@@ -157,6 +157,7 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'his-peace-calmed-a-storm-mug',
     description: 'A reminder that the peace of Jesus is greater than the storm around you.',
     badge: 'Drinkware',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-his-peace-calmed-a-storm-correct-hover.png?v=1784713790',
     useShopifyImages: true,
   },
   'white-11oz-ceramic-mug-2': {

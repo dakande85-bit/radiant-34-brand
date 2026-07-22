@@ -86,6 +86,7 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'kind-words-like-honey-mug',
     description: 'Kind words are like honey—sweet to the soul and healing to the bones. Inspired by Proverbs 16:24.',
     badge: 'Drinkware',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-kind-words-honey-mug-hover.png?v=1784749909',
     useShopifyImages: true,
   },
   'white-11oz-ceramic-mug-1': {

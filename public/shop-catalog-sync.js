@@ -2,95 +2,143 @@
   const HIDDEN_CLASS = 'r34-shop-force-hidden';
   const SELECTED_CLASS = 'r34-shop-category-card--selected';
 
-  const UNISEX_APPAREL = ['t-shirt', 'tee', 'shirt', 'tank', 'hoodie', 'sweatshirt', 'jacket', 'bomber'];
-  const OUTERWEAR = ['hoodie', 'sweatshirt', 'jacket', 'bomber', 'outerwear'];
+  const WOMENS_CAMPAIGN_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279';
+  const MENS_CAMPAIGN_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143';
+  const WOMENS_OUTERWEAR_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-unisex-bomber-jacket-white-front-6a61746d245cf.jpg?v=1784771725';
+  const MENS_OUTERWEAR_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-unisex-bomber-jacket-white-front-6a6170040175a.jpg?v=1784770593';
 
   const categories = [
     {
+      key: 'women',
       label: 'Women',
-      description: 'Dresses and unisex Radiant 34 clothing styled for women.',
-      matches: [...UNISEX_APPAREL, 'dress', 'women', 'woman', 'female'],
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
+      description: 'Dresses and selected unisex Radiant 34 clothing styled for women.',
+      image: WOMENS_CAMPAIGN_IMAGE,
     },
     {
+      key: 'men',
       label: 'Men',
       description: 'Unisex T-shirts, tanks, layers and headwear styled for men.',
-      matches: [...UNISEX_APPAREL, 'snapback', 'hat', 'cap', 'headwear'],
-      excludes: ['dress'],
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143',
+      image: MENS_CAMPAIGN_IMAGE,
     },
     {
+      key: 'womens-outerwear',
       label: "Women’s Outerwear",
-      description: 'Unisex bombers and hoodies available for women in the current collection.',
-      matches: OUTERWEAR,
+      description: 'Bomber jackets and hoodies available for women in the current collection.',
+      image: WOMENS_OUTERWEAR_IMAGE,
     },
     {
+      key: 'mens-outerwear',
       label: "Men’s Outerwear",
-      description: 'Unisex bombers and hoodies available for men in the current collection.',
-      matches: OUTERWEAR,
+      description: 'Bomber jackets and hoodies available for men in the current collection.',
+      image: MENS_OUTERWEAR_IMAGE,
     },
     {
+      key: 'dresses',
       label: 'Dresses',
       description: 'Statement T-shirt dresses created specifically for the women’s collection.',
-      matches: ['dress'],
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
+      image: WOMENS_CAMPAIGN_IMAGE,
     },
     {
+      key: 'tshirts',
       label: 'T-Shirts',
       description: 'Heavyweight, ringer and everyday Scripture T-shirts.',
-      matches: ['t-shirt', 'tee', 'shirt'],
-      excludes: ['dress'],
     },
     {
+      key: 'tanks',
       label: 'Tank Tops',
       description: 'Lightweight unisex Scripture tank tops for warm days and training.',
-      matches: ['tank'],
     },
     {
+      key: 'headwear',
       label: 'Headwear',
       description: 'Snapbacks and caps carrying clear Scripture-led statements.',
-      matches: ['snapback', 'hat', 'cap', 'headwear'],
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143',
+      image: MENS_CAMPAIGN_IMAGE,
     },
     {
+      key: 'drinkware',
       label: 'Mugs & Drinkware',
       description: 'Scripture-led mugs and daily drinkware.',
-      matches: ['drinkware', 'mug', 'bottle', 'drink'],
     },
     {
+      key: 'bags',
       label: 'Bags',
       description: 'Backpacks, totes and travel bags.',
-      matches: ['bag', 'backpack', 'duffle', 'tote'],
     },
     {
+      key: 'accessories',
       label: 'Accessories',
       description: 'Phone cases, keyrings and small everyday accessories.',
-      matches: ['accessories', 'case', 'keyring', 'keychain'],
     },
     {
+      key: 'all',
       label: 'All Products',
       description: 'Browse every active Radiant 34 product.',
-      matches: [],
     },
   ];
 
   const text = (node) => node?.textContent?.trim() ?? '';
+  const productText = (card) =>
+    `${text(card.querySelector('.product-card__category'))} ${text(card.querySelector('.shopify-card__body strong'))}`.toLowerCase();
 
-  const cardHaystack = (card) =>
-    `${text(card.querySelector('.product-card__category'))} ${text(card.querySelector('.shopify-card__body strong'))} ${text(card.querySelector('.shopify-card__description'))}`.toLowerCase();
+  const containsAny = (value, terms) => terms.some((term) => value.includes(term));
+
+  const classifyCard = (card) => {
+    const value = productText(card);
+    const isDress = value.includes('dress');
+    const isHeadwear = containsAny(value, ['snapback', 'dad hat', ' hat', 'cap', 'headwear']);
+    const isOuterwear = containsAny(value, ['hoodie', 'sweatshirt', 'bomber', 'jacket', 'outerwear']);
+    const isTank = value.includes('tank');
+    const isTshirt = !isDress && containsAny(value, ['t-shirt', 'tshirt', 'ringer t-shirt', 'heavyweight scripture']);
+    const isDrinkware = containsAny(value, ['mug', 'drinkware', 'bottle']);
+    const isBag = containsAny(value, ['bag', 'backpack', 'duffle', 'tote']);
+    const isAccessory = containsAny(value, ['phone case', 'tough case', 'keyring', 'keychain', 'accessories']);
+
+    return {
+      value,
+      isDress,
+      isHeadwear,
+      isOuterwear,
+      isTank,
+      isTshirt,
+      isDrinkware,
+      isBag,
+      isAccessory,
+    };
+  };
 
   const cardMatchesCategory = (card, category) => {
-    if (!category.matches.length) return true;
-    const haystack = cardHaystack(card);
-    const included = category.matches.some((term) => haystack.includes(term));
-    const excluded = (category.excludes ?? []).some((term) => haystack.includes(term));
-    return included && !excluded;
+    if (category.key === 'all') return true;
+
+    const kind = classifyCard(card);
+
+    switch (category.key) {
+      case 'women':
+        return kind.isDress || kind.isTshirt || kind.isTank || kind.isOuterwear;
+      case 'men':
+        return !kind.isDress && (kind.isTshirt || kind.isTank || kind.isOuterwear || kind.isHeadwear);
+      case 'womens-outerwear':
+      case 'mens-outerwear':
+        return kind.isOuterwear && !kind.isHeadwear && !kind.isDress;
+      case 'dresses':
+        return kind.isDress;
+      case 'tshirts':
+        return kind.isTshirt;
+      case 'tanks':
+        return kind.isTank;
+      case 'headwear':
+        return kind.isHeadwear && !kind.isOuterwear;
+      case 'drinkware':
+        return kind.isDrinkware;
+      case 'bags':
+        return kind.isBag;
+      case 'accessories':
+        return kind.isAccessory;
+      default:
+        return false;
+    }
   };
 
-  const matchingCard = (cards, category) => {
-    if (!category.matches.length) return cards[0] ?? null;
-    return cards.find((card) => cardMatchesCategory(card, category)) ?? null;
-  };
+  const matchingCard = (cards, category) => cards.find((card) => cardMatchesCategory(card, category)) ?? null;
 
   const resetReactFilter = (shopPage) => {
     const allButton = Array.from(shopPage.querySelectorAll('.filters button'))
@@ -99,10 +147,10 @@
   };
 
   const applySelectedCategory = (shopPage) => {
-    const selectedLabel = shopPage.dataset.r34SelectedCategory;
-    if (!selectedLabel) return;
+    const selectedKey = shopPage.dataset.r34SelectedCategory;
+    if (!selectedKey) return;
 
-    const category = categories.find((item) => item.label === selectedLabel);
+    const category = categories.find((item) => item.key === selectedKey);
     if (!category) return;
 
     const cards = Array.from(shopPage.querySelectorAll('.product-grid--shop .shopify-card'));
@@ -110,7 +158,7 @@
 
     cards.forEach((card) => {
       const visible = cardMatchesCategory(card, category);
-      card.style.display = visible ? '' : 'none';
+      card.style.setProperty('display', visible ? '' : 'none', visible ? '' : 'important');
       card.setAttribute('aria-hidden', visible ? 'false' : 'true');
       if (visible) visibleCount += 1;
     });
@@ -127,7 +175,7 @@
 
   const showResults = (shopPage, selectedButton, category) => {
     shopPage.dataset.r34CategoryOpen = 'true';
-    shopPage.dataset.r34SelectedCategory = category.label;
+    shopPage.dataset.r34SelectedCategory = category.key;
     resetReactFilter(shopPage);
 
     const chooser = shopPage.querySelector('.r34-shop-categories');
@@ -156,7 +204,7 @@
       applySelectedCategory(shopPage);
       const heading = shopPage.querySelector('.r34-shop-results-heading');
       heading?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
+    }, 80);
   };
 
   const rebuildCategories = () => {
@@ -175,8 +223,7 @@
       .map((card) => `${text(card.querySelector('.product-card__category'))}:${text(card.querySelector('.shopify-card__body strong'))}`)
       .sort()
       .join('|');
-    const taxonomyVersion = 'gender-outerwear-v2';
-    const combinedSignature = `${taxonomyVersion}|${signature}`;
+    const combinedSignature = `strict-taxonomy-v3|${signature}`;
 
     if (grid.dataset.r34CatalogSignature !== combinedSignature) {
       grid.dataset.r34CatalogSignature = combinedSignature;
@@ -196,6 +243,7 @@
         button.className = 'r34-shop-category-card';
         button.setAttribute('aria-label', `Shop ${category.label}`);
         button.setAttribute('aria-pressed', 'false');
+        button.dataset.r34CategoryKey = category.key;
         button.innerHTML = `
           <img src="${imageUrl}" alt="${category.label}">
           <span class="r34-shop-category-card__copy">

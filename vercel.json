@@ -1,6 +1,16 @@
 {
   "redirects": [
     {
+      "source": "/drop-001",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/drop-001/:path*",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
       "source": "/cart/:path*",
       "destination": "https://xagsqp-u0.myshopify.com/cart/:path*",
       "permanent": false

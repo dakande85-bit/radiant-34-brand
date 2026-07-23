@@ -1,11 +1,22 @@
 (() => {
-  const blockedLabels = new Set(['drop 001', 'lookbook', 'mission']);
+  const blockedLabels = new Set(['drop 001', 'lookbook']);
   const normalize = (value) => (value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+  const navigateInternally = (path) => {
+    if (window.location.pathname === path) return;
+    window.history.pushState(null, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const createContactLink = () => {
     const link = document.createElement('a');
     link.href = '/contact';
     link.textContent = 'Contact';
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      navigateInternally('/contact');
+    });
     return link;
   };
 

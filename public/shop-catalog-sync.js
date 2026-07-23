@@ -2,67 +2,73 @@
   const HIDDEN_CLASS = 'r34-shop-force-hidden';
   const SELECTED_CLASS = 'r34-shop-category-card--selected';
 
+  const UNISEX_APPAREL = ['t-shirt', 'tee', 'shirt', 'tank', 'hoodie', 'sweatshirt', 'jacket', 'bomber'];
+  const OUTERWEAR = ['hoodie', 'sweatshirt', 'jacket', 'bomber', 'outerwear'];
+
   const categories = [
     {
       label: 'Women',
-      filter: 'All',
-      description: 'Statement dresses and future women’s pieces in the new Radiant 34 campaign direction.',
-      matches: ['dress', 'women', 'woman', 'female'],
+      description: 'Dresses and unisex Radiant 34 clothing styled for women.',
+      matches: [...UNISEX_APPAREL, 'dress', 'women', 'woman', 'female'],
+      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
+    },
+    {
+      label: 'Men',
+      description: 'Unisex T-shirts, tanks, layers and headwear styled for men.',
+      matches: [...UNISEX_APPAREL, 'snapback', 'hat', 'cap', 'headwear'],
+      excludes: ['dress'],
+      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143',
+    },
+    {
+      label: "Women’s Outerwear",
+      description: 'Unisex bombers and hoodies available for women in the current collection.',
+      matches: OUTERWEAR,
+    },
+    {
+      label: "Men’s Outerwear",
+      description: 'Unisex bombers and hoodies available for men in the current collection.',
+      matches: OUTERWEAR,
+    },
+    {
+      label: 'Dresses',
+      description: 'Statement T-shirt dresses created specifically for the women’s collection.',
+      matches: ['dress'],
       image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
     },
     {
       label: 'T-Shirts',
-      filter: 'Tees',
       description: 'Heavyweight, ringer and everyday Scripture T-shirts.',
       matches: ['t-shirt', 'tee', 'shirt'],
       excludes: ['dress'],
     },
     {
       label: 'Tank Tops',
-      filter: 'Tanks',
-      description: 'Lightweight Scripture tank tops for warm days and training.',
+      description: 'Lightweight unisex Scripture tank tops for warm days and training.',
       matches: ['tank'],
     },
     {
-      label: 'Hoodies',
-      filter: 'Hoodies',
-      description: 'Signature and everyday Radiant 34 layers.',
-      matches: ['hoodie', 'sweatshirt'],
-    },
-    {
-      label: 'Outerwear',
-      filter: 'All',
-      description: 'Bomber jackets and statement layers built around the new visual direction.',
-      matches: ['jacket', 'bomber', 'outerwear'],
-    },
-    {
       label: 'Headwear',
-      filter: 'All',
       description: 'Snapbacks and caps carrying clear Scripture-led statements.',
       matches: ['snapback', 'hat', 'cap', 'headwear'],
       image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143',
     },
     {
       label: 'Mugs & Drinkware',
-      filter: 'Drinkware',
       description: 'Scripture-led mugs and daily drinkware.',
       matches: ['drinkware', 'mug', 'bottle', 'drink'],
     },
     {
       label: 'Bags',
-      filter: 'Bags',
       description: 'Backpacks, totes and travel bags.',
       matches: ['bag', 'backpack', 'duffle', 'tote'],
     },
     {
       label: 'Accessories',
-      filter: 'Accessories',
-      description: 'Phone cases, keyrings and everyday accessories.',
+      description: 'Phone cases, keyrings and small everyday accessories.',
       matches: ['accessories', 'case', 'keyring', 'keychain'],
     },
     {
       label: 'All Products',
-      filter: 'All',
       description: 'Browse every active Radiant 34 product.',
       matches: [],
     },
@@ -86,10 +92,10 @@
     return cards.find((card) => cardMatchesCategory(card, category)) ?? null;
   };
 
-  const clickFilter = (shopPage, label) => {
-    const button = Array.from(shopPage.querySelectorAll('.filters button'))
-      .find((item) => text(item).toLowerCase() === label.toLowerCase());
-    button?.click();
+  const resetReactFilter = (shopPage) => {
+    const allButton = Array.from(shopPage.querySelectorAll('.filters button'))
+      .find((item) => text(item).toLowerCase() === 'all');
+    allButton?.click();
   };
 
   const applySelectedCategory = (shopPage) => {
@@ -100,20 +106,29 @@
     if (!category) return;
 
     const cards = Array.from(shopPage.querySelectorAll('.product-grid--shop .shopify-card'));
+    let visibleCount = 0;
+
     cards.forEach((card) => {
-      card.style.display = cardMatchesCategory(card, category) ? '' : 'none';
+      const visible = cardMatchesCategory(card, category);
+      card.style.display = visible ? '' : 'none';
+      card.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      if (visible) visibleCount += 1;
     });
 
-    const empty = shopPage.querySelector('.shop-empty');
-    if (empty && text(empty) === 'No products match this filter.') {
-      empty.style.display = cards.some((card) => cardMatchesCategory(card, category)) ? 'none' : '';
+    let empty = shopPage.querySelector('.r34-taxonomy-empty');
+    if (!empty) {
+      empty = document.createElement('p');
+      empty.className = 'shop-empty r34-taxonomy-empty';
+      empty.textContent = 'No active products are currently available in this category.';
+      shopPage.querySelector('.product-grid--shop')?.before(empty);
     }
+    empty.style.display = visibleCount ? 'none' : '';
   };
 
   const showResults = (shopPage, selectedButton, category) => {
     shopPage.dataset.r34CategoryOpen = 'true';
     shopPage.dataset.r34SelectedCategory = category.label;
-    clickFilter(shopPage, category.filter);
+    resetReactFilter(shopPage);
 
     const chooser = shopPage.querySelector('.r34-shop-categories');
     const controls = shopPage.querySelector('.shop-controls');
@@ -160,9 +175,11 @@
       .map((card) => `${text(card.querySelector('.product-card__category'))}:${text(card.querySelector('.shopify-card__body strong'))}`)
       .sort()
       .join('|');
+    const taxonomyVersion = 'gender-outerwear-v2';
+    const combinedSignature = `${taxonomyVersion}|${signature}`;
 
-    if (grid.dataset.r34CatalogSignature !== signature) {
-      grid.dataset.r34CatalogSignature = signature;
+    if (grid.dataset.r34CatalogSignature !== combinedSignature) {
+      grid.dataset.r34CatalogSignature = combinedSignature;
       grid.innerHTML = '';
 
       categories.forEach((category) => {

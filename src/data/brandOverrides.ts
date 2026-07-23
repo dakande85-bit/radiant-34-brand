@@ -109,6 +109,32 @@ export const brandOverrides: Record<string, BrandOverride> = {
     useShopifyImages: true,
     drop001: true,
   },
+  't-shirt-dress': {
+    publicTitle: 'Radiant 34 Fearfully & Wonderfully Created T-Shirt Dress',
+    publicHandle: 'fearfully-wonderfully-created-tshirt-dress',
+    description: 'A relaxed oversized T-shirt dress inspired by Psalm 139:14 and designed for confident everyday wear.',
+    badge: 'Women',
+    primaryImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-t-shirt-dress-white-front-6a6168242ee1d.jpg?v=1784768575',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
+    gallery: [
+      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-t-shirt-dress-white-front-6a6168242ee1d.jpg?v=1784768575',
+      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
+    ],
+    useShopifyImages: false,
+  },
+  'snapback-hat': {
+    publicTitle: 'Radiant 34 Follow God Not Man Snapback',
+    publicHandle: 'follow-god-not-man-snapback',
+    description: 'A structured dark navy snapback embroidered with Follow God, Not Man, inspired by Galatians 1:10.',
+    badge: 'Headwear',
+    primaryImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/classic-snapback-dark-navy-front-6a617b2f5d17f.jpg?v=1784773446',
+    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143',
+    gallery: [
+      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/classic-snapback-dark-navy-front-6a617b2f5d17f.jpg?v=1784773446',
+      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143',
+    ],
+    useShopifyImages: false,
+  },
   'premium-tote-bag-black': {
     publicTitle: 'Radiant 34 Premium Black Tote Bag',
     publicHandle: 'radiant-premium-black-tote-bag',

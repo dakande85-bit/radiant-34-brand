@@ -1,5 +1,6 @@
 (() => {
   const blockedLabels = new Set(['drop 001', 'lookbook']);
+  const shopLabels = new Set(['shop', 'search', 'shop drop 001', 'shop all products']);
   const normalize = (value) => (value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
   const navigateInternally = (path) => {
@@ -50,11 +51,30 @@
     });
   };
 
+  const isShopControl = (element) => {
+    const label = normalize(element.textContent);
+    const href = element.getAttribute?.('href') || '';
+    return shopLabels.has(label) || href === '/shop' || href.startsWith('/shop?') || href.startsWith('/shop#');
+  };
+
+  const useReliableShopNavigation = (event) => {
+    if (window.location.pathname === '/shop') return;
+    const control = event.target.closest?.('a, button');
+    if (!control || !isShopControl(control)) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    window.location.assign('/shop');
+  };
+
   const applyNavigationFixes = () => {
     updatePrimaryNavigation();
     updateFooterNavigation();
     updateContactActions();
   };
+
+  document.addEventListener('click', useReliableShopNavigation, true);
 
   const observer = new MutationObserver(applyNavigationFixes);
   observer.observe(document.documentElement, { childList: true, subtree: true });

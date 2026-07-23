@@ -5,13 +5,13 @@
   const CATEGORY_IMAGES = {
     women: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
     men: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143',
-    womensOuterwear: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-unisex-bomber-jacket-white-front-6a61746d245cf.jpg?v=1784771725',
+    womensOuterwear: '/images/radiant-cream-hoodie.png',
     mensOuterwear: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-unisex-bomber-jacket-white-front-6a6170040175a.jpg?v=1784770593',
     dresses: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-t-shirt-dress-white-front-6a61f2fc0fdf2.jpg?v=1784804134',
     tshirts: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/228c2e23-e93d-46ac-a7c0-f0e9d9b3d17f.webp?v=1784711348',
     tanks: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/bf1822ec-2f59-4a22-9850-6ff6ed0887bf.jpg?v=1784727959',
     headwear: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/classic-snapback-dark-navy-front-6a617b2f5d17f.jpg?v=1784773446',
-    drinkware: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/white-glossy-mug-white-11-oz-front-6a617de6b6a92.jpg?v=1784774159',
+    drinkware: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-his-peace-calmed-a-storm-mug-primary.png?v=1784714241',
     bags: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-duffle-bag-white-front-6a524d6683378.jpg?v=1783778670',
     accessories: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/d13309a6-e4d7-4c11-b7c2-1ac2f6451217.webp?v=1783929907',
     all: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-signature-hoodie-cream-primary_128d2f24-8bd2-4f6b-bdcc-bd432ee36ee6.png?v=1784758611',
@@ -237,7 +237,7 @@
       .map((card) => `${text(card.querySelector('.product-card__category'))}:${text(card.querySelector('.shopify-card__body strong'))}`)
       .sort()
       .join('|');
-    const combinedSignature = `fixed-unique-category-images-v4|${signature}`;
+    const combinedSignature = `fixed-unique-category-images-v5|${signature}`;
 
     if (grid.dataset.r34CatalogSignature !== combinedSignature) {
       grid.dataset.r34CatalogSignature = combinedSignature;

@@ -51,7 +51,17 @@ type StorefrontProductForCart = {
   };
 };
 
+type CatalogPayload = {
+  data: {
+    products: {
+      nodes: ReturnType<typeof toStorefrontProduct>[];
+    };
+  };
+};
+
 const isDevelopment = process.env.NODE_ENV !== 'production';
+const catalogCacheTtlMs = 60_000;
+let catalogCache: { expiresAt: number; payload: CatalogPayload } | null = null;
 
 const isProductListQuery = (query: string) => /\bproducts\s*\(/.test(query);
 const isProductHandleQuery = (query: string) =>
@@ -66,6 +76,28 @@ const buildStorefrontHeaders = () => {
   const storefrontToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
   if (storefrontToken) headers['X-Shopify-Storefront-Access-Token'] = storefrontToken;
   return headers;
+};
+
+const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+const fetchWithRetry = async (url: string, init: RequestInit, attempts = 2) => {
+  let lastResponse: Response | null = null;
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await fetch(url, init);
+      lastResponse = response;
+      if (response.ok || (response.status < 500 && response.status !== 429)) return response;
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < attempts - 1) await wait(300 * (attempt + 1));
+  }
+
+  if (lastResponse) return lastResponse;
+  throw lastError instanceof Error ? lastError : new Error('Shopify request failed.');
 };
 
 const adminProductSelection = `
@@ -90,26 +122,61 @@ const adminProductSelection = `
   priceRangeV2 { minVariantPrice { amount currencyCode } }
 `;
 
+const storefrontProductSelection = `
+  id
+  title
+  handle
+  availableForSale
+  variants(first: 100) {
+    nodes {
+      id
+      title
+      availableForSale
+      selectedOptions { name value }
+    }
+  }
+`;
+
+const fetchStorefrontProductsForCart = async (domain: string, version: string) => {
+  const response = await fetchWithRetry(`https://${domain}/api/${version}/graphql.json`, {
+    method: 'POST',
+    headers: buildStorefrontHeaders(),
+    body: JSON.stringify({
+      query: `
+        query RadiantStorefrontProducts {
+          products(first: 100) {
+            nodes {
+              ${storefrontProductSelection}
+            }
+          }
+        }
+      `,
+      variables: {},
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.errors?.length) {
+    console.error('[Radiant 34 Shopify] Storefront product validation failed', {
+      status: response.status,
+      errors: payload.errors,
+    });
+    return new Map<string, StorefrontProductForCart>();
+  }
+
+  const products = (payload.data?.products?.nodes ?? []) as StorefrontProductForCart[];
+  return new Map(products.map((product) => [product.handle, product]));
+};
+
 const fetchStorefrontProductForCart = async (domain: string, version: string, handle: string) => {
-  const response = await fetch(`https://${domain}/api/${version}/graphql.json`, {
+  const response = await fetchWithRetry(`https://${domain}/api/${version}/graphql.json`, {
     method: 'POST',
     headers: buildStorefrontHeaders(),
     body: JSON.stringify({
       query: `
         query ProductForCart($handle: String!) {
           product(handle: $handle) {
-            id
-            title
-            handle
-            availableForSale
-            variants(first: 100) {
-              nodes {
-                id
-                title
-                availableForSale
-                selectedOptions { name value }
-              }
-            }
+            ${storefrontProductSelection}
           }
         }
       `,
@@ -183,10 +250,10 @@ const toStorefrontProduct = (
   };
 };
 
-async function fetchAdminProducts(domain: string, version: string) {
+const fetchAdminProductNodes = async (domain: string, version: string) => {
   const token = await getShopifyAccessToken();
   const adminUrl = `https://${domain}/admin/api/${version}/graphql.json`;
-  const response = await fetch(adminUrl, {
+  const response = await fetchWithRetry(adminUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -216,26 +283,39 @@ async function fetchAdminProducts(domain: string, version: string) {
     throw new Error(`Shopify Admin products request failed: ${response.status}`);
   }
 
-  const products = (payload.data?.products?.nodes ?? []) as AdminProduct[];
-  const activeProducts = products.filter((product) => product.status === 'ACTIVE');
-  const storefrontProducts = await Promise.all(
-    activeProducts.map((product) => fetchStorefrontProductForCart(domain, version, product.handle)),
-  );
+  return (payload.data?.products?.nodes ?? []) as AdminProduct[];
+};
 
-  return {
+async function fetchAdminProducts(domain: string, version: string): Promise<CatalogPayload> {
+  if (catalogCache && catalogCache.expiresAt > Date.now()) return catalogCache.payload;
+
+  const [products, storefrontProducts] = await Promise.all([
+    fetchAdminProductNodes(domain, version),
+    fetchStorefrontProductsForCart(domain, version),
+  ]);
+
+  const activeProducts = products.filter((product) => product.status === 'ACTIVE');
+  const payload: CatalogPayload = {
     data: {
       products: {
-        nodes: activeProducts.map((product, index) =>
-          toStorefrontProduct(product, storefrontProducts[index])),
+        nodes: activeProducts.map((product) =>
+          toStorefrontProduct(product, storefrontProducts.get(product.handle) ?? null)),
       },
     },
   };
+
+  catalogCache = {
+    expiresAt: Date.now() + catalogCacheTtlMs,
+    payload,
+  };
+
+  return payload;
 }
 
 async function fetchAdminProductByHandle(domain: string, version: string, handle: string) {
   const token = await getShopifyAccessToken();
   const adminUrl = `https://${domain}/admin/api/${version}/graphql.json`;
-  const response = await fetch(adminUrl, {
+  const response = await fetchWithRetry(adminUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -310,7 +390,7 @@ export default async function handler(req: any, res: any) {
     }
 
     const storefrontUrl = `https://${domain}/api/${version}/graphql.json`;
-    const shopifyResponse = await fetch(storefrontUrl, {
+    const shopifyResponse = await fetchWithRetry(storefrontUrl, {
       method: 'POST',
       headers: buildStorefrontHeaders(),
       body: JSON.stringify({

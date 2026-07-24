@@ -10,12 +10,10 @@
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      /* Category selection is handled by the visual category cards above the products. */
       .shop-page .shop-controls .filters {
         display: none !important;
       }
 
-      /* Keep every product card compact and aligned even when Shopify copy is verbose. */
       .shopify-card__description {
         min-height: 3.3em;
         display: -webkit-box !important;
@@ -28,16 +26,17 @@
   };
 
   const signalForCard = (card) => {
+    const category = text(card.querySelector('.product-card__category'));
     const title = text(card.querySelector('.shopify-card__body strong'));
     const imageAlt = card.querySelector('.shopify-card__image img')?.getAttribute('alt') ?? '';
-    return `${title} ${imageAlt}`.toLowerCase();
+    return `${category} ${title} ${imageAlt}`.toLowerCase();
   };
 
   const classifySignal = (value) => {
     const isDress = containsAny(value, ['t-shirt dress', 'tshirt dress', ' dress']);
     const isHeadwear = containsAny(value, ['snapback', 'dad hat', 'baseball cap', ' cap', 'headwear']);
     const isOuterwear = containsAny(value, ['hoodie', 'sweatshirt', 'bomber', 'jacket', 'outerwear']);
-    const isTank = containsAny(value, ['tank top', ' tank']);
+    const isTank = !isDress && containsAny(value, ['tank top', ' tank', 'tank']);
     const isDrinkware = containsAny(value, ['mug', 'drinkware', 'water bottle', 'tumbler']);
     const isBag = containsAny(value, ['backpack', 'duffle', 'tote bag', 'shoulder bag', ' bag']);
     const isAccessory = containsAny(value, ['phone case', 'tough case', 'keyring', 'keychain', 'bracelet', 'accessor']);
@@ -45,7 +44,7 @@
       && !isHeadwear
       && !isOuterwear
       && !isTank
-      && containsAny(value, ['t-shirt', 'tshirt', 'tee', 'crewneck shirt']);
+      && containsAny(value, ['t-shirt', 'tshirt', 'tee', 'crewneck shirt', 'heavyweight scripture']);
 
     return {
       isDress,
@@ -57,6 +56,18 @@
       isBag,
       isAccessory,
     };
+  };
+
+  const productKind = (kind) => {
+    if (kind.isDress) return 'dress';
+    if (kind.isHeadwear) return 'headwear';
+    if (kind.isOuterwear) return 'outerwear';
+    if (kind.isTank) return 'tank';
+    if (kind.isTshirt) return 'tshirt';
+    if (kind.isDrinkware) return 'drinkware';
+    if (kind.isBag) return 'bag';
+    if (kind.isAccessory) return 'accessories';
+    return 'other';
   };
 
   const categoryLabel = (kind) => {
@@ -128,7 +139,7 @@
 
     if (titleNode.textContent !== publicTitle) titleNode.textContent = publicTitle;
 
-    const kind = classifySignal(`${publicTitle} ${card.querySelector('.shopify-card__image img')?.getAttribute('alt') ?? ''}`.toLowerCase());
+    const kind = classifySignal(`${publicTitle} ${categoryNode.textContent ?? ''} ${card.querySelector('.shopify-card__image img')?.getAttribute('alt') ?? ''}`.toLowerCase());
     const correctCategory = categoryLabel(kind);
     if (categoryNode.textContent !== correctCategory) categoryNode.textContent = correctCategory;
 
@@ -140,41 +151,70 @@
       if (descriptionNode.textContent !== correctDescription) descriptionNode.textContent = correctDescription;
     }
 
-    card.dataset.r34ProductKind = correctCategory.toLowerCase();
+    card.dataset.r34ProductKind = productKind(kind);
   };
 
   const matchesSelectedCategory = (card, selectedKey) => {
     if (!selectedKey || selectedKey === 'all') return true;
 
-    const kind = classifySignal(signalForCard(card));
+    const kind = card.dataset.r34ProductKind || productKind(classifySignal(signalForCard(card)));
+
     switch (selectedKey) {
       case 'women':
-        return kind.isDress || kind.isTshirt || kind.isTank || kind.isOuterwear;
+        return ['dress', 'tshirt', 'tank', 'outerwear'].includes(kind);
       case 'men':
-        return !kind.isDress && (kind.isTshirt || kind.isTank || kind.isOuterwear || kind.isHeadwear);
+        return ['tshirt', 'tank', 'outerwear', 'headwear'].includes(kind);
       case 'womens-outerwear':
       case 'mens-outerwear':
-        return kind.isOuterwear && !kind.isHeadwear && !kind.isDress;
+        return kind === 'outerwear';
       case 'dresses':
-        return kind.isDress;
+        return kind === 'dress';
       case 'tshirts':
-        return kind.isTshirt;
+        return kind === 'tshirt';
       case 'tanks':
-        return kind.isTank;
+        return kind === 'tank';
       case 'headwear':
-        return kind.isHeadwear;
+        return kind === 'headwear';
       case 'drinkware':
-        return kind.isDrinkware;
+        return kind === 'drinkware';
       case 'bags':
-        return kind.isBag;
+        return kind === 'bag';
       case 'accessories':
-        return kind.isAccessory;
+        return kind === 'accessories';
       default:
-        return false;
+        return true;
     }
   };
 
-  const enforceAccuracy = () => {
+  const resetReactFilter = (shopPage) => {
+    const allButton = Array.from(shopPage.querySelectorAll('.filters button'))
+      .find((button) => text(button).toLowerCase() === 'all');
+    allButton?.click();
+  };
+
+  const selectedKeyFromCard = (card) => {
+    if (card.dataset.r34CategoryKey) return card.dataset.r34CategoryKey;
+    const label = text(card.querySelector('strong')).toLowerCase();
+    const labels = {
+      women: 'women',
+      men: 'men',
+      'women’s outerwear': 'womens-outerwear',
+      "women's outerwear": 'womens-outerwear',
+      'men’s outerwear': 'mens-outerwear',
+      "men's outerwear": 'mens-outerwear',
+      dresses: 'dresses',
+      't-shirts': 'tshirts',
+      'tank tops': 'tanks',
+      headwear: 'headwear',
+      'mugs & drinkware': 'drinkware',
+      bags: 'bags',
+      accessories: 'accessories',
+      'all products': 'all',
+    };
+    return labels[label] || '';
+  };
+
+  const applySelectedCategory = () => {
     if (window.location.pathname !== '/shop') return;
 
     installStyles();
@@ -185,19 +225,46 @@
     cards.forEach(normalizeCard);
 
     const selectedKey = shopPage.dataset.r34SelectedCategory;
-    if (selectedKey) {
-      let visibleCount = 0;
-      cards.forEach((card) => {
-        const visible = matchesSelectedCategory(card, selectedKey);
-        card.style.setProperty('display', visible ? '' : 'none', visible ? '' : 'important');
-        card.setAttribute('aria-hidden', visible ? 'false' : 'true');
-        if (visible) visibleCount += 1;
-      });
+    if (!selectedKey) return;
 
-      const empty = shopPage.querySelector('.r34-taxonomy-empty');
-      if (empty) empty.style.display = visibleCount ? 'none' : '';
-    }
+    let visibleCount = 0;
+    cards.forEach((card) => {
+      const visible = matchesSelectedCategory(card, selectedKey);
+      if (visible) {
+        card.style.removeProperty('display');
+        card.hidden = false;
+        visibleCount += 1;
+      } else {
+        card.style.setProperty('display', 'none', 'important');
+      }
+      card.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    });
+
+    shopPage.querySelectorAll('.shop-empty').forEach((empty) => {
+      const copy = text(empty).toLowerCase();
+      if (copy.includes('no products') || empty.classList.contains('r34-taxonomy-empty')) {
+        empty.style.display = visibleCount ? 'none' : '';
+      }
+    });
   };
+
+  const queueRepeatedApply = () => {
+    [0, 60, 180, 420].forEach((delay) => window.setTimeout(applySelectedCategory, delay));
+  };
+
+  document.addEventListener('click', (event) => {
+    const card = event.target.closest?.('.r34-shop-category-card');
+    if (!card || window.location.pathname !== '/shop') return;
+
+    const shopPage = card.closest('.shop-page');
+    const selectedKey = selectedKeyFromCard(card);
+    if (!shopPage || !selectedKey) return;
+
+    shopPage.dataset.r34SelectedCategory = selectedKey;
+    shopPage.dataset.r34CategoryOpen = 'true';
+    resetReactFilter(shopPage);
+    queueRepeatedApply();
+  }, true);
 
   let queued = false;
   const queue = () => {
@@ -206,7 +273,7 @@
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         queued = false;
-        enforceAccuracy();
+        applySelectedCategory();
       });
     });
   };
@@ -217,7 +284,6 @@
   });
 
   document.addEventListener('DOMContentLoaded', queue);
-  document.addEventListener('click', () => window.setTimeout(queue, 140), true);
-  window.addEventListener('popstate', queue);
+  window.addEventListener('popstate', queueRepeatedApply);
   queue();
 })();

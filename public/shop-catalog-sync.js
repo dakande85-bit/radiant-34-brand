@@ -1,5 +1,5 @@
 (() => {
-  const HIDDEN_CLASS = 'r34-shop-force-hidden';
+  const STYLE_ID = 'r34-shop-catalog-authoritative-styles';
   const SELECTED_CLASS = 'r34-shop-category-card--selected';
 
   const CATEGORY_IMAGES = {
@@ -18,290 +18,351 @@
   };
 
   const categories = [
-    {
-      key: 'women',
-      label: 'Women',
-      description: 'Dresses, T-shirts, tanks and selected Radiant 34 layers styled for women.',
-      image: CATEGORY_IMAGES.women,
-    },
-    {
-      key: 'men',
-      label: 'Men',
-      description: 'T-shirts, tanks, outerwear and headwear styled for men.',
-      image: CATEGORY_IMAGES.men,
-    },
-    {
-      key: 'womens-outerwear',
-      label: "Women’s Outerwear",
-      description: 'Hoodies and selected outerwear available for women in the current collection.',
-      image: CATEGORY_IMAGES.womensOuterwear,
-    },
-    {
-      key: 'mens-outerwear',
-      label: "Men’s Outerwear",
-      description: 'Bomber jackets and hoodies available for men in the current collection.',
-      image: CATEGORY_IMAGES.mensOuterwear,
-    },
-    {
-      key: 'dresses',
-      label: 'Dresses',
-      description: 'Statement T-shirt dresses created specifically for the women’s collection.',
-      image: CATEGORY_IMAGES.dresses,
-    },
-    {
-      key: 'tshirts',
-      label: 'T-Shirts',
-      description: 'Heavyweight, ringer and everyday Scripture T-shirts.',
-      image: CATEGORY_IMAGES.tshirts,
-    },
-    {
-      key: 'tanks',
-      label: 'Tank Tops',
-      description: 'Lightweight unisex Scripture tank tops for warm days and training.',
-      image: CATEGORY_IMAGES.tanks,
-    },
-    {
-      key: 'headwear',
-      label: 'Headwear',
-      description: 'Snapbacks and caps carrying clear Scripture-led statements.',
-      image: CATEGORY_IMAGES.headwear,
-    },
-    {
-      key: 'drinkware',
-      label: 'Mugs & Drinkware',
-      description: 'Scripture-led mugs and daily drinkware.',
-      image: CATEGORY_IMAGES.drinkware,
-    },
-    {
-      key: 'bags',
-      label: 'Bags',
-      description: 'Backpacks, totes and travel bags.',
-      image: CATEGORY_IMAGES.bags,
-    },
-    {
-      key: 'accessories',
-      label: 'Accessories',
-      description: 'Phone cases, keyrings and small everyday accessories.',
-      image: CATEGORY_IMAGES.accessories,
-    },
-    {
-      key: 'all',
-      label: 'All Products',
-      description: 'Browse every active Radiant 34 product.',
-      image: CATEGORY_IMAGES.all,
-    },
-  ];
+    ['women', 'Women', 'Dresses, T-shirts, tanks and selected layers styled for women.', CATEGORY_IMAGES.women],
+    ['men', 'Men', 'T-shirts, tanks, outerwear and headwear styled for men.', CATEGORY_IMAGES.men],
+    ['womens-outerwear', 'Women’s Outerwear', 'Hoodies and selected outerwear for women.', CATEGORY_IMAGES.womensOuterwear],
+    ['mens-outerwear', 'Men’s Outerwear', 'Bomber jackets and hoodies for men.', CATEGORY_IMAGES.mensOuterwear],
+    ['dresses', 'Dresses', 'Statement T-shirt dresses from the women’s collection.', CATEGORY_IMAGES.dresses],
+    ['tshirts', 'T-Shirts', 'Heavyweight, ringer and everyday Scripture T-shirts.', CATEGORY_IMAGES.tshirts],
+    ['tanks', 'Tank Tops', 'Lightweight Scripture tank tops for warm days and training.', CATEGORY_IMAGES.tanks],
+    ['headwear', 'Headwear', 'Snapbacks, dad hats and caps.', CATEGORY_IMAGES.headwear],
+    ['drinkware', 'Mugs & Drinkware', 'Scripture-led mugs and daily drinkware.', CATEGORY_IMAGES.drinkware],
+    ['bags', 'Bags', 'Backpacks, totes and travel bags.', CATEGORY_IMAGES.bags],
+    ['accessories', 'Accessories', 'Phone cases, keyrings and everyday accessories.', CATEGORY_IMAGES.accessories],
+    ['all', 'All Products', 'Browse every active Radiant 34 product.', CATEGORY_IMAGES.all],
+  ].map(([key, label, description, image]) => ({ key, label, description, image }));
 
   const text = (node) => node?.textContent?.trim() ?? '';
   const containsAny = (value, terms) => terms.some((term) => value.includes(term));
 
-  const productSignal = (card) => {
+  const installStyles = () => {
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+      .shop-page[data-r34-category-open="false"] .shop-controls,
+      .shop-page[data-r34-category-open="false"] .product-grid--shop,
+      .shop-page[data-r34-category-open="false"] .r34-shop-results-heading,
+      .shop-page[data-r34-category-open="false"] .r34-taxonomy-empty { display:none !important; }
+      .shop-page .shop-controls .filters { display:none !important; }
+      .r34-shop-category-card--selected { outline:3px solid #b98529 !important; outline-offset:3px; }
+      .r34-shop-results-heading { margin:64px 0 24px; padding-top:34px; border-top:1px solid rgba(17,16,13,.16); }
+      .r34-shop-results-heading .eyebrow { margin:0 0 10px; color:#b98529; font-size:.72rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; }
+      .r34-shop-results-heading h2 { margin:0; font-family:Georgia,'Times New Roman',serif; font-size:clamp(2rem,4vw,4rem); font-weight:400; line-height:1; }
+      .r34-shop-results-heading p { max-width:620px; margin:14px 0 0; color:#74654e; line-height:1.65; }
+      .shopify-card__description { min-height:3.3em; display:-webkit-box !important; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+    `;
+    document.head.appendChild(style);
+  };
+
+  const signalForCard = (card) => {
     const category = text(card.querySelector('.product-card__category'));
     const title = text(card.querySelector('.shopify-card__body strong'));
     const image = card.querySelector('.shopify-card__image img');
-    const imageAlt = image?.getAttribute('alt') ?? '';
-    const imageSrc = image?.getAttribute('src') ?? '';
-    return `${category} ${title} ${imageAlt} ${imageSrc}`.toLowerCase();
+    return `${category} ${title} ${image?.alt ?? ''} ${image?.src ?? ''}`.toLowerCase();
   };
 
   const classifyCard = (card) => {
-    const value = productSignal(card);
-    const isDress = value.includes('dress');
-    const isHeadwear = containsAny(value, ['snapback', 'dad hat', ' hat', 'cap', 'headwear']);
-    const isBomber = value.includes('bomber');
-    const isJacket = containsAny(value, ['jacket', 'outerwear']);
-    const isHoodie = containsAny(value, ['hoodie', 'sweatshirt']);
-    const isOuterwear = isBomber || isJacket || isHoodie;
-    const isTank = value.includes('tank');
-    const isTshirt = !isDress && containsAny(value, ['t-shirt', 'tshirt', 'ringer t-shirt', 'heavyweight scripture']);
-    const isDrinkware = containsAny(value, ['mug', 'drinkware', 'bottle']);
-    const isBag = containsAny(value, ['bag', 'backpack', 'duffle', 'tote']);
-    const isAccessory = containsAny(value, ['phone case', 'tough case', 'keyring', 'keychain', 'accessories']);
+    const value = signalForCard(card);
+    const dress = containsAny(value, ['t-shirt dress', 'tshirt dress', ' dress']);
+    const headwear = containsAny(value, ['snapback', 'dad hat', 'baseball cap', ' cap', ' hat', 'headwear']);
+    const bomber = value.includes('bomber');
+    const hoodie = containsAny(value, ['hoodie', 'sweatshirt']);
+    const outerwear = bomber || hoodie || containsAny(value, ['jacket', 'outerwear']);
+    const tank = !dress && containsAny(value, ['tank top', ' tank', 'tank']);
+    const tshirt = !dress && !headwear && !outerwear && !tank
+      && containsAny(value, ['t-shirt', 'tshirt', 'tee', 'crewneck shirt', 'heavyweight scripture']);
+    const drinkware = containsAny(value, ['mug', 'drinkware', 'water bottle', 'bottle', 'tumbler']);
+    const bag = containsAny(value, ['backpack', 'duffle', 'tote bag', 'shoulder bag', ' bag']);
+    const accessory = containsAny(value, ['phone case', 'tough case', 'keyring', 'keychain', 'bracelet', 'accessor']);
     const explicitWomen = containsAny(value, [' women ', " women's ", ' womens ', 'female', 'ladies', '6a61746d245cf']);
     const explicitMen = containsAny(value, [' men ', " men's ", ' mens ', 'male', '6a6170040175a']);
-    const menOnlyOuterwear = isOuterwear && (explicitMen || (isBomber && !explicitWomen));
-    const womenOnlyOuterwear = isOuterwear && explicitWomen && !explicitMen;
+    const menOnlyOuterwear = outerwear && (explicitMen || (bomber && !explicitWomen));
+    const womenOnlyOuterwear = outerwear && explicitWomen && !explicitMen;
 
-    return {
-      value,
-      isDress,
-      isHeadwear,
-      isOuterwear,
-      isTank,
-      isTshirt,
-      isDrinkware,
-      isBag,
-      isAccessory,
-      menOnlyOuterwear,
-      womenOnlyOuterwear,
-    };
+    return { value, dress, headwear, bomber, hoodie, outerwear, tank, tshirt, drinkware, bag, accessory, menOnlyOuterwear, womenOnlyOuterwear };
   };
 
-  const cardMatchesCategory = (card, category) => {
-    if (category.key === 'all') return true;
+  const categoryLabel = (kind) => {
+    if (kind.dress) return 'Dress';
+    if (kind.headwear) return 'Headwear';
+    if (kind.outerwear) return kind.menOnlyOuterwear ? 'Men’s Outerwear' : 'Outerwear';
+    if (kind.tank) return 'Tank Top';
+    if (kind.tshirt) return 'T-Shirt';
+    if (kind.drinkware) return 'Drinkware';
+    if (kind.bag) return 'Bag';
+    if (kind.accessory) return 'Accessories';
+    return 'Radiant 34';
+  };
 
+  const genericDescription = (kind) => {
+    if (kind.dress) return 'A relaxed statement dress featuring original Radiant 34 artwork.';
+    if (kind.headwear) return 'Everyday headwear carrying a clear Radiant 34 faith-led statement.';
+    if (kind.outerwear) return kind.menOnlyOuterwear
+      ? 'A men’s outerwear piece featuring original Radiant 34 artwork.'
+      : 'A Radiant 34 outerwear piece featuring original faith-led artwork.';
+    if (kind.tank) return 'A lightweight tank top featuring original Radiant 34 artwork.';
+    if (kind.tshirt) return 'A T-shirt featuring original Radiant 34 faith-led artwork.';
+    if (kind.drinkware) return 'Everyday drinkware carrying a Radiant 34 faith-led design.';
+    if (kind.bag) return 'An everyday bag designed for work, training, church and travel.';
+    if (kind.accessory) return 'A practical everyday accessory featuring Radiant 34 artwork.';
+    return 'An original Radiant 34 product designed for everyday use.';
+  };
+
+  const supplierCopy = (description) => {
+    const value = description.toLowerCase();
+    return description.length > 165 || containsAny(value, [
+      'fabric weight', 'brushed fleece', 'overlock seams', '100% polyester', 'polyester •',
+      'customizable', 'stuff of dreams', 'add a little zing', 'may vary by 5%',
+      'blank product components', 'sourced from mexico', 'sourced from lithuania',
+    ]);
+  };
+
+  const normalizeCard = (card) => {
+    const titleNode = card.querySelector('.shopify-card__body strong');
+    const categoryNode = card.querySelector('.product-card__category');
+    const descriptionNode = card.querySelector('.shopify-card__description');
+    if (!titleNode || !categoryNode) return;
+
+    const lowerTitle = text(titleNode).toLowerCase();
+    let title = text(titleNode);
+    let description = descriptionNode ? text(descriptionNode) : '';
+
+    if (lowerTitle.includes('bomber jacket')) {
+      title = 'Radiant 34 Men’s Bomber Jacket';
+      description = 'A lightweight men’s bomber jacket featuring original Radiant 34 artwork.';
+    } else if (lowerTitle.includes('heavyweight scripture t-shirt 04')) {
+      title = 'Radiant 34 Faith Over Fear Heavyweight T-Shirt';
+      description = 'A heavyweight T-shirt featuring the Faith Over Fear design.';
+    } else if (lowerTitle.includes('heavyweight scripture t-shirt 05')) {
+      title = 'Radiant 34 Jesus Is King Heavyweight T-Shirt';
+      description = 'A heavyweight T-shirt featuring the Jesus Is King design.';
+    }
+
+    if (titleNode.textContent !== title) titleNode.textContent = title;
     const kind = classifyCard(card);
+    const label = categoryLabel(kind);
+    if (categoryNode.textContent !== label) categoryNode.textContent = label;
 
-    switch (category.key) {
+    if (descriptionNode) {
+      const nextDescription = supplierCopy(description) ? genericDescription(kind) : description;
+      if (descriptionNode.textContent !== nextDescription) descriptionNode.textContent = nextDescription;
+    }
+
+    card.dataset.r34Kind = kind.dress ? 'dress'
+      : kind.headwear ? 'headwear'
+      : kind.outerwear ? 'outerwear'
+      : kind.tank ? 'tank'
+      : kind.tshirt ? 'tshirt'
+      : kind.drinkware ? 'drinkware'
+      : kind.bag ? 'bag'
+      : kind.accessory ? 'accessories'
+      : 'other';
+    card.dataset.r34MenOnlyOuterwear = kind.menOnlyOuterwear ? 'true' : 'false';
+    card.dataset.r34WomenOnlyOuterwear = kind.womenOnlyOuterwear ? 'true' : 'false';
+  };
+
+  const matchesCategory = (card, key) => {
+    if (key === 'all') return true;
+    const kind = card.dataset.r34Kind || 'other';
+    const menOnly = card.dataset.r34MenOnlyOuterwear === 'true';
+    const womenOnly = card.dataset.r34WomenOnlyOuterwear === 'true';
+
+    switch (key) {
       case 'women':
-        return kind.isDress
-          || kind.isTshirt
-          || kind.isTank
-          || (kind.isOuterwear && !kind.menOnlyOuterwear);
+        return ['dress', 'tshirt', 'tank'].includes(kind) || (kind === 'outerwear' && !menOnly);
       case 'men':
-        return !kind.isDress
-          && !kind.womenOnlyOuterwear
-          && (kind.isTshirt || kind.isTank || kind.isOuterwear || kind.isHeadwear);
+        return !womenOnly && ['tshirt', 'tank', 'outerwear', 'headwear'].includes(kind);
       case 'womens-outerwear':
-        return kind.isOuterwear && !kind.menOnlyOuterwear && !kind.isHeadwear && !kind.isDress;
+        return kind === 'outerwear' && !menOnly;
       case 'mens-outerwear':
-        return kind.isOuterwear && !kind.womenOnlyOuterwear && !kind.isHeadwear && !kind.isDress;
-      case 'dresses':
-        return kind.isDress;
-      case 'tshirts':
-        return kind.isTshirt;
-      case 'tanks':
-        return kind.isTank;
-      case 'headwear':
-        return kind.isHeadwear && !kind.isOuterwear;
-      case 'drinkware':
-        return kind.isDrinkware;
-      case 'bags':
-        return kind.isBag;
-      case 'accessories':
-        return kind.isAccessory;
-      default:
-        return false;
+        return kind === 'outerwear' && !womenOnly;
+      case 'dresses': return kind === 'dress';
+      case 'tshirts': return kind === 'tshirt';
+      case 'tanks': return kind === 'tank';
+      case 'headwear': return kind === 'headwear';
+      case 'drinkware': return kind === 'drinkware';
+      case 'bags': return kind === 'bag';
+      case 'accessories': return kind === 'accessories';
+      default: return false;
     }
   };
 
   const resetReactFilter = (shopPage) => {
     const allButton = Array.from(shopPage.querySelectorAll('.filters button'))
-      .find((item) => text(item).toLowerCase() === 'all');
+      .find((button) => text(button).toLowerCase() === 'all');
     allButton?.click();
   };
 
-  const applySelectedCategory = (shopPage) => {
-    const selectedKey = shopPage.dataset.r34SelectedCategory;
-    if (!selectedKey) return;
+  const ensureChooser = (shopPage) => {
+    const controls = shopPage.querySelector('.shop-controls');
+    if (!controls) return null;
 
-    const category = categories.find((item) => item.key === selectedKey);
-    if (!category) return;
-
-    const cards = Array.from(shopPage.querySelectorAll('.product-grid--shop .shopify-card'));
-    let visibleCount = 0;
-
-    cards.forEach((card) => {
-      const visible = cardMatchesCategory(card, category);
-      card.style.setProperty('display', visible ? '' : 'none', visible ? '' : 'important');
-      card.setAttribute('aria-hidden', visible ? 'false' : 'true');
-      if (visible) visibleCount += 1;
-    });
-
-    let empty = shopPage.querySelector('.r34-taxonomy-empty');
-    if (!empty) {
-      empty = document.createElement('p');
-      empty.className = 'shop-empty r34-taxonomy-empty';
-      empty.textContent = 'No active products are currently available in this category.';
-      shopPage.querySelector('.product-grid--shop')?.before(empty);
+    let chooser = shopPage.querySelector('.r34-shop-categories');
+    if (!chooser) {
+      chooser = document.createElement('section');
+      chooser.className = 'r34-shop-categories';
+      controls.before(chooser);
     }
-    empty.style.display = visibleCount ? 'none' : '';
+
+    let intro = chooser.querySelector('.r34-shop-category-intro');
+    if (!intro) {
+      intro = document.createElement('div');
+      intro.className = 'r34-shop-category-intro';
+      chooser.prepend(intro);
+    }
+    intro.innerHTML = '<h2>Shop by category.</h2><p>Choose a category to view the matching products.</p>';
+
+    let grid = chooser.querySelector('.r34-shop-category-grid');
+    if (!grid) {
+      grid = document.createElement('div');
+      grid.className = 'r34-shop-category-grid';
+      chooser.appendChild(grid);
+    }
+
+    const signature = 'authoritative-shop-categories-v8';
+    if (grid.dataset.r34CatalogSignature !== signature) {
+      grid.dataset.r34CatalogSignature = signature;
+      grid.innerHTML = categories.map((category) => `
+        <button type="button" class="r34-shop-category-card" data-r34-category-key="${category.key}" aria-label="Shop ${category.label}" aria-pressed="false">
+          <img src="${category.image}" alt="${category.label}">
+          <span class="r34-shop-category-card__copy">
+            <strong>${category.label}</strong>
+            <span>${category.description}</span>
+          </span>
+        </button>
+      `).join('');
+    }
+
+    chooser.hidden = false;
+    chooser.style.removeProperty('display');
+    shopPage.querySelector('.r34-shop-back')?.remove();
+    return chooser;
   };
 
-  const showResults = (shopPage, selectedButton, category) => {
-    shopPage.dataset.r34CategoryOpen = 'true';
-    shopPage.dataset.r34SelectedCategory = category.key;
-    resetReactFilter(shopPage);
+  const ensureResultsHeading = (shopPage, category) => {
+    const controls = shopPage.querySelector('.shop-controls');
+    if (!controls) return null;
+    let heading = shopPage.querySelector('.r34-shop-results-heading');
+    if (!heading) {
+      heading = document.createElement('div');
+      heading.className = 'r34-shop-results-heading';
+      controls.before(heading);
+    }
+    heading.innerHTML = `<p class="eyebrow">Selected category</p><h2>${category.label}</h2><p>${category.description}</p>`;
+    heading.hidden = false;
+    return heading;
+  };
 
-    const chooser = shopPage.querySelector('.r34-shop-categories');
+  const applyCategory = (shopPage, key, shouldScroll = false) => {
+    const category = categories.find((item) => item.key === key);
+    if (!category) return;
+
+    resetReactFilter(shopPage);
+    const cards = Array.from(shopPage.querySelectorAll('.product-grid--shop .shopify-card'));
+    cards.forEach(normalizeCard);
+
+    let visibleCount = 0;
+    cards.forEach((card) => {
+      const visible = matchesCategory(card, key);
+      if (visible) {
+        card.style.removeProperty('display');
+        card.hidden = false;
+        visibleCount += 1;
+      } else {
+        card.style.setProperty('display', 'none', 'important');
+      }
+      card.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    });
+
+    shopPage.dataset.r34CategoryOpen = 'true';
+    shopPage.dataset.r34SelectedCategory = key;
+
     const controls = shopPage.querySelector('.shop-controls');
     const productGrid = shopPage.querySelector('.product-grid--shop');
-
-    if (chooser) {
-      chooser.hidden = false;
-      chooser.style.removeProperty('display');
-    }
-
     [controls, productGrid].forEach((node) => {
       if (!node) return;
       node.hidden = false;
-      node.classList.remove(HIDDEN_CLASS);
       node.style.removeProperty('display');
     });
 
     shopPage.querySelectorAll('.r34-shop-category-card').forEach((button) => {
-      const selected = button === selectedButton;
+      const selected = button.dataset.r34CategoryKey === key;
       button.classList.toggle(SELECTED_CLASS, selected);
       button.setAttribute('aria-pressed', selected ? 'true' : 'false');
     });
 
-    window.setTimeout(() => {
-      applySelectedCategory(shopPage);
-      const heading = shopPage.querySelector('.r34-shop-results-heading');
-      heading?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 80);
+    const heading = ensureResultsHeading(shopPage, category);
+    let empty = shopPage.querySelector('.r34-taxonomy-empty');
+    if (!empty) {
+      empty = document.createElement('p');
+      empty.className = 'shop-empty r34-taxonomy-empty';
+      productGrid?.before(empty);
+    }
+    empty.textContent = 'No active products are currently available in this category.';
+    empty.style.display = visibleCount ? 'none' : '';
+
+    if (shouldScroll) window.setTimeout(() => heading?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 40);
   };
 
-  const rebuildCategories = () => {
+  const showLanding = (shopPage) => {
+    shopPage.dataset.r34CategoryOpen = 'false';
+    delete shopPage.dataset.r34SelectedCategory;
+    const controls = shopPage.querySelector('.shop-controls');
+    const productGrid = shopPage.querySelector('.product-grid--shop');
+    if (controls) controls.hidden = true;
+    if (productGrid) productGrid.hidden = true;
+    shopPage.querySelectorAll('.r34-shop-category-card').forEach((button) => {
+      button.classList.remove(SELECTED_CLASS);
+      button.setAttribute('aria-pressed', 'false');
+    });
+  };
+
+  const sync = () => {
     if (window.location.pathname !== '/shop') return;
+    installStyles();
 
     const shopPage = document.querySelector('.shop-page');
     const productGrid = shopPage?.querySelector('.product-grid--shop');
     const cards = Array.from(productGrid?.querySelectorAll('.shopify-card') ?? []);
     if (!shopPage || !productGrid || !cards.length) return;
 
-    const chooser = shopPage.querySelector('.r34-shop-categories');
-    const grid = chooser?.querySelector('.r34-shop-category-grid');
-    if (!chooser || !grid) return;
+    cards.forEach(normalizeCard);
+    ensureChooser(shopPage);
 
-    const signature = cards
-      .map((card) => `${text(card.querySelector('.product-card__category'))}:${text(card.querySelector('.shopify-card__body strong'))}`)
-      .sort()
-      .join('|');
-    const combinedSignature = `gender-separated-outerwear-v6|${signature}`;
-
-    if (grid.dataset.r34CatalogSignature !== combinedSignature) {
-      grid.dataset.r34CatalogSignature = combinedSignature;
-      grid.innerHTML = '';
-
-      categories.forEach((category) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'r34-shop-category-card';
-        button.setAttribute('aria-label', `Shop ${category.label}`);
-        button.setAttribute('aria-pressed', 'false');
-        button.dataset.r34CategoryKey = category.key;
-        button.innerHTML = `
-          <img src="${category.image}" alt="${category.label}">
-          <span class="r34-shop-category-card__copy">
-            <strong>${category.label}</strong>
-            <span>${category.description}</span>
-          </span>
-        `;
-        button.addEventListener('click', () => showResults(shopPage, button, category));
-        grid.appendChild(button);
-      });
-    }
-
-    applySelectedCategory(shopPage);
+    const selectedKey = shopPage.dataset.r34SelectedCategory;
+    if (selectedKey) applyCategory(shopPage, selectedKey, false);
+    else showLanding(shopPage);
   };
+
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest?.('.r34-shop-category-card');
+    if (!button || window.location.pathname !== '/shop') return;
+
+    const key = button.dataset.r34CategoryKey;
+    const shopPage = button.closest('.shop-page');
+    if (!key || !shopPage) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    applyCategory(shopPage, key, true);
+  }, true);
 
   let queued = false;
   const queue = () => {
     if (queued) return;
     queued = true;
     requestAnimationFrame(() => {
-      queued = false;
-      rebuildCategories();
+      requestAnimationFrame(() => {
+        queued = false;
+        sync();
+      });
     });
   };
 
-  new MutationObserver(queue).observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-  });
-  window.addEventListener('popstate', queue);
+  new MutationObserver(queue).observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener('DOMContentLoaded', queue);
-  document.addEventListener('click', () => setTimeout(queue, 0));
+  window.addEventListener('popstate', queue);
   queue();
 })();

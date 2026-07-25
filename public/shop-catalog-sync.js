@@ -21,19 +21,19 @@
     {
       key: 'women',
       label: 'Women',
-      description: 'Dresses and selected unisex Radiant 34 clothing styled for women.',
+      description: 'Dresses, T-shirts, tanks and selected Radiant 34 layers styled for women.',
       image: CATEGORY_IMAGES.women,
     },
     {
       key: 'men',
       label: 'Men',
-      description: 'Unisex T-shirts, tanks, layers and headwear styled for men.',
+      description: 'T-shirts, tanks, outerwear and headwear styled for men.',
       image: CATEGORY_IMAGES.men,
     },
     {
       key: 'womens-outerwear',
       label: "Women’s Outerwear",
-      description: 'Bomber jackets and hoodies available for women in the current collection.',
+      description: 'Hoodies and selected outerwear available for women in the current collection.',
       image: CATEGORY_IMAGES.womensOuterwear,
     },
     {
@@ -93,21 +93,34 @@
   ];
 
   const text = (node) => node?.textContent?.trim() ?? '';
-  const productText = (card) =>
-    `${text(card.querySelector('.product-card__category'))} ${text(card.querySelector('.shopify-card__body strong'))}`.toLowerCase();
-
   const containsAny = (value, terms) => terms.some((term) => value.includes(term));
 
+  const productSignal = (card) => {
+    const category = text(card.querySelector('.product-card__category'));
+    const title = text(card.querySelector('.shopify-card__body strong'));
+    const image = card.querySelector('.shopify-card__image img');
+    const imageAlt = image?.getAttribute('alt') ?? '';
+    const imageSrc = image?.getAttribute('src') ?? '';
+    return `${category} ${title} ${imageAlt} ${imageSrc}`.toLowerCase();
+  };
+
   const classifyCard = (card) => {
-    const value = productText(card);
+    const value = productSignal(card);
     const isDress = value.includes('dress');
     const isHeadwear = containsAny(value, ['snapback', 'dad hat', ' hat', 'cap', 'headwear']);
-    const isOuterwear = containsAny(value, ['hoodie', 'sweatshirt', 'bomber', 'jacket', 'outerwear']);
+    const isBomber = value.includes('bomber');
+    const isJacket = containsAny(value, ['jacket', 'outerwear']);
+    const isHoodie = containsAny(value, ['hoodie', 'sweatshirt']);
+    const isOuterwear = isBomber || isJacket || isHoodie;
     const isTank = value.includes('tank');
     const isTshirt = !isDress && containsAny(value, ['t-shirt', 'tshirt', 'ringer t-shirt', 'heavyweight scripture']);
     const isDrinkware = containsAny(value, ['mug', 'drinkware', 'bottle']);
     const isBag = containsAny(value, ['bag', 'backpack', 'duffle', 'tote']);
     const isAccessory = containsAny(value, ['phone case', 'tough case', 'keyring', 'keychain', 'accessories']);
+    const explicitWomen = containsAny(value, [' women ', " women's ", ' womens ', 'female', 'ladies', '6a61746d245cf']);
+    const explicitMen = containsAny(value, [' men ', " men's ", ' mens ', 'male', '6a6170040175a']);
+    const menOnlyOuterwear = isOuterwear && (explicitMen || (isBomber && !explicitWomen));
+    const womenOnlyOuterwear = isOuterwear && explicitWomen && !explicitMen;
 
     return {
       value,
@@ -119,6 +132,8 @@
       isDrinkware,
       isBag,
       isAccessory,
+      menOnlyOuterwear,
+      womenOnlyOuterwear,
     };
   };
 
@@ -129,12 +144,18 @@
 
     switch (category.key) {
       case 'women':
-        return kind.isDress || kind.isTshirt || kind.isTank || kind.isOuterwear;
+        return kind.isDress
+          || kind.isTshirt
+          || kind.isTank
+          || (kind.isOuterwear && !kind.menOnlyOuterwear);
       case 'men':
-        return !kind.isDress && (kind.isTshirt || kind.isTank || kind.isOuterwear || kind.isHeadwear);
+        return !kind.isDress
+          && !kind.womenOnlyOuterwear
+          && (kind.isTshirt || kind.isTank || kind.isOuterwear || kind.isHeadwear);
       case 'womens-outerwear':
+        return kind.isOuterwear && !kind.menOnlyOuterwear && !kind.isHeadwear && !kind.isDress;
       case 'mens-outerwear':
-        return kind.isOuterwear && !kind.isHeadwear && !kind.isDress;
+        return kind.isOuterwear && !kind.womenOnlyOuterwear && !kind.isHeadwear && !kind.isDress;
       case 'dresses':
         return kind.isDress;
       case 'tshirts':
@@ -237,7 +258,7 @@
       .map((card) => `${text(card.querySelector('.product-card__category'))}:${text(card.querySelector('.shopify-card__body strong'))}`)
       .sort()
       .join('|');
-    const combinedSignature = `fixed-unique-category-images-v5|${signature}`;
+    const combinedSignature = `gender-separated-outerwear-v6|${signature}`;
 
     if (grid.dataset.r34CatalogSignature !== combinedSignature) {
       grid.dataset.r34CatalogSignature = combinedSignature;

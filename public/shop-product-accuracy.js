@@ -28,14 +28,19 @@
   const signalForCard = (card) => {
     const category = text(card.querySelector('.product-card__category'));
     const title = text(card.querySelector('.shopify-card__body strong'));
-    const imageAlt = card.querySelector('.shopify-card__image img')?.getAttribute('alt') ?? '';
-    return `${category} ${title} ${imageAlt}`.toLowerCase();
+    const image = card.querySelector('.shopify-card__image img');
+    const imageAlt = image?.getAttribute('alt') ?? '';
+    const imageSrc = image?.getAttribute('src') ?? '';
+    return `${category} ${title} ${imageAlt} ${imageSrc}`.toLowerCase();
   };
 
   const classifySignal = (value) => {
     const isDress = containsAny(value, ['t-shirt dress', 'tshirt dress', ' dress']);
     const isHeadwear = containsAny(value, ['snapback', 'dad hat', 'baseball cap', ' cap', 'headwear']);
-    const isOuterwear = containsAny(value, ['hoodie', 'sweatshirt', 'bomber', 'jacket', 'outerwear']);
+    const isBomber = value.includes('bomber');
+    const isJacket = containsAny(value, ['jacket', 'outerwear']);
+    const isHoodie = containsAny(value, ['hoodie', 'sweatshirt']);
+    const isOuterwear = isBomber || isJacket || isHoodie;
     const isTank = !isDress && containsAny(value, ['tank top', ' tank', 'tank']);
     const isDrinkware = containsAny(value, ['mug', 'drinkware', 'water bottle', 'tumbler']);
     const isBag = containsAny(value, ['backpack', 'duffle', 'tote bag', 'shoulder bag', ' bag']);
@@ -45,6 +50,10 @@
       && !isOuterwear
       && !isTank
       && containsAny(value, ['t-shirt', 'tshirt', 'tee', 'crewneck shirt', 'heavyweight scripture']);
+    const explicitWomen = containsAny(value, [' women ', " women's ", ' womens ', 'female', 'ladies', '6a61746d245cf']);
+    const explicitMen = containsAny(value, [' men ', " men's ", ' mens ', 'male', '6a6170040175a']);
+    const menOnlyOuterwear = isOuterwear && (explicitMen || (isBomber && !explicitWomen));
+    const womenOnlyOuterwear = isOuterwear && explicitWomen && !explicitMen;
 
     return {
       isDress,
@@ -55,6 +64,8 @@
       isDrinkware,
       isBag,
       isAccessory,
+      menOnlyOuterwear,
+      womenOnlyOuterwear,
     };
   };
 
@@ -85,7 +96,7 @@
   const genericDescription = (kind) => {
     if (kind.isDress) return 'A relaxed statement dress featuring original Radiant 34 artwork.';
     if (kind.isHeadwear) return 'Everyday headwear carrying a clear Radiant 34 faith-led statement.';
-    if (kind.isOuterwear) return 'A unisex outerwear piece featuring original Radiant 34 artwork.';
+    if (kind.isOuterwear) return 'A Radiant 34 outerwear piece featuring original faith-led artwork.';
     if (kind.isTank) return 'A lightweight unisex tank top featuring Radiant 34 artwork.';
     if (kind.isTshirt) return 'A unisex T-shirt featuring original Radiant 34 faith-led artwork.';
     if (kind.isDrinkware) return 'Everyday drinkware carrying a Radiant 34 faith-led design.';
@@ -123,8 +134,8 @@
     let publicDescription = descriptionNode ? text(descriptionNode) : '';
 
     if (lowerTitle === 'unisex bomber jacket' || (lowerTitle.includes('bomber jacket') && !lowerTitle.includes('radiant 34'))) {
-      publicTitle = 'Radiant 34 All-Over Print Bomber Jacket';
-      publicDescription = 'A lightweight unisex bomber jacket featuring original Radiant 34 artwork.';
+      publicTitle = 'Radiant 34 Men’s All-Over Print Bomber Jacket';
+      publicDescription = 'A lightweight men’s bomber jacket featuring original Radiant 34 artwork.';
     }
 
     if (lowerTitle.includes('heavyweight scripture t-shirt 04')) {
@@ -139,7 +150,7 @@
 
     if (titleNode.textContent !== publicTitle) titleNode.textContent = publicTitle;
 
-    const kind = classifySignal(`${publicTitle} ${categoryNode.textContent ?? ''} ${card.querySelector('.shopify-card__image img')?.getAttribute('alt') ?? ''}`.toLowerCase());
+    const kind = classifySignal(`${publicTitle} ${categoryNode.textContent ?? ''} ${signalForCard(card)}`.toLowerCase());
     const correctCategory = categoryLabel(kind);
     if (categoryNode.textContent !== correctCategory) categoryNode.textContent = correctCategory;
 
@@ -152,21 +163,27 @@
     }
 
     card.dataset.r34ProductKind = productKind(kind);
+    card.dataset.r34MenOnlyOuterwear = kind.menOnlyOuterwear ? 'true' : 'false';
+    card.dataset.r34WomenOnlyOuterwear = kind.womenOnlyOuterwear ? 'true' : 'false';
   };
 
   const matchesSelectedCategory = (card, selectedKey) => {
     if (!selectedKey || selectedKey === 'all') return true;
 
     const kind = card.dataset.r34ProductKind || productKind(classifySignal(signalForCard(card)));
+    const menOnlyOuterwear = card.dataset.r34MenOnlyOuterwear === 'true';
+    const womenOnlyOuterwear = card.dataset.r34WomenOnlyOuterwear === 'true';
 
     switch (selectedKey) {
       case 'women':
-        return ['dress', 'tshirt', 'tank', 'outerwear'].includes(kind);
+        return ['dress', 'tshirt', 'tank'].includes(kind)
+          || (kind === 'outerwear' && !menOnlyOuterwear);
       case 'men':
-        return ['tshirt', 'tank', 'outerwear', 'headwear'].includes(kind);
+        return !womenOnlyOuterwear && ['tshirt', 'tank', 'outerwear', 'headwear'].includes(kind);
       case 'womens-outerwear':
+        return kind === 'outerwear' && !menOnlyOuterwear;
       case 'mens-outerwear':
-        return kind === 'outerwear';
+        return kind === 'outerwear' && !womenOnlyOuterwear;
       case 'dresses':
         return kind === 'dress';
       case 'tshirts':

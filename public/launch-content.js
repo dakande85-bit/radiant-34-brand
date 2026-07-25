@@ -2,45 +2,6 @@
   const HOMEPAGE_BLACK_MALE_MODEL = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-homepage-black-male-cream-tee_875dd493-88c1-48c5-b511-9f9fd3bcb00d.png?v=1784762298';
   const HOMEPAGE_BRUNETTE_MODEL = '/images/radiant-editorial-02.png';
 
-  const SHOP_CATEGORIES = [
-    {
-      label: 'T-Shirts',
-      filter: 'Tees',
-      description: 'Everyday tees carrying Scripture with a clean, wearable finish.',
-      matches: ['t-shirt', 'tee', 'shirt'],
-    },
-    {
-      label: 'Hoodies',
-      filter: 'Hoodies',
-      description: 'Premium layers designed for comfort, faith and everyday use.',
-      matches: ['hoodie', 'sweatshirt'],
-    },
-    {
-      label: 'Mugs & Drinkware',
-      filter: 'Drinkware',
-      description: 'Daily reminders for coffee, tea, training and quiet moments.',
-      matches: ['drinkware', 'mug', 'bottle', 'drink'],
-    },
-    {
-      label: 'Bags',
-      filter: 'Bags',
-      description: 'Backpacks, totes and travel pieces made to carry the message.',
-      matches: ['bag', 'backpack', 'duffle', 'tote'],
-    },
-    {
-      label: 'Accessories',
-      filter: 'Accessories',
-      description: 'Small everyday pieces with a clear Radiant 34 identity.',
-      matches: ['accessories', 'case', 'keyring', 'keychain', 'hat', 'cap'],
-    },
-    {
-      label: 'All Products',
-      filter: 'All',
-      description: 'Browse the complete active Radiant 34 collection.',
-      matches: [],
-    },
-  ];
-
   const text = (node) => node?.textContent?.trim() ?? '';
 
   const replaceExactText = (from, to) => {
@@ -55,10 +16,11 @@
     });
   };
 
-  const installHomepageStyles = () => {
-    if (document.getElementById('r34-homepage-launch-styles')) return;
+  const installStyles = () => {
+    if (document.getElementById('r34-launch-styles')) return;
+
     const style = document.createElement('style');
-    style.id = 'r34-homepage-launch-styles';
+    style.id = 'r34-launch-styles';
     style.textContent = `
       .r34-psalm-editorial {
         display:grid !important;
@@ -73,7 +35,6 @@
         object-fit:cover !important;
         object-position:center !important;
       }
-      .r34-psalm-editorial .eyebrow { letter-spacing:.18em; }
       .r34-psalm-editorial h2 { max-width:12ch; }
       .r34-psalm-editorial p { max-width:42ch; }
 
@@ -95,16 +56,11 @@
       .site-footer nav button:hover { color:#b98529 !important; }
       .site-footer span { color:#74654e !important; }
 
-      .r34-shop-categories {
-        margin-top:34px;
-      }
-      .r34-shop-category-intro {
-        max-width:680px;
-        margin-bottom:30px;
-      }
+      .r34-shop-categories { margin-top:34px; }
+      .r34-shop-category-intro { max-width:680px; margin-bottom:30px; }
       .r34-shop-category-intro h2 {
         margin:0;
-        font-family:Georgia, 'Times New Roman', serif;
+        font-family:Georgia,'Times New Roman',serif;
         font-size:clamp(2.35rem,4.8vw,5rem);
         font-weight:400;
         line-height:1;
@@ -141,9 +97,7 @@
         object-position:center;
         transition:transform .45s ease;
       }
-      .r34-shop-category-card:hover img {
-        transform:scale(1.035);
-      }
+      .r34-shop-category-card:hover img { transform:scale(1.035); }
       .r34-shop-category-card::after {
         content:'';
         position:absolute;
@@ -160,7 +114,7 @@
       }
       .r34-shop-category-card__copy strong {
         display:block;
-        font-family:Georgia, 'Times New Roman', serif;
+        font-family:Georgia,'Times New Roman',serif;
         font-size:clamp(1.7rem,2.5vw,2.6rem);
         font-weight:400;
         line-height:1;
@@ -172,24 +126,6 @@
         color:rgba(255,250,240,.82);
         font-size:.88rem;
         line-height:1.55;
-      }
-      .r34-shop-back {
-        width:max-content;
-        min-height:44px;
-        margin:0 0 24px;
-        padding:0 18px;
-        border:1px solid rgba(17,16,13,.24);
-        border-radius:999px;
-        background:transparent;
-        color:#11100d;
-        font-size:.68rem;
-        font-weight:900;
-        letter-spacing:.13em;
-        text-transform:uppercase;
-      }
-      .r34-shop-back:hover {
-        border-color:#b98529;
-        color:#b98529;
       }
 
       @media (max-width:980px) {
@@ -213,10 +149,10 @@
   const simplifyNavigation = () => {
     document.querySelectorAll('.main-nav > a').forEach((link) => {
       const label = text(link).toLowerCase();
-      if (label === 'lookbook' || label === 'mission') link.remove();
+      if (label === 'lookbook' || label === 'mission' || label === 'drop 001') link.remove();
     });
 
-    const allowedFooterLinks = new Set(['shop', 'drop 001', 'our story', 'contact']);
+    const allowedFooterLinks = new Set(['shop', 'our story', 'contact']);
     document.querySelectorAll('.site-footer nav button').forEach((button) => {
       if (!allowedFooterLinks.has(text(button).toLowerCase())) button.remove();
     });
@@ -224,65 +160,48 @@
     replaceExactText('Get Drop Alert', 'Contact');
   };
 
-  const updateHeroCopy = () => {
-    const hero = document.querySelector('main .hero');
-    if (!hero) return;
+  const restructureHome = () => {
+    if (window.location.pathname !== '/') return;
 
-    const intro = hero.querySelector('.hero-copy > p:not(.eyebrow)');
+    const hero = document.querySelector('main .hero');
+    const intro = hero?.querySelector('.hero-copy > p:not(.eyebrow)');
     if (intro) {
       intro.textContent = 'Faith for everyday life. Radiant 34 creates clothing and essentials inspired by Scripture — designed to carry hope, courage and light wherever you go.';
     }
-  };
 
-  const removeHomepageProducts = () => {
-    document.querySelectorAll('main .drop-band').forEach((section) => {
-      section.remove();
-    });
-
+    document.querySelectorAll('main .drop-band').forEach((section) => section.remove());
     document.querySelectorAll('.r34-home-mockup-grid, .r34-home-mockup').forEach((node) => {
       const section = node.closest('section');
       if (section) section.remove();
       else node.remove();
     });
-  };
 
-  const updatePsalmEditorial = () => {
-    const section = document.querySelector('main .lookbook');
-    if (!section) return;
+    const editorial = document.querySelector('main .lookbook');
+    if (editorial) {
+      editorial.hidden = false;
+      editorial.classList.add('r34-psalm-editorial');
+      const eyebrow = editorial.querySelector('.eyebrow');
+      const heading = editorial.querySelector('h2');
+      const paragraphs = Array.from(editorial.querySelectorAll('.lookbook-copy > p')).filter((node) => node !== eyebrow);
+      const images = Array.from(editorial.querySelectorAll('img'));
 
-    section.hidden = false;
-    section.classList.add('r34-psalm-editorial');
+      if (eyebrow) eyebrow.textContent = 'Psalm 34:5';
+      if (heading) heading.textContent = 'Look to Him. Walk without shame.';
+      if (paragraphs[0]) paragraphs[0].textContent = 'For ordinary days and difficult seasons: turn your eyes toward God. Courage, peace and identity begin there.';
+      paragraphs.slice(1).forEach((paragraph) => paragraph.remove());
 
-    const eyebrow = section.querySelector('.eyebrow');
-    const heading = section.querySelector('h2');
-    const paragraphs = Array.from(section.querySelectorAll('.lookbook-copy > p')).filter((node) => node !== eyebrow);
-    const images = Array.from(section.querySelectorAll('img'));
-
-    if (eyebrow) eyebrow.textContent = 'Psalm 34:5';
-    if (heading) heading.textContent = 'Look to Him. Walk without shame.';
-    if (paragraphs[0]) {
-      paragraphs[0].textContent = 'For ordinary days and difficult seasons: turn your eyes toward God. Courage, peace and identity begin there.';
+      if (images[0]) {
+        images[0].src = HOMEPAGE_BLACK_MALE_MODEL;
+        images[0].alt = 'Black male model wearing the cream Radiant 34 T-shirt';
+        images[0].removeAttribute('srcset');
+      }
+      if (images[1]) {
+        images[1].src = HOMEPAGE_BRUNETTE_MODEL;
+        images[1].alt = 'White brunette model wearing a Radiant 34 T-shirt';
+        images[1].removeAttribute('srcset');
+      }
     }
-    paragraphs.slice(1).forEach((paragraph) => paragraph.remove());
 
-    if (images[0]) {
-      images[0].src = HOMEPAGE_BLACK_MALE_MODEL;
-      images[0].alt = 'Black male model wearing the cream Radiant 34 T-shirt';
-      images[0].removeAttribute('srcset');
-    }
-    if (images[1]) {
-      images[1].src = HOMEPAGE_BRUNETTE_MODEL;
-      images[1].alt = 'White brunette model wearing a Radiant 34 T-shirt';
-      images[1].removeAttribute('srcset');
-    }
-  };
-
-  const restructureHome = () => {
-    if (window.location.pathname !== '/') return;
-
-    updateHeroCopy();
-    removeHomepageProducts();
-    updatePsalmEditorial();
     hideSectionContaining('Clothing that funds the telling');
 
     const story = document.querySelector('.about-section');
@@ -304,210 +223,42 @@
     }
   };
 
-  const restructureDrop = () => {
-    if (window.location.pathname !== '/drop-001') return;
-
-    document.querySelectorAll('.drop-strip__item').forEach((item, index) => {
-      item.hidden = index >= 6;
-    });
-
-    document.querySelectorAll('.lookbook, .campaign-grid').forEach((section) => {
-      section.hidden = true;
-    });
-
-    const statement = document.querySelector('.campaign-statement');
-    if (statement) {
-      const eyebrow = statement.querySelector('.eyebrow');
-      const heading = statement.querySelector('h2');
-      const copy = statement.querySelector('p:last-child');
-      if (eyebrow) eyebrow.textContent = 'The first collection';
-      if (heading) heading.textContent = 'Drop 001 begins with Psalm 34:5.';
-      if (copy) copy.textContent = 'A focused collection built around deliverance, testimony, and the quiet confidence that comes from looking to Christ.';
-    }
-  };
-
-  const cardMatchesCategory = (card, category) => {
-    if (!category.matches.length) return true;
-    const haystack = `${text(card.querySelector('.product-card__category'))} ${text(card.querySelector('strong'))}`.toLowerCase();
-    return category.matches.some((term) => haystack.includes(term));
-  };
-
-  const chooseCategory = (shopPage, category) => {
-    const chooser = shopPage.querySelector('.r34-shop-categories');
-    const controls = shopPage.querySelector('.shop-controls');
-    const productGrid = shopPage.querySelector('.product-grid--shop');
-    const backButton = shopPage.querySelector('.r34-shop-back');
-    const filterButton = Array.from(shopPage.querySelectorAll('.filters button'))
-      .find((button) => text(button).toLowerCase() === category.filter.toLowerCase());
-
-    shopPage.dataset.r34CategoryOpen = 'true';
-    if (filterButton) filterButton.click();
-    if (chooser) chooser.hidden = true;
-    if (controls) controls.hidden = false;
-    if (productGrid) productGrid.hidden = false;
-    if (backButton) backButton.hidden = false;
-
-    const heading = shopPage.querySelector('.section-head h1');
-    const copy = shopPage.querySelector('.section-head > p');
-    if (heading) heading.textContent = category.label;
-    if (copy) copy.textContent = category.description;
-
-    window.setTimeout(() => {
-      productGrid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 30);
-  };
-
-  const showCategoryLanding = (shopPage) => {
-    const chooser = shopPage.querySelector('.r34-shop-categories');
-    const controls = shopPage.querySelector('.shop-controls');
-    const productGrid = shopPage.querySelector('.product-grid--shop');
-    const backButton = shopPage.querySelector('.r34-shop-back');
-    const allFilter = Array.from(shopPage.querySelectorAll('.filters button'))
-      .find((button) => text(button).toLowerCase() === 'all');
-    const search = shopPage.querySelector('.shop-search input');
-
-    shopPage.dataset.r34CategoryOpen = 'false';
-    if (allFilter) allFilter.click();
-    if (search) {
-      search.value = '';
-      search.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-    if (chooser) chooser.hidden = false;
-    if (controls) controls.hidden = true;
-    if (productGrid) productGrid.hidden = true;
-    if (backButton) backButton.hidden = true;
-
-    const eyebrow = shopPage.querySelector('.section-head .eyebrow');
-    const heading = shopPage.querySelector('.section-head h1');
-    const copy = shopPage.querySelector('.section-head > p');
-    if (eyebrow) eyebrow.textContent = 'Shop';
-    if (heading) heading.textContent = 'Choose your category.';
-    if (copy) copy.textContent = 'Select a category image to explore the products inside.';
-
-    window.setTimeout(() => {
-      chooser?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 30);
-  };
-
-  const buildShopCategories = (shopPage) => {
-    const productGrid = shopPage.querySelector('.product-grid--shop');
-    const controls = shopPage.querySelector('.shop-controls');
-    const cards = Array.from(productGrid?.querySelectorAll('.shopify-card') ?? []);
-    if (!productGrid || !controls || !cards.length) return;
-
-    let chooser = shopPage.querySelector('.r34-shop-categories');
-    if (!chooser) {
-      chooser = document.createElement('section');
-      chooser.className = 'r34-shop-categories';
-
-      const intro = document.createElement('div');
-      intro.className = 'r34-shop-category-intro';
-      intro.innerHTML = '<h2>Shop by category.</h2><p>Choose what you are looking for first. Products will appear after you select a category.</p>';
-
-      const grid = document.createElement('div');
-      grid.className = 'r34-shop-category-grid';
-
-      SHOP_CATEGORIES.forEach((category) => {
-        const matchingCard = cards.find((card) => cardMatchesCategory(card, category));
-        if (!matchingCard) return;
-
-        const image = matchingCard.querySelector('.shopify-card__hover')
-          ?? matchingCard.querySelector('.shopify-card__image img');
-        if (!image?.src) return;
-
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'r34-shop-category-card';
-        button.setAttribute('aria-label', `Shop ${category.label}`);
-        button.innerHTML = `
-          <img src="${image.src}" alt="${category.label}">
-          <span class="r34-shop-category-card__copy">
-            <strong>${category.label}</strong>
-            <span>${category.description}</span>
-          </span>
-        `;
-        button.addEventListener('click', () => chooseCategory(shopPage, category));
-        grid.appendChild(button);
-      });
-
-      chooser.append(intro, grid);
-      controls.before(chooser);
-
-      const backButton = document.createElement('button');
-      backButton.type = 'button';
-      backButton.className = 'r34-shop-back';
-      backButton.textContent = 'Back to categories';
-      backButton.hidden = true;
-      backButton.addEventListener('click', () => showCategoryLanding(shopPage));
-      controls.before(backButton);
-    }
-
-    if (shopPage.dataset.r34CategoryOpen !== 'true') {
-      chooser.hidden = false;
-      controls.hidden = true;
-      productGrid.hidden = true;
-      const backButton = shopPage.querySelector('.r34-shop-back');
-      if (backButton) backButton.hidden = true;
-    }
-  };
-
-  const restructureShop = () => {
-    if (window.location.pathname !== '/shop') return;
-
-    const shopPage = document.querySelector('.shop-page');
-    if (!shopPage) return;
-
-    const head = shopPage.querySelector('.section-head');
-    if (head && shopPage.dataset.r34CategoryOpen !== 'true') {
-      const eyebrow = head.querySelector('.eyebrow');
-      const heading = head.querySelector('h1');
-      const copy = head.querySelector(':scope > p');
-      if (eyebrow) eyebrow.textContent = 'Shop';
-      if (heading) heading.textContent = 'Choose your category.';
-      if (copy) copy.textContent = 'Select a category image to explore the products inside.';
-    }
-
-    buildShopCategories(shopPage);
-  };
-
   const applyStoryCopy = () => {
     replaceExactText('About', 'Our Story');
+    if (window.location.pathname !== '/about') return;
 
-    if (window.location.pathname === '/about') {
-      const h1 = document.querySelector('main h1');
-      if (h1) h1.textContent = 'Our Story';
-      const blocks = document.querySelectorAll('main p');
-      const copy = [
-        'Radiant 34 began with one verse: “Those who look to Him are radiant; their faces are never covered with shame.” — Psalm 34:5.',
-        'Radiant 34 creates clothing and everyday pieces inspired by Scripture, designed to carry faith naturally into real life.',
-        'Every collection begins with the Bible. Every design points beyond the product and back to Jesus Christ.',
-      ];
-      blocks.forEach((node, index) => { if (copy[index]) node.textContent = copy[index]; });
-    }
+    const heading = document.querySelector('main h1');
+    if (heading) heading.textContent = 'Our Story';
+    const blocks = document.querySelectorAll('main p');
+    const copy = [
+      'Radiant 34 began with one verse: “Those who look to Him are radiant; their faces are never covered with shame.” — Psalm 34:5.',
+      'Radiant 34 creates clothing and everyday pieces inspired by Scripture, designed to carry faith naturally into real life.',
+      'Every collection begins with the Bible. Every design points beyond the product and back to Jesus Christ.',
+    ];
+    blocks.forEach((node, index) => {
+      if (copy[index]) node.textContent = copy[index];
+    });
   };
 
-  const applyLaunchContent = () => {
-    installHomepageStyles();
+  const apply = () => {
+    installStyles();
     simplifyNavigation();
     restructureHome();
-    restructureDrop();
-    restructureShop();
     applyStoryCopy();
   };
 
   let queued = false;
-  const queueApply = () => {
+  const queue = () => {
     if (queued) return;
     queued = true;
     requestAnimationFrame(() => {
       queued = false;
-      applyLaunchContent();
+      apply();
     });
   };
 
-  const observer = new MutationObserver(queueApply);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  window.addEventListener('popstate', queueApply);
-  document.addEventListener('click', () => setTimeout(queueApply, 0));
-  applyLaunchContent();
+  new MutationObserver(queue).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('popstate', queue);
+  document.addEventListener('DOMContentLoaded', queue);
+  queue();
 })();

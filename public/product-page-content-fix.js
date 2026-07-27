@@ -1,19 +1,11 @@
 (() => {
-  const DRESS_TITLE = 'Radiant 34 Renewed Daily T-Shirt Dress';
-  const DRESS_DESCRIPTION = 'An oversized T-shirt dress featuring the Renewed Daily design, inspired by Lamentations 3:22–23. Made from smooth stretch fabric with a relaxed drop-shoulder fit for comfortable everyday wear.';
+  const DRESS_PATH = '/products/t-shirt-dress-5';
+  const DRESS_TITLE = 'Radiant 34 Made New T-Shirt Dress';
+  const DRESS_DESCRIPTION = 'An oversized T-shirt dress featuring the Made New design, inspired by 2 Corinthians 5:17. The warm tan, black and cream all-over artwork is finished with a relaxed drop-shoulder silhouette for comfortable everyday wear.';
 
   const text = (node) => node?.textContent?.trim() ?? '';
-  const containsAny = (value, terms) => terms.some((term) => value.includes(term));
 
-  const isDressPage = (detail) => {
-    const title = text(detail.querySelector('.product-detail__copy h2'));
-    const category = text(detail.querySelector('.product-category'));
-    const imageAlts = Array.from(detail.querySelectorAll('.product-gallery img'))
-      .map((image) => image.getAttribute('alt') || '')
-      .join(' ');
-    const value = `${title} ${category} ${imageAlts}`.toLowerCase();
-    return containsAny(value, ['t-shirt dress', 'tshirt dress', 'renewed daily']);
-  };
+  const isDressPage = () => window.location.pathname.replace(/\/$/, '') === DRESS_PATH;
 
   const replaceBadges = (detail, labels) => {
     const row = detail.querySelector('.product-badge-row');
@@ -33,7 +25,7 @@
     const care = details.find((item) => text(item.querySelector('summary')).toLowerCase().includes('care'));
 
     if (fabric?.querySelector('p')) {
-      fabric.querySelector('p').textContent = 'Relaxed oversized fit with a dropped shoulder, wide sleeves and smooth stretch fabric. Polyester–spandex blend; composition varies slightly by fulfilment region.';
+      fabric.querySelector('p').textContent = 'Relaxed oversized fit with dropped shoulders, widened sleeves and smooth stretch fabric. Polyester–spandex composition varies slightly by fulfilment region.';
     }
 
     if (care?.querySelector('p')) {
@@ -42,7 +34,7 @@
   };
 
   const cleanDressPage = (detail) => {
-    if (!isDressPage(detail)) return;
+    if (!isDressPage()) return;
 
     const title = detail.querySelector('.product-detail__copy h2');
     const category = detail.querySelector('.product-category');
@@ -58,9 +50,9 @@
 
     replaceBadges(detail, [
       'WOMEN',
-      'LAMENTATIONS 3:22–23',
+      '2 CORINTHIANS 5:17',
       'OVERSIZED FIT',
-      'SOFT STRETCH',
+      'ALL-OVER PRINT',
     ]);
 
     updateAccordions(detail);

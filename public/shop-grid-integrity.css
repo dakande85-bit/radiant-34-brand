@@ -1,0 +1,38 @@
+/* Shop grid integrity overrides.
+   Keep catalogue cards intact and remove duplicated purchase controls from the listing view. */
+
+.shop-page .product-grid--shop {
+  align-items: start !important;
+  grid-auto-flow: row !important;
+}
+
+.shop-page .shopify-card {
+  min-width: 0;
+  align-self: start;
+}
+
+/* Category filtering must remove the complete card, not leave its action row behind. */
+.shop-page .shopify-card[aria-hidden="true"],
+.shop-page .shopify-card[hidden] {
+  display: none !important;
+}
+
+/* The full product card remains the single catalogue CTA. */
+.shop-page .shopify-card__actions {
+  display: none !important;
+}
+
+.shop-page .shopify-card__main,
+.shop-page .shopify-card__image,
+.shop-page .shopify-card__body {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.shop-page .shopify-card__main {
+  height: auto !important;
+}
+
+.shop-page .shopify-card__view {
+  margin-bottom: 2px;
+}

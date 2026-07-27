@@ -33,6 +33,32 @@
     }
   };
 
+  const prepareGallery = (detail) => {
+    if (!isDressPage()) return;
+
+    detail.classList.add('r34-made-new-page');
+    const gallery = detail.querySelector('.product-gallery');
+    if (!gallery || gallery.dataset.r34MadeNewReady === 'true') return;
+
+    const items = Array.from(gallery.querySelectorAll('.product-gallery__item'));
+    if (items.length >= 3) {
+      const [cleanFront, lifestyleFront, cleanBack, ...remaining] = items;
+      gallery.append(lifestyleFront, cleanFront, cleanBack, ...remaining);
+
+      const orderedImages = Array.from(gallery.querySelectorAll('.product-gallery__item img'));
+      const altText = [
+        'Radiant 34 Made New T-Shirt Dress styled on a model',
+        'Front view of the Radiant 34 Made New T-Shirt Dress',
+        'Back view of the Radiant 34 Made New T-Shirt Dress',
+      ];
+      orderedImages.forEach((image, index) => {
+        if (altText[index]) image.alt = altText[index];
+      });
+    }
+
+    gallery.dataset.r34MadeNewReady = 'true';
+  };
+
   const cleanDressPage = (detail) => {
     if (!isDressPage()) return;
 
@@ -56,6 +82,7 @@
     ]);
 
     updateAccordions(detail);
+    prepareGallery(detail);
   };
 
   const createLightbox = () => {

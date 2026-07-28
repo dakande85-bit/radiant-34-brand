@@ -133,7 +133,7 @@ export const brandOverrides: Record<string, BrandOverride> = {
       'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/classic-snapback-dark-navy-front-6a617b2f5d17f.jpg?v=1784773446',
       'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143',
     ],
-    useShopifyImages: false,
+    useShopifyImages: true,
   },
   'premium-tote-bag-black': {
     publicTitle: 'Radiant 34 Premium Black Tote Bag',

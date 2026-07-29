@@ -2,10 +2,10 @@ import { asset } from './products';
 
 const siteAssets = {
   logo: asset('/images/radiant-logo-transparent.png'),
-  heroModel: asset('/images/radiant-hero-psalm-rooftop.png'),
-  storyModels: asset('/images/radiant-editorial-03.png'),
-  lookbookTees: asset('/images/radiant-editorial-02.png'),
-  communityModels: asset('/images/radiant-editorial-05.png'),
+  heroModel: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-home-hero.webp?v=1785331751',
+  storyModels: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-home-dress.webp?v=1785331796',
+  lookbookTees: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-home-male.webp?v=1785331768',
+  communityModels: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-home-female.webp?v=1785331783',
   dropHero: asset('/images/radiant-editorial-07.png'),
   aboutHero: asset('/images/radiant-editorial-01.png'),
   missionHero: asset('/images/radiant-editorial-08.png'),

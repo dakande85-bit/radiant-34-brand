@@ -1,7 +1,4 @@
 (() => {
-  const HOMEPAGE_BLACK_MALE_MODEL = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-homepage-black-male-cream-tee_875dd493-88c1-48c5-b511-9f9fd3bcb00d.png?v=1784762298';
-  const HOMEPAGE_BRUNETTE_MODEL = '/images/radiant-editorial-02.png';
-
   const text = (node) => node?.textContent?.trim() ?? '';
 
   const replaceExactText = (from, to) => {
@@ -183,23 +180,11 @@
       const eyebrow = editorial.querySelector('.eyebrow');
       const heading = editorial.querySelector('h2');
       const paragraphs = Array.from(editorial.querySelectorAll('.lookbook-copy > p')).filter((node) => node !== eyebrow);
-      const images = Array.from(editorial.querySelectorAll('img'));
 
       if (eyebrow) eyebrow.textContent = 'Psalm 34:5';
       if (heading) heading.textContent = 'Look to Him. Walk without shame.';
       if (paragraphs[0]) paragraphs[0].textContent = 'For ordinary days and difficult seasons: turn your eyes toward God. Courage, peace and identity begin there.';
       paragraphs.slice(1).forEach((paragraph) => paragraph.remove());
-
-      if (images[0]) {
-        images[0].src = HOMEPAGE_BLACK_MALE_MODEL;
-        images[0].alt = 'Black male model wearing the cream Radiant 34 T-shirt';
-        images[0].removeAttribute('srcset');
-      }
-      if (images[1]) {
-        images[1].src = HOMEPAGE_BRUNETTE_MODEL;
-        images[1].alt = 'White brunette model wearing a Radiant 34 T-shirt';
-        images[1].removeAttribute('srcset');
-      }
     }
 
     hideSectionContaining('Clothing that funds the telling');
@@ -247,18 +232,12 @@
     applyStoryCopy();
   };
 
-  let queued = false;
-  const queue = () => {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(() => {
-      queued = false;
-      apply();
-    });
+  const scheduleApply = () => {
+    [0, 80, 250, 700].forEach((delay) => window.setTimeout(apply, delay));
   };
 
-  new MutationObserver(queue).observe(document.documentElement, { childList: true, subtree: true });
-  window.addEventListener('popstate', queue);
-  document.addEventListener('DOMContentLoaded', queue);
-  queue();
+  document.addEventListener('DOMContentLoaded', scheduleApply);
+  window.addEventListener('popstate', scheduleApply);
+  document.addEventListener('click', () => window.setTimeout(apply, 80));
+  scheduleApply();
 })();

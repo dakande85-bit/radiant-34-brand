@@ -1,0 +1,10 @@
+html.r34-home-route main .section-band.drop-band {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+html.r34-home-route main .lookbook,
+html.r34-home-route main .about-section,
+html.r34-home-route main .hero {
+  visibility: visible;
+}

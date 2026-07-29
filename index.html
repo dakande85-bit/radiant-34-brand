@@ -25,6 +25,26 @@
     <link rel="stylesheet" href="%BASE_URL%launch-fixes.css" />
     <link rel="stylesheet" href="%BASE_URL%product-page-fixes.css?v=20260727-1246" />
     <link rel="stylesheet" href="%BASE_URL%shop-grid-integrity.css?v=20260729-0355" />
+    <style>
+      html.r34-home-page main > .drop-band {
+        display: none !important;
+      }
+    </style>
+    <script>
+      (() => {
+        const syncHomeRoute = () => {
+          document.documentElement.classList.toggle('r34-home-page', window.location.pathname === '/');
+        };
+        const originalPushState = window.history.pushState.bind(window.history);
+        window.history.pushState = (...args) => {
+          const result = originalPushState(...args);
+          syncHomeRoute();
+          return result;
+        };
+        window.addEventListener('popstate', syncHomeRoute);
+        syncHomeRoute();
+      })();
+    </script>
     <title>Radiant 34 | Bible Inspired Clothing</title>
   </head>
   <body>

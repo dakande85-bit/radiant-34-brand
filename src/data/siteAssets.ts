@@ -8,7 +8,7 @@ const siteAssets = {
   communityModels: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-home-female.webp?v=1785331783',
   dropHero: asset('/images/radiant-editorial-07.png'),
   aboutHero: asset('/images/radiant-editorial-01.png'),
-  missionHero: asset('/images/radiant-editorial-08.png'),
+  missionHero: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-home-female.webp?v=1785331783',
   contactHero: asset('/images/radiant-editorial-10.png'),
   lookbook: [
     asset('/images/radiant-editorial-01.png'),

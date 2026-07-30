@@ -1,6 +1,6 @@
 (() => {
   const blockedLabels = new Set(['drop 001', 'lookbook']);
-  const shopLabels = new Set(['shop', 'search', 'shop all products']);
+  const shopLabels = new Set(['shop', 'shop all products']);
   const normalize = (value) => (value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
   const navigateInternally = (path) => {
@@ -34,6 +34,14 @@
   const removeDrop001Links = () => {
     document.querySelectorAll('a, button').forEach((element) => {
       if (isDrop001Control(element)) element.remove();
+    });
+  };
+
+  const removeSearchTabs = () => {
+    document.querySelectorAll(
+      '.site-header a, .site-header button, .main-nav a, .main-nav button, nav[aria-label="Primary navigation"] a, nav[aria-label="Primary navigation"] button',
+    ).forEach((element) => {
+      if (normalize(element.textContent) === 'search') element.remove();
     });
   };
 
@@ -86,6 +94,7 @@
 
   const applyNavigationFixes = () => {
     removeDrop001Links();
+    removeSearchTabs();
     updatePrimaryNavigation();
     updateFooterNavigation();
     updateContactActions();

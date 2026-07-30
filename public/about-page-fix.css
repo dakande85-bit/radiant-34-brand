@@ -1,0 +1,165 @@
+html.r34-about-route main > .page-hero--editorial {
+  min-height: auto !important;
+  padding: clamp(64px, 8vw, 112px) max(24px, calc((100vw - 1180px) / 2)) !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.72fr) !important;
+  gap: clamp(44px, 8vw, 108px) !important;
+  align-items: center !important;
+  background:
+    radial-gradient(circle at 78% 22%, rgba(211, 162, 70, 0.18), transparent 28rem),
+    var(--cream-2) !important;
+}
+
+html.r34-about-route main > .page-hero--editorial > div {
+  max-width: 690px;
+}
+
+html.r34-about-route main > .page-hero--editorial .eyebrow {
+  margin-bottom: 18px;
+}
+
+html.r34-about-route main > .page-hero--editorial h1 {
+  max-width: 760px;
+  font-size: clamp(4rem, 7.6vw, 7.8rem) !important;
+  line-height: 0.9 !important;
+}
+
+html.r34-about-route main > .page-hero--editorial p:not(.eyebrow) {
+  max-width: 620px;
+  margin: 22px 0 0;
+  color: var(--charcoal);
+  font-size: 1rem;
+  line-height: 1.72;
+}
+
+html.r34-about-route main > .page-hero--editorial p:last-of-type {
+  max-width: 590px;
+  margin-top: 30px;
+  padding: 20px 0 20px 24px;
+  border-left: 3px solid var(--gold);
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+  font-style: italic;
+  line-height: 1.55;
+}
+
+html.r34-about-route main > .page-hero--editorial img {
+  width: min(100%, 470px) !important;
+  height: auto !important;
+  aspect-ratio: 4 / 5;
+  justify-self: end;
+  object-fit: cover !important;
+  object-position: center top !important;
+  border-radius: 10px !important;
+  box-shadow: 0 26px 64px rgba(43, 36, 26, 0.16) !important;
+}
+
+html.r34-about-route main > .text-band {
+  padding: clamp(76px, 9vw, 126px) max(24px, calc((100vw - 1180px) / 2)) !important;
+  display: grid;
+  grid-template-columns: minmax(210px, 0.42fr) minmax(0, 1fr);
+  column-gap: clamp(42px, 8vw, 110px);
+  row-gap: 24px;
+  align-items: start;
+  background: #14110d !important;
+  color: var(--cream-2);
+}
+
+html.r34-about-route main > .text-band::before {
+  content: "THE STORY BEHIND RADIANT 34";
+  grid-column: 1;
+  grid-row: 1 / span 5;
+  padding-top: 7px;
+  color: var(--gold-2);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  line-height: 1.6;
+}
+
+html.r34-about-route main > .text-band > .eyebrow,
+html.r34-about-route main > .text-band > h2 {
+  display: none !important;
+}
+
+html.r34-about-route main > .text-band > p:not(.eyebrow) {
+  grid-column: 2;
+  max-width: 760px;
+  margin: 0 !important;
+  color: rgba(255, 250, 240, 0.72) !important;
+  font-size: clamp(1rem, 1.25vw, 1.1rem) !important;
+  line-height: 1.82 !important;
+}
+
+html.r34-about-route main > .text-band > p:not(.eyebrow):first-of-type {
+  color: var(--cream-2) !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.65rem, 2.8vw, 2.7rem) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.025em;
+}
+
+html.r34-about-route main > .text-band > p:not(.eyebrow):last-of-type {
+  margin-top: 8px !important;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255, 250, 240, 0.16);
+  color: var(--gold-2) !important;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  html.r34-about-route main > .page-hero--editorial {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.62fr) !important;
+    gap: 38px !important;
+  }
+
+  html.r34-about-route main > .page-hero--editorial h1 {
+    font-size: clamp(3.5rem, 8vw, 5.5rem) !important;
+  }
+
+  html.r34-about-route main > .page-hero--editorial img {
+    width: 100% !important;
+  }
+
+  html.r34-about-route main > .text-band {
+    grid-template-columns: 1fr;
+    row-gap: 22px;
+  }
+
+  html.r34-about-route main > .text-band::before,
+  html.r34-about-route main > .text-band > p:not(.eyebrow) {
+    grid-column: 1;
+  }
+
+  html.r34-about-route main > .text-band::before {
+    grid-row: auto;
+    padding-top: 0;
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 680px) {
+  html.r34-about-route main > .page-hero--editorial {
+    padding-top: 52px !important;
+    padding-bottom: 64px !important;
+    grid-template-columns: 1fr !important;
+    gap: 36px !important;
+  }
+
+  html.r34-about-route main > .page-hero--editorial h1 {
+    font-size: clamp(3.4rem, 16vw, 5.2rem) !important;
+  }
+
+  html.r34-about-route main > .page-hero--editorial img {
+    width: 100% !important;
+    max-width: none;
+    justify-self: stretch;
+    aspect-ratio: 4 / 5;
+  }
+
+  html.r34-about-route main > .text-band {
+    padding-top: 66px !important;
+    padding-bottom: 72px !important;
+  }
+}

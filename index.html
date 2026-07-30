@@ -24,24 +24,25 @@
     <meta name="twitter:image" content="https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-home-hero.webp?v=1785331751" />
     <script>
       (() => {
-        const syncHomeRoute = () => {
+        const syncRouteClasses = () => {
           const path = window.location.pathname.replace(/\/$/, '') || '/';
           document.documentElement.classList.toggle('r34-home-route', path === '/');
+          document.documentElement.classList.toggle('r34-about-route', path === '/about');
         };
         const originalPushState = window.history.pushState.bind(window.history);
         const originalReplaceState = window.history.replaceState.bind(window.history);
         window.history.pushState = (...args) => {
           const result = originalPushState(...args);
-          syncHomeRoute();
+          syncRouteClasses();
           return result;
         };
         window.history.replaceState = (...args) => {
           const result = originalReplaceState(...args);
-          syncHomeRoute();
+          syncRouteClasses();
           return result;
         };
-        window.addEventListener('popstate', syncHomeRoute);
-        syncHomeRoute();
+        window.addEventListener('popstate', syncRouteClasses);
+        syncRouteClasses();
       })();
     </script>
     <link rel="stylesheet" href="%BASE_URL%launch-fixes.css" />
@@ -50,6 +51,7 @@
     <link rel="stylesheet" href="%BASE_URL%shop-category-cards.css?v=20260730-0535" />
     <link rel="stylesheet" href="%BASE_URL%home-route-guard.css?v=20260729-1645" />
     <link rel="stylesheet" href="%BASE_URL%contact-page-upgrade.css?v=20260730-0550" />
+    <link rel="stylesheet" href="%BASE_URL%about-page-fix.css?v=20260730-0600" />
     <title>Radiant 34 | Bible Inspired Clothing</title>
   </head>
   <body>

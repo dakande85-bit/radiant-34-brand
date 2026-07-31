@@ -212,6 +212,7 @@ const toStorefrontProduct = (
   const adminVariant = adminVariants.find((variant) => variant.availableForSale) ?? adminVariants[0] ?? null;
   const storefrontVariants = storefrontProduct?.variants?.nodes ?? [];
   const storefrontVariant = storefrontVariants.find((variant) => variant.availableForSale) ?? null;
+  const checkoutVariant = storefrontVariant ?? (adminVariant?.availableForSale ? adminVariant : null);
 
   const displayVariants = storefrontVariants.length
     ? storefrontVariants
@@ -242,8 +243,8 @@ const toStorefrontProduct = (
     },
     variants: { nodes: displayVariants },
     adminVariantId: adminVariant?.id,
-    storefrontVariantId: storefrontVariant?.id,
-    canCheckout: Boolean(storefrontVariant),
+    storefrontVariantId: checkoutVariant?.id,
+    canCheckout: Boolean(checkoutVariant),
     priceRange: {
       minVariantPrice: product.priceRangeV2?.minVariantPrice,
     },

@@ -114,13 +114,7 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'fearfully-wonderfully-created-tshirt-dress',
     description: 'A relaxed oversized T-shirt dress inspired by Psalm 139:14 and designed for confident everyday wear.',
     badge: 'Women',
-    primaryImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-t-shirt-dress-white-front-6a6168242ee1d.jpg?v=1784768575',
-    hoverImage: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
-    gallery: [
-      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-t-shirt-dress-white-front-6a6168242ee1d.jpg?v=1784768575',
-      'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
-    ],
-    useShopifyImages: false,
+    useShopifyImages: true,
   },
   'snapback-hat': {
     publicTitle: 'Radiant 34 Follow God Not Man Snapback',

@@ -1,0 +1,369 @@
+
+===== COMMAND: git status =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:42:57.3780456+01:00
+EXIT_CODE: 0
+OUTPUT:
+On branch recovery/storefront-stabilization-2026-08-01
+Your branch is up to date with 'origin/main'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	separated-collage-contact-sheet.png
+	separated-collage-images.zip
+	separated-collage-images/
+	separated-designs-2026-07-25.zip
+	separated-designs-2026-07-25/
+
+nothing added to commit but untracked files present (use "git add" to track)
+END: 2026-08-01T19:42:58.0416583+01:00
+
+===== COMMAND: git branch -vv =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:42:58.0426745+01:00
+EXIT_CODE: 0
+OUTPUT:
+  main                                         f9b76ac [origin/main: behind 139] Launch full Shopify catalog images reviews and brand pages
+* recovery/storefront-stabilization-2026-08-01 75d9f6b [origin/main] Trigger fresh production deployment from restored storefront
+END: 2026-08-01T19:42:58.5131118+01:00
+
+===== COMMAND: git log --oneline --decorate --graph -30 =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:42:58.5131118+01:00
+EXIT_CODE: 0
+OUTPUT:
+* 75d9f6b (HEAD -> recovery/storefront-stabilization-2026-08-01, origin/main, origin/HEAD) Trigger fresh production deployment from restored storefront
+* b3d9ec8 Use Shopify image order for Fearfully and Wonderfully dress
+* bb7f361 Keep active Shopify products visible during storefront sync lag
+* 1dbd59f Refresh corrected mission slider layout
+* 8e3aaa2 Fix mission product slider image sizing and cropping
+* 82934c0 Load customer account and social login controls
+* 6669b2e Add customer account tab and social sign-in
+* cc02a1b Add homepage mission product slider
+* ad06ffb Style mission featured product slider
+* b5ff7fc Replace mission image with featured product slider
+* 6408189 Apply dedicated About page layout and route styling
+* da04345 Redesign and stabilise the About page layout
+* dc1d5ce Load redesigned contact page experience
+* 33bc728 Place contact signup above the fold and improve guidance
+* 26a10e0 Redesign contact page with intuitive above-the-fold signup
+* 2a18e1d Refresh navigation without search tab
+* fe34a08 Remove inactive search tab from site navigation
+* 804a66a Load restored shop category card styles
+* 51c9dc6 Restore shop category card layout without homepage mutators
+* f1acfcb Replace retired homepage mission image with current campaign model
+* 79390a9 Apply permanent homepage route guard and remove conflicting DOM patch
+* c9a4571 Permanently hide retired homepage product strip before React paints
+* b14095a Keep removed featured product image off the homepage
+* 68b5eff Remove duplicate homepage mutators and refresh stable homepage script
+* 898d9b0 Stabilise homepage and remove competing image mutations
+* d134e5a Load refreshed homepage campaign imagery
+* 587304b Apply new Radiant 34 homepage campaign images
+* 8f8248d Refresh homepage campaign imagery
+* dcad5fb Load authoritative shop grid normalizer
+* 490430d Normalize visible shop cards and remove empty grid slots
+END: 2026-08-01T19:42:59.1509216+01:00
+
+===== COMMAND: git diff origin/main...HEAD =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:42:59.1509216+01:00
+EXIT_CODE: 0
+OUTPUT:
+END: 2026-08-01T19:42:59.9880969+01:00
+
+===== COMMAND: node --version =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:42:59.9880969+01:00
+EXIT_CODE: 0
+OUTPUT:
+v24.16.0
+END: 2026-08-01T19:43:00.6645915+01:00
+
+===== COMMAND: npm --version =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:43:00.6645915+01:00
+EXIT_CODE: 1
+OUTPUT:
+npm : File C:\Program Files\nodejs\npm.ps1 cannot be loaded because running scripts is disabled on this system. For 
+more information, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
+At line:1 char:1
++ npm --version
++ ~~~
+    + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess
+END: 2026-08-01T19:43:01.2194798+01:00
+
+===== COMMAND: cat package.json =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:43:01.2194798+01:00
+EXIT_CODE: 0
+OUTPUT:
+{
+  "name": "radiant-34-brand",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "framer-motion": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@types/node": "^26.1.1",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "eslint": "latest",
+    "eslint-plugin-react-hooks": "latest",
+    "eslint-plugin-react-refresh": "latest",
+    "globals": "latest",
+    "typescript-eslint": "latest"
+  }
+}
+END: 2026-08-01T19:43:01.7407323+01:00
+
+===== COMMAND: npm ci =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:43:01.7407323+01:00
+EXIT_CODE: 0
+OUTPUT:
+
+added 157 packages, and audited 158 packages in 56s
+
+42 packages are looking for funding
+  run `npm fund` for details
+
+2 high severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+END: 2026-08-01T19:43:59.5067496+01:00
+
+===== COMMAND: npm run build =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:43:59.5091928+01:00
+EXIT_CODE: 0
+OUTPUT:
+
+> radiant-34-brand@0.1.0 build
+> tsc -b && vite build
+
+[36mvite v8.1.3 [32mbuilding client environment for production...[36m[39m
+[2K
+transforming...? 20 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   4.18 kB ¦ gzip:  1.20 kB
+dist/assets/index-DkWIvv3O.css   32.79 kB ¦ gzip:  6.72 kB
+dist/assets/index-kGnrnRZm.js   265.54 kB ¦ gzip: 78.01 kB
+
+[32m? built in 1.81s[39m
+END: 2026-08-01T19:44:15.7637573+01:00
+
+===== COMMAND: npm run lint =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:44:15.7647763+01:00
+EXIT_CODE: 1
+OUTPUT:
+
+> radiant-34-brand@0.1.0 lint
+> eslint .
+
+
+C:\Users\Adeya\Documents\Radiant 34\api\auth\_supabaseAuth.ts
+  15:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\auth\config.ts
+  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\auth\refresh.ts
+  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\auth\session.ts
+  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\_purchase.ts
+  66:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  70:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\admin.ts
+   5:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\eligibility.ts
+  6:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  6:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\index.ts
+  18:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\summary.ts
+  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\shopify-debug.ts
+  238:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\shopify-storefront.ts
+  359:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  359:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\shopify-token.ts
+  10:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\src\data\brandOverrides.ts
+  3:7  error  'productImage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Adeya\Documents\Radiant 34\src\lib\shopify.ts
+  225:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  285:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  349:9  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  352:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  387:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  422:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx
+    11:3   error    'getProductsByCategory' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   324:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:324:5
+  322 |     const primaryOptionName = getPrimaryVariantOptionName(shopifyProduct);
+  323 |     const primaryOptionValues = getVariantOptionValues(shopifyProduct, primaryOptionName ?? '');
+> 324 |     setSelectedSize(primaryOptionValues[0] ?? product.options?.size?.[0] ?? '');
+      |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  325 |     setSelectedColor(product.options?.color?.[0] ?? '');
+  326 |   }, [product, shopifyProduct]);
+  327 |  react-hooks/set-state-in-effect
+   359:21  error    Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:359:21
+  357 |       setPurchaseMessage(`${title} added to cart.`);
+  358 |       if (!checkout) onCartChanged();
+> 359 |       if (checkout) window.location.href = cart.checkoutUrl;
+      |                     ^^^^^^^^^^^^^^^ value cannot be modified
+  360 |     } catch (error) {
+  361 |       setPurchaseMessage(error instanceof Error ? error.message : 'Unable to add product.');
+  362 |     } finally {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/immutability
+   489:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:489:5
+  487 |   useEffect(() => {
+  488 |     let mounted = true;
+> 489 |     setUnavailable(false);
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  490 |     setMessage('');
+  491 |
+  492 |     Promise.all([                                                                                                                                                                                                                                             react-hooks/set-state-in-effect
+   864:7   error    'findVariantForSize' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  1073:10  error    'lastCartError' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  1079:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1079:5
+  1077 |     void checkShopifyProxy();
+  1078 |     console.log('Radiant override count:', Object.keys(brandOverrides).length);
+> 1079 |     setProducts([]);
+       |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  1080 |     setShopError('');
+  1081 |     setLoading(true);
+  1082 |                                                                                                                                                                      react-hooks/set-state-in-effect
+  1428:20  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1428:20
+  1426 |
+  1427 |   useEffect(() => {
+> 1428 |     if (open) void loadCart();
+       |                    ^^^^^^^^ Avoid calling setState() directly within an effect
+  1429 |   }, [open]);
+  1430 |
+  1431 |   const replaceCart = (nextCart: ShopifyCart) => {                                                                                                                                                                                                                    react-hooks/set-state-in-effect
+  1429:6   warning  React Hook useEffect has a missing dependency: 'loadCart'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+  1815:10  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1815:10
+  1813 |     ensureRadiantCartVersion();
+  1814 |     installClearRadiantCartDev();
+> 1815 |     void refreshCartCount();
+       |          ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  1816 |   }, []);
+  1817 |
+  1818 |   useEffect(() => {                                                                                                                                                                                                             react-hooks/set-state-in-effect
+  1855:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1855:7
+  1853 |
+  1854 |     if (localOverride && !currentProductStillMatches) {
+> 1855 |       setSelectedShopifyProduct(null);
+       |       ^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  1856 |       setSelectedProduct(fallbackForShopifyProduct({ handle: shopifyLookupHandle, title: localOverride.publicTitle }, 0));
+  1857 |     }
+  1858 |                                                                                                     react-hooks/set-state-in-effect
+
+? 44 problems (43 errors, 1 warning)
+
+END: 2026-08-01T19:44:44.3047914+01:00
+
+===== COMMAND: npx tsc --noEmit =====
+PWD: C:\Users\Adeya\Documents\Radiant 34
+START: 2026-08-01T19:44:44.3077918+01:00
+EXIT_CODE: 0
+OUTPUT:
+END: 2026-08-01T19:44:48.2687098+01:00

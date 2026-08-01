@@ -31,6 +31,17 @@
       || href.includes('radiant34.com/drop-001');
   };
 
+  const isMissionControl = (element) => {
+    const label = normalize(element.textContent);
+    const href = element.getAttribute?.('href') || '';
+    return href === '/mission'
+      || href.startsWith('/mission?')
+      || href.startsWith('/mission#')
+      || label === 'mission'
+      || label === 'our mission'
+      || label === 'our missions';
+  };
+
   const removeDrop001Links = () => {
     document.querySelectorAll('a, button').forEach((element) => {
       if (isDrop001Control(element)) element.remove();
@@ -53,11 +64,23 @@
       if (blockedLabels.has(normalize(link.textContent)) || isDrop001Control(link)) link.remove();
     });
 
-    const directLinks = [...nav.querySelectorAll(':scope > a')];
+    let directLinks = [...nav.querySelectorAll(':scope > a')];
     const hasContact = directLinks.some((link) => normalize(link.textContent) === 'contact');
     if (!hasContact) {
       const mobileActions = nav.querySelector('.mobile-nav-actions');
       nav.insertBefore(createContactLink(), mobileActions || null);
+    }
+
+    directLinks = [...nav.querySelectorAll(':scope > a')];
+    const missionLinks = directLinks.filter(isMissionControl);
+    const missionLink = missionLinks[0] || null;
+    missionLinks.slice(1).forEach((link) => link.remove());
+
+    if (missionLink) {
+      missionLink.textContent = 'Our Mission';
+      missionLink.setAttribute('href', '/mission');
+      const mobileActions = nav.querySelector('.mobile-nav-actions');
+      nav.insertBefore(missionLink, mobileActions || null);
     }
   };
 

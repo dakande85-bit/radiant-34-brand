@@ -51,17 +51,22 @@ type StorefrontProductForCart = {
   };
 };
 
+type CatalogProduct = ReturnType<typeof toStorefrontProduct>;
+
 type CatalogPayload = {
   data: {
     products: {
-      nodes: ReturnType<typeof toStorefrontProduct>[];
+      nodes: CatalogProduct[];
     };
   };
 };
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const catalogCacheTtlMs = 60_000;
+const productCacheTtlMs = 5 * 60_000;
+const shopifyRequestTimeoutMs = 8_000;
 let catalogCache: { expiresAt: number; payload: CatalogPayload } | null = null;
+const productCache = new Map<string, { expiresAt: number; product: CatalogProduct }>();
 
 const isProductListQuery = (query: string) => /\bproducts\s*\(/.test(query);
 const isProductHandleQuery = (query: string) =>
@@ -85,12 +90,17 @@ const fetchWithRetry = async (url: string, init: RequestInit, attempts = 2) => {
   let lastError: unknown = null;
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), shopifyRequestTimeoutMs);
+
     try {
-      const response = await fetch(url, init);
+      const response = await fetch(url, { ...init, signal: controller.signal });
       lastResponse = response;
       if (response.ok || (response.status < 500 && response.status !== 429)) return response;
     } catch (error) {
       lastError = error;
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     if (attempt < attempts - 1) await wait(300 * (attempt + 1));
@@ -166,37 +176,6 @@ const fetchStorefrontProductsForCart = async (domain: string, version: string) =
 
   const products = (payload.data?.products?.nodes ?? []) as StorefrontProductForCart[];
   return new Map(products.map((product) => [product.handle, product]));
-};
-
-const fetchStorefrontProductForCart = async (domain: string, version: string, handle: string) => {
-  const response = await fetchWithRetry(`https://${domain}/api/${version}/graphql.json`, {
-    method: 'POST',
-    headers: buildStorefrontHeaders(),
-    body: JSON.stringify({
-      query: `
-        query ProductForCart($handle: String!) {
-          product(handle: $handle) {
-            ${storefrontProductSelection}
-          }
-        }
-      `,
-      variables: { handle },
-    }),
-  });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload.errors?.length) {
-    if (isDevelopment) {
-      console.info('[Radiant 34 Shopify] Storefront cart validation failed', {
-        handle,
-        status: response.status,
-        errors: payload.errors,
-      });
-    }
-    return null;
-  }
-
-  return (payload.data?.product ?? null) as StorefrontProductForCart | null;
 };
 
 const toStorefrontProduct = (
@@ -292,7 +271,12 @@ async function fetchAdminProducts(domain: string, version: string): Promise<Cata
 
   const [products, storefrontProducts] = await Promise.all([
     fetchAdminProductNodes(domain, version),
-    fetchStorefrontProductsForCart(domain, version),
+    fetchStorefrontProductsForCart(domain, version).catch((error) => {
+      console.error('[Radiant 34 Shopify] Storefront catalogue validation skipped', {
+        message: error instanceof Error ? error.message : error,
+      });
+      return new Map<string, StorefrontProductForCart>();
+    }),
   ]);
 
   const activeProducts = products.filter((product) => product.status === 'ACTIVE');
@@ -310,10 +294,27 @@ async function fetchAdminProducts(domain: string, version: string): Promise<Cata
     payload,
   };
 
+  for (const product of payload.data.products.nodes) {
+    productCache.set(product.handle, {
+      expiresAt: Date.now() + productCacheTtlMs,
+      product,
+    });
+  }
+
   return payload;
 }
 
 async function fetchAdminProductByHandle(domain: string, version: string, handle: string) {
+  const cachedProduct = productCache.get(handle);
+  if (cachedProduct && cachedProduct.expiresAt > Date.now()) {
+    return { data: { product: cachedProduct.product } };
+  }
+
+  const catalogProduct = catalogCache?.payload.data.products.nodes.find((product) => product.handle === handle);
+  if (catalogProduct && catalogCache && catalogCache.expiresAt > Date.now()) {
+    return { data: { product: catalogProduct } };
+  }
+
   const token = await getShopifyAccessToken();
   const adminUrl = `https://${domain}/admin/api/${version}/graphql.json`;
   const response = await fetchWithRetry(adminUrl, {
@@ -345,13 +346,18 @@ async function fetchAdminProductByHandle(domain: string, version: string, handle
   }
 
   const product = payload.data?.product as AdminProduct | null | undefined;
-  const storefrontProduct = product
-    ? await fetchStorefrontProductForCart(domain, version, product.handle)
-    : null;
+  const mappedProduct = product ? toStorefrontProduct(product, null) : null;
+
+  if (mappedProduct) {
+    productCache.set(handle, {
+      expiresAt: Date.now() + productCacheTtlMs,
+      product: mappedProduct,
+    });
+  }
 
   return {
     data: {
-      product: product ? toStorefrontProduct(product, storefrontProduct) : null,
+      product: mappedProduct,
     },
   };
 }

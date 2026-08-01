@@ -4,7 +4,7 @@
 
 .r34-shop-category-intro {
   max-width: 680px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
 .r34-shop-category-intro h2 {
@@ -25,16 +25,34 @@
 }
 
 .r34-shop-category-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(16px, 2.2vw, 28px);
+  display: flex;
+  gap: clamp(14px, 1.8vw, 22px);
+  width: 100%;
+  padding: 4px 4px 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.r34-shop-category-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.r34-shop-category-grid::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(185, 133, 41, .42);
 }
 
 .r34-shop-category-card {
   position: relative;
   display: block;
-  min-width: 0;
-  min-height: 430px;
+  flex: 0 0 clamp(250px, 25vw, 330px);
+  min-width: 250px;
+  min-height: 350px;
   padding: 0;
   overflow: hidden;
   border: 0;
@@ -45,6 +63,7 @@
   cursor: pointer;
   box-shadow: 0 20px 42px rgba(43, 36, 26, .12);
   isolation: isolate;
+  scroll-snap-align: start;
 }
 
 .r34-shop-category-card img {
@@ -77,13 +96,13 @@
   right: 0;
   bottom: 0;
   display: block;
-  padding: 28px;
+  padding: 25px;
 }
 
 .r34-shop-category-card__copy strong {
   display: block;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(1.7rem, 2.5vw, 2.6rem);
+  font-size: clamp(1.65rem, 2.2vw, 2.35rem);
   font-weight: 400;
   line-height: 1;
 }
@@ -93,8 +112,8 @@
   max-width: 34ch;
   margin-top: 10px;
   color: rgba(255, 250, 240, .84);
-  font-size: .88rem;
-  line-height: 1.55;
+  font-size: .84rem;
+  line-height: 1.5;
 }
 
 .r34-shop-category-card--selected {
@@ -103,8 +122,8 @@
 }
 
 .r34-shop-results-heading {
-  margin: 64px 0 24px;
-  padding-top: 34px;
+  margin: 52px 0 24px;
+  padding-top: 30px;
   border-top: 1px solid rgba(17, 16, 13, .16);
 }
 
@@ -132,26 +151,24 @@
   line-height: 1.65;
 }
 
-@media (max-width: 980px) {
-  .r34-shop-category-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 680px) {
   .r34-shop-categories {
     margin-top: 24px;
   }
 
   .r34-shop-category-grid {
-    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-inline: -4px;
+    padding-bottom: 14px;
   }
 
   .r34-shop-category-card {
-    min-height: 390px;
+    flex-basis: min(78vw, 290px);
+    min-width: min(78vw, 290px);
+    min-height: 320px;
   }
 
   .r34-shop-category-card__copy {
-    padding: 24px;
+    padding: 22px;
   }
 }

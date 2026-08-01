@@ -50,7 +50,8 @@ const shopifyCheckoutDomain = 'xagsqp-u0.myshopify.com';
 const cartIdKey = 'radiant34CartId';
 const checkoutUrlKey = 'radiant34CheckoutUrl';
 const cartVersionKey = 'radiant34CartVersion';
-const cartVersion = '2';
+const cartVersion = '3';
+const shopifyRequestTimeoutMs = 12_000;
 
 export function normalizeCheckoutUrl(checkoutUrl: string) {
   try {
@@ -68,6 +69,18 @@ export function normalizeCheckoutUrl(checkoutUrl: string) {
   } catch {
     return checkoutUrl;
   }
+}
+
+function numericVariantId(variantId: string) {
+  const match = variantId.match(/(?:ProductVariant\/)?(\d+)$/);
+  if (!match) throw new Error('This product option is unavailable.');
+  return match[1];
+}
+
+function nativeBuyNowUrl(variantId: string, quantity: number) {
+  const numericId = numericVariantId(variantId);
+  const safeQuantity = Math.max(1, Math.min(99, Math.floor(quantity)));
+  return `https://${shopifyCheckoutDomain}/cart/${numericId}:${safeQuantity}?checkout&_fd=0&pb=0`;
 }
 
 export function clearRadiantCart() {
@@ -119,7 +132,7 @@ function userMessageForError(error: unknown) {
   if (lower.includes('unavailable') || lower.includes('does not exist') || lower.includes('merchandise')) {
     return 'This size is currently unavailable.';
   }
-  if (lower.includes('failed to fetch') || lower.includes('network')) {
+  if (lower.includes('failed to fetch') || lower.includes('network') || lower.includes('abort')) {
     return 'Connection problem. Please try again.';
   }
   return 'Checkout is temporarily unavailable. Please try again.';
@@ -211,6 +224,8 @@ export async function shopifyFetch<T = unknown>(
   variables?: Record<string, unknown>,
 ): Promise<T> {
   let response: Response;
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), shopifyRequestTimeoutMs);
 
   try {
     response = await fetch('/api/shopify-storefront', {
@@ -219,10 +234,13 @@ export async function shopifyFetch<T = unknown>(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
     });
   } catch (error) {
     console.error('[Radiant 34 Shopify] Network request failed', error);
     throw new Error('Connection problem. Please try again.');
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 
   const json = await response.json().catch(() => ({})) as ProxyResponse<T>;
@@ -279,7 +297,13 @@ export async function createCart(variantId: string, quantity = 1, persist = true
 
 export async function buyNowVariant(variantId: string, quantity = 1) {
   try {
-    return await createCart(variantId, quantity, false);
+    const checkoutUrl = nativeBuyNowUrl(variantId, quantity);
+    return {
+      id: `native-buy-now-${numericVariantId(variantId)}`,
+      checkoutUrl,
+      totalQuantity: Math.max(1, Math.floor(quantity)),
+      lines: { nodes: [] },
+    } satisfies ShopifyCart;
   } catch (error) {
     console.error('[Radiant 34 Shopify] Buy Now failed', error);
     throw new Error(userMessageForError(error));

@@ -1,5 +1,6 @@
 (() => {
   const SESSION_KEY = 'r34CustomerAuthSession';
+  const RETURN_PATH_KEY = 'r34CustomerAuthReturnPath';
   const STYLE_ID = 'r34-customer-account-styles';
   const MODAL_ID = 'r34-account-modal';
   const nativeFetch = window.fetch.bind(window);
@@ -7,6 +8,15 @@
   let customer = null;
   let loadingCustomer = false;
   let accountMessage = '';
+  let authConfig = null;
+  let loadingConfig = false;
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 
   const readSession = () => {
     try {
@@ -30,25 +40,34 @@
   const clearSession = () => {
     window.localStorage.removeItem(SESSION_KEY);
     customer = null;
-    accountMessage = '';
   };
 
   const processOAuthReturn = () => {
-    if (!window.location.hash.includes('access_token=') && !window.location.hash.includes('error_description=')) return;
-    const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    const error = params.get('error_description');
-    if (error) accountMessage = decodeURIComponent(error.replace(/\+/g, ' '));
-    const accessToken = params.get('access_token');
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const queryParams = new URLSearchParams(window.location.search);
+    const error = hashParams.get('error_description') || queryParams.get('error_description');
+    const accessToken = hashParams.get('access_token');
+
+    if (!error && !accessToken) return;
+
+    if (error) {
+      accountMessage = decodeURIComponent(error.replace(/\+/g, ' '));
+    }
+
     if (accessToken) {
       saveSession({
         access_token: accessToken,
-        refresh_token: params.get('refresh_token') || '',
-        expires_at: params.get('expires_at'),
-        expires_in: params.get('expires_in'),
+        refresh_token: hashParams.get('refresh_token') || '',
+        expires_at: hashParams.get('expires_at'),
+        expires_in: hashParams.get('expires_in'),
       });
       accountMessage = '';
     }
-    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+
+    const returnPath = window.sessionStorage.getItem(RETURN_PATH_KEY) || '/';
+    window.sessionStorage.removeItem(RETURN_PATH_KEY);
+    const safePath = returnPath.startsWith('/') ? returnPath : '/';
+    window.history.replaceState(null, '', safePath);
   };
 
   const installStyles = () => {
@@ -56,154 +75,27 @@
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      .r34-account-tab {
-        appearance:none;
-        border:0;
-        background:transparent;
-        color:inherit;
-        cursor:pointer;
-        font:inherit;
-        font-size:.7rem;
-        font-weight:900;
-        letter-spacing:.14em;
-        text-transform:uppercase;
-        white-space:nowrap;
-      }
-      .r34-account-tab:hover,
-      .r34-account-tab:focus-visible { color:#b98529; }
-      .r34-account-shell {
-        position:fixed;
-        inset:0;
-        z-index:160;
-        display:none;
-        align-items:center;
-        justify-content:center;
-        padding:24px;
-      }
-      .r34-account-shell[data-open='true'] { display:flex; }
-      .r34-account-backdrop {
-        position:absolute;
-        inset:0;
-        border:0;
-        background:rgba(17,16,13,.68);
-        backdrop-filter:blur(7px);
-      }
-      .r34-account-dialog {
-        position:relative;
-        z-index:1;
-        width:min(560px,100%);
-        max-height:min(760px,calc(100svh - 36px));
-        overflow-y:auto;
-        padding:clamp(28px,5vw,48px);
-        border:1px solid rgba(185,133,41,.28);
-        border-radius:12px;
-        background:#fffaf0;
-        color:#11100d;
-        box-shadow:0 34px 90px rgba(17,16,13,.32);
-      }
-      .r34-account-close {
-        position:absolute;
-        top:18px;
-        right:18px;
-        width:42px;
-        height:42px;
-        border:1px solid rgba(17,16,13,.18);
-        border-radius:50%;
-        background:transparent;
-        color:#11100d;
-        cursor:pointer;
-        font-size:1.3rem;
-      }
-      .r34-account-eyebrow {
-        margin:0 0 14px;
-        color:#b98529;
-        font-size:.7rem;
-        font-weight:900;
-        letter-spacing:.18em;
-        text-transform:uppercase;
-      }
-      .r34-account-dialog h2 {
-        max-width:9ch;
-        margin:0;
-        font-family:Georgia,'Times New Roman',serif;
-        font-size:clamp(2.6rem,7vw,4.7rem);
-        font-weight:400;
-        letter-spacing:-.045em;
-        line-height:.95;
-      }
-      .r34-account-intro {
-        max-width:460px;
-        margin:20px 0 28px;
-        color:#655945;
-        line-height:1.7;
-      }
-      .r34-account-providers {
-        display:grid;
-        gap:12px;
-      }
-      .r34-account-provider,
-      .r34-account-signout {
-        width:100%;
-        min-height:54px;
-        border:1px solid rgba(17,16,13,.18);
-        border-radius:999px;
-        cursor:pointer;
-        font-size:.72rem;
-        font-weight:900;
-        letter-spacing:.08em;
-      }
-      .r34-account-provider { background:#fff; color:#11100d; }
-      .r34-account-provider--facebook { background:#1877f2; border-color:#1877f2; color:#fff; }
-      .r34-account-provider--tiktok { background:#111; border-color:#111; color:#fff; }
-      .r34-account-provider:disabled { cursor:wait; opacity:.58; }
-      .r34-account-card {
-        margin-top:26px;
-        padding:22px;
-        border:1px solid rgba(185,133,41,.25);
-        border-radius:10px;
-        background:#f7efe0;
-      }
-      .r34-account-card strong,
-      .r34-account-card span { display:block; }
-      .r34-account-card strong { font-family:Georgia,'Times New Roman',serif; font-size:1.7rem; font-weight:400; }
-      .r34-account-card span { margin-top:6px; color:#74654e; }
-      .r34-account-signout { margin-top:18px; background:#11100d; color:#fffaf0; }
-      .r34-account-message {
-        margin:18px 0 0;
-        padding:13px 15px;
-        border:1px solid rgba(185,133,41,.28);
-        border-radius:8px;
-        color:#2b241a;
-        line-height:1.5;
-      }
-      .r34-account-note {
-        margin:18px 0 0;
-        color:#74654e;
-        font-size:.78rem;
-        line-height:1.55;
-      }
-      @media (max-width:980px) {
-        .main-nav .r34-account-tab {
-          width:100%;
-          min-height:58px;
-          display:flex;
-          align-items:center;
-          border-bottom:1px solid rgba(185,133,41,.18);
-          text-align:left;
-        }
-      }
+      .r34-account-tab{appearance:none;border:0;background:transparent;color:inherit;cursor:pointer;font:inherit;font-size:.7rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+      .r34-account-tab:hover,.r34-account-tab:focus-visible{color:#b98529}
+      .r34-account-shell{position:fixed;inset:0;z-index:160;display:none;align-items:center;justify-content:center;padding:24px}
+      .r34-account-shell[data-open='true']{display:flex}
+      .r34-account-backdrop{position:absolute;inset:0;border:0;background:rgba(17,16,13,.68);backdrop-filter:blur(7px)}
+      .r34-account-dialog{position:relative;z-index:1;width:min(560px,100%);max-height:min(760px,calc(100svh - 36px));overflow-y:auto;padding:clamp(28px,5vw,48px);border:1px solid rgba(185,133,41,.28);border-radius:12px;background:#fffaf0;color:#11100d;box-shadow:0 34px 90px rgba(17,16,13,.32)}
+      .r34-account-close{position:absolute;top:18px;right:18px;width:42px;height:42px;border:1px solid rgba(17,16,13,.18);border-radius:50%;background:transparent;color:#11100d;cursor:pointer;font-size:1.3rem}
+      .r34-account-eyebrow{margin:0 0 14px;color:#b98529;font-size:.7rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase}
+      .r34-account-dialog h2{max-width:10ch;margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(2.5rem,7vw,4.5rem);font-weight:400;letter-spacing:-.045em;line-height:.95}
+      .r34-account-intro{max-width:460px;margin:20px 0 28px;color:#655945;line-height:1.7}
+      .r34-account-providers{display:grid;gap:12px}
+      .r34-account-provider,.r34-account-signout{width:100%;min-height:54px;border:1px solid rgba(17,16,13,.18);border-radius:999px;cursor:pointer;font-size:.72rem;font-weight:900;letter-spacing:.08em}
+      .r34-account-provider{background:#fff;color:#11100d}.r34-account-provider--facebook{background:#1877f2;border-color:#1877f2;color:#fff}.r34-account-provider:disabled{cursor:wait;opacity:.58}
+      .r34-account-card{margin-top:26px;padding:22px;border:1px solid rgba(185,133,41,.25);border-radius:10px;background:#f7efe0}
+      .r34-account-card strong,.r34-account-card span{display:block}.r34-account-card strong{font-family:Georgia,'Times New Roman',serif;font-size:1.7rem;font-weight:400}.r34-account-card span{margin-top:6px;color:#74654e}
+      .r34-account-signout{margin-top:18px;background:#11100d;color:#fffaf0}
+      .r34-account-message{margin:18px 0 0;padding:13px 15px;border:1px solid rgba(185,133,41,.28);border-radius:8px;color:#2b241a;line-height:1.5}
+      .r34-account-note{margin:18px 0 0;color:#74654e;font-size:.78rem;line-height:1.55}
+      @media(max-width:980px){.main-nav .r34-account-tab{width:100%;min-height:58px;display:flex;align-items:center;border-bottom:1px solid rgba(185,133,41,.18);text-align:left}}
     `;
     document.head.appendChild(style);
-  };
-
-  const renameMissionLabels = () => {
-    document.querySelectorAll('a[href="/mission"], button, .r34-mission-eyebrow').forEach((node) => {
-      const copy = node.textContent?.trim();
-      if (copy === 'Our Mission' || (node.matches?.('a[href="/mission"]') && copy === 'Mission')) {
-        node.textContent = 'Our Missions';
-      }
-    });
-    if (window.location.pathname === '/mission') document.title = 'Our Missions | Radiant 34';
   };
 
   const accountLabel = () => readSession()?.access_token ? 'My Account' : 'Create Account';
@@ -211,8 +103,16 @@
   const updateAccountTabs = () => {
     document.querySelectorAll('[data-r34-account-tab]').forEach((button) => {
       button.textContent = accountLabel();
-      button.setAttribute('aria-label', `${accountLabel()} — Google, Facebook or TikTok`);
+      button.setAttribute('aria-label', `${accountLabel()} — Google or Facebook`);
     });
+  };
+
+  const closeAccount = () => {
+    const shell = document.getElementById(MODAL_ID);
+    if (!shell) return;
+    shell.dataset.open = 'false';
+    shell.setAttribute('aria-hidden', 'true');
+    document.body.style.removeProperty('overflow');
   };
 
   const ensureModal = () => {
@@ -232,18 +132,27 @@
       </section>
     `;
     document.body.appendChild(shell);
-
     shell.querySelector('.r34-account-backdrop')?.addEventListener('click', closeAccount);
     shell.querySelector('.r34-account-close')?.addEventListener('click', closeAccount);
     return shell;
   };
 
-  const closeAccount = () => {
-    const shell = document.getElementById(MODAL_ID);
-    if (!shell) return;
-    shell.dataset.open = 'false';
-    shell.setAttribute('aria-hidden', 'true');
-    document.body.style.removeProperty('overflow');
+  const fetchAuthConfig = async () => {
+    if (authConfig || loadingConfig) return authConfig;
+    loadingConfig = true;
+    try {
+      const response = await nativeFetch('/api/auth/config', { headers: { Accept: 'application/json' } });
+      const config = await response.json().catch(() => ({}));
+      authConfig = response.ok ? config : { configured: false, providers: [] };
+      if (!response.ok) accountMessage = config.error || 'Customer sign-in is temporarily unavailable.';
+    } catch {
+      authConfig = { configured: false, providers: [] };
+      accountMessage = 'Customer sign-in is temporarily unavailable.';
+    } finally {
+      loadingConfig = false;
+      renderAccount();
+    }
+    return authConfig;
   };
 
   const loadCustomer = async () => {
@@ -271,20 +180,27 @@
 
   const startSocialSignIn = async (provider) => {
     accountMessage = '';
-    const buttons = document.querySelectorAll('.r34-account-provider');
-    buttons.forEach((button) => { button.disabled = true; });
+    document.querySelectorAll('.r34-account-provider').forEach((button) => { button.disabled = true; });
     try {
-      const response = await nativeFetch('/api/auth/config');
-      const config = await response.json().catch(() => ({}));
-      if (!response.ok || !config.configured || !config.supabaseUrl) {
-        throw new Error('Customer sign-in is being configured. Please try again shortly.');
+      const config = authConfig || await fetchAuthConfig();
+      const providers = Array.isArray(config?.providers) ? config.providers : [];
+      if (!config?.configured || !config?.supabaseUrl) {
+        throw new Error('Customer sign-in is not fully configured yet.');
       }
-      const redirectTo = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-      const authUrl = `${config.supabaseUrl}/auth/v1/authorize?provider=${encodeURIComponent(provider)}&redirect_to=${encodeURIComponent(redirectTo)}`;
+      if (!providers.includes(provider)) {
+        throw new Error('This sign-in provider is not enabled.');
+      }
+
+      window.sessionStorage.setItem(
+        RETURN_PATH_KEY,
+        `${window.location.pathname}${window.location.search}`,
+      );
+      const redirectTo = `${window.location.origin}/`;
+      const authUrl = `${config.supabaseUrl}/auth/v1/authorize?provider=${encodeURIComponent(provider)}&redirect_to=${encodeURIComponent(redirectTo)}&flow_type=implicit`;
       window.location.assign(authUrl);
     } catch (error) {
       accountMessage = error instanceof Error ? error.message : 'Unable to start sign-in.';
-      buttons.forEach((button) => { button.disabled = false; });
+      document.querySelectorAll('.r34-account-provider').forEach((button) => { button.disabled = false; });
       renderAccount();
     }
   };
@@ -299,8 +215,8 @@
       content.innerHTML = `
         <p class="r34-account-eyebrow">Customer account</p>
         <h2 id="r34-account-title">Loading your account.</h2>
-        <p class="r34-account-intro">Checking your Radiant 34 customer profile…</p>
-        ${accountMessage ? `<p class="r34-account-message">${accountMessage}</p>` : ''}
+        <p class="r34-account-intro">Checking your Radiant 34 customer profile.</p>
+        ${accountMessage ? `<p class="r34-account-message">${escapeHtml(accountMessage)}</p>` : ''}
       `;
       if (!loadingCustomer) void loadCustomer();
       return;
@@ -312,8 +228,8 @@
         <h2 id="r34-account-title">Welcome back.</h2>
         <p class="r34-account-intro">Your account is connected to verified purchases and product reviews.</p>
         <div class="r34-account-card">
-          <strong>${customer.name || 'Radiant 34 customer'}</strong>
-          <span>${customer.email || ''}</span>
+          <strong>${escapeHtml(customer.name || 'Radiant 34 customer')}</strong>
+          <span>${escapeHtml(customer.email || '')}</span>
         </div>
         <button class="r34-account-signout" type="button" data-r34-signout>Sign out</button>
       `;
@@ -325,18 +241,37 @@
       return;
     }
 
+    if (loadingConfig || !authConfig) {
+      content.innerHTML = `
+        <p class="r34-account-eyebrow">Customer account</p>
+        <h2 id="r34-account-title">Loading sign-in.</h2>
+        <p class="r34-account-intro">Checking the available secure sign-in options.</p>
+      `;
+      if (!loadingConfig) void fetchAuthConfig();
+      return;
+    }
+
+    const providers = Array.isArray(authConfig.providers) ? authConfig.providers : [];
+    const providerButtons = [
+      providers.includes('google')
+        ? '<button class="r34-account-provider" type="button" data-r34-provider="google">Continue with Google</button>'
+        : '',
+      providers.includes('facebook')
+        ? '<button class="r34-account-provider r34-account-provider--facebook" type="button" data-r34-provider="facebook">Continue with Facebook</button>'
+        : '',
+    ].filter(Boolean).join('');
+
     content.innerHTML = `
       <p class="r34-account-eyebrow">Customer account</p>
       <h2 id="r34-account-title">Create your account.</h2>
-      <p class="r34-account-intro">Use a social account to register or sign in. Your Radiant 34 account is created automatically on your first login.</p>
-      <div class="r34-account-providers">
-        <button class="r34-account-provider" type="button" data-r34-provider="google">Continue with Google</button>
-        <button class="r34-account-provider r34-account-provider--facebook" type="button" data-r34-provider="facebook">Continue with Facebook</button>
-        <button class="r34-account-provider r34-account-provider--tiktok" type="button" data-r34-provider="custom:tiktok">Continue with TikTok</button>
-      </div>
+      <p class="r34-account-intro">Use Google or Facebook to register or sign in. Your Radiant 34 account is created automatically on your first login.</p>
+      ${authConfig.configured && providerButtons
+        ? `<div class="r34-account-providers">${providerButtons}</div>`
+        : '<p class="r34-account-message">Customer sign-in is not fully configured yet.</p>'}
       <p class="r34-account-note">By continuing, you create or access your Radiant 34 customer account.</p>
-      ${accountMessage ? `<p class="r34-account-message">${accountMessage}</p>` : ''}
+      ${accountMessage ? `<p class="r34-account-message">${escapeHtml(accountMessage)}</p>` : ''}
     `;
+
     content.querySelectorAll('[data-r34-provider]').forEach((button) => {
       button.addEventListener('click', () => startSocialSignIn(button.dataset.r34Provider));
     });
@@ -348,29 +283,34 @@
     shell.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     renderAccount();
+    if (!authConfig && !loadingConfig) void fetchAuthConfig();
     window.setTimeout(() => shell.querySelector('.r34-account-close')?.focus(), 0);
   };
 
   const ensureAccountTab = () => {
     const nav = document.querySelector('.main-nav');
-    if (!nav || nav.querySelector('[data-r34-account-tab]')) return;
+    if (!nav) return;
 
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'r34-account-tab';
-    button.dataset.r34AccountTab = 'true';
+    let button = nav.querySelector('[data-r34-account-tab]');
+    if (!button) {
+      button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'r34-account-tab';
+      button.dataset.r34AccountTab = 'true';
+      button.addEventListener('click', openAccount);
+    }
+
     button.textContent = accountLabel();
-    button.addEventListener('click', openAccount);
-
+    const missionLink = Array.from(nav.querySelectorAll(':scope > a'))
+      .find((link) => link.getAttribute('href') === '/mission');
     const mobileActions = nav.querySelector('.mobile-nav-actions');
-    nav.insertBefore(button, mobileActions || null);
+    nav.insertBefore(button, missionLink || mobileActions || null);
+    updateAccountTabs();
   };
 
   const apply = () => {
     installStyles();
-    renameMissionLabels();
     ensureAccountTab();
-    updateAccountTabs();
   };
 
   processOAuthReturn();
@@ -393,5 +333,7 @@
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeAccount();
   });
+
+  if (readSession()?.access_token) void loadCustomer();
   queue();
 })();

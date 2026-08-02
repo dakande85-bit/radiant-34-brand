@@ -1,0 +1,2585 @@
+Radiant 34 independent review raw command output
+Captured: 2026-08-02T17:03:52.8196019+01:00
+
+
+===== COMMAND: git status =====
+START: 2026-08-02T17:03:52.8406358+01:00
+EXIT_CODE: 0
+DURATION_MS: 518
+OUTPUT:
+On branch recovery/storefront-stabilization-2026-08-01
+Your branch is ahead of 'origin/main' by 4 commits.
+  (use "git push" to publish your local commits)
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	docs/review/
+	separated-collage-contact-sheet.png
+	separated-collage-images.zip
+	separated-collage-images/
+	separated-designs-2026-07-25.zip
+	separated-designs-2026-07-25/
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+END: 2026-08-02T17:03:53.3583926+01:00
+
+===== COMMAND: git branch --show-current =====
+START: 2026-08-02T17:03:53.4353239+01:00
+EXIT_CODE: 0
+DURATION_MS: 473
+OUTPUT:
+recovery/storefront-stabilization-2026-08-01
+
+END: 2026-08-02T17:03:53.9080576+01:00
+
+===== COMMAND: git branch -vv =====
+START: 2026-08-02T17:03:53.9938641+01:00
+EXIT_CODE: 0
+DURATION_MS: 849
+OUTPUT:
+  main                                         f9b76ac [origin/main: behind 139] Launch full Shopify catalog images reviews and brand pages
+* recovery/storefront-stabilization-2026-08-01 dc55fde [origin/main: ahead 4] fix: match t-shirt category thumbnail to product image
+
+END: 2026-08-02T17:03:54.8429490+01:00
+
+===== COMMAND: git branch -a =====
+START: 2026-08-02T17:03:54.9593287+01:00
+EXIT_CODE: 0
+DURATION_MS: 847
+OUTPUT:
+  main
+* recovery/storefront-stabilization-2026-08-01
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/backup/pre-rollback-2026-08-01
+  remotes/origin/main
+
+END: 2026-08-02T17:03:55.8061647+01:00
+
+===== COMMAND: git log --oneline --decorate --graph -40 =====
+START: 2026-08-02T17:03:55.9443374+01:00
+EXIT_CODE: 0
+DURATION_MS: 828
+OUTPUT:
+* dc55fde (HEAD -> recovery/storefront-stabilization-2026-08-01) fix: match t-shirt category thumbnail to product image
+* 36e34d8 fix: exclude unisex sweatshirt from women category
+* 8724081 fix: remove incorrect touch hover image override
+* 7187d86 Document storefront incident recovery audit
+* 75d9f6b (origin/main, origin/HEAD) Trigger fresh production deployment from restored storefront
+* b3d9ec8 Use Shopify image order for Fearfully and Wonderfully dress
+* bb7f361 Keep active Shopify products visible during storefront sync lag
+* 1dbd59f Refresh corrected mission slider layout
+* 8e3aaa2 Fix mission product slider image sizing and cropping
+* 82934c0 Load customer account and social login controls
+* 6669b2e Add customer account tab and social sign-in
+* cc02a1b Add homepage mission product slider
+* ad06ffb Style mission featured product slider
+* b5ff7fc Replace mission image with featured product slider
+* 6408189 Apply dedicated About page layout and route styling
+* da04345 Redesign and stabilise the About page layout
+* dc1d5ce Load redesigned contact page experience
+* 33bc728 Place contact signup above the fold and improve guidance
+* 26a10e0 Redesign contact page with intuitive above-the-fold signup
+* 2a18e1d Refresh navigation without search tab
+* fe34a08 Remove inactive search tab from site navigation
+* 804a66a Load restored shop category card styles
+* 51c9dc6 Restore shop category card layout without homepage mutators
+* f1acfcb Replace retired homepage mission image with current campaign model
+* 79390a9 Apply permanent homepage route guard and remove conflicting DOM patch
+* c9a4571 Permanently hide retired homepage product strip before React paints
+* b14095a Keep removed featured product image off the homepage
+* 68b5eff Remove duplicate homepage mutators and refresh stable homepage script
+* 898d9b0 Stabilise homepage and remove competing image mutations
+* d134e5a Load refreshed homepage campaign imagery
+* 587304b Apply new Radiant 34 homepage campaign images
+* 8f8248d Refresh homepage campaign imagery
+* dcad5fb Load authoritative shop grid normalizer
+* 490430d Normalize visible shop cards and remove empty grid slots
+* acaa8f6 Enforce continuous four-column desktop shop grid
+* 4f689ac Refresh desktop four-column shop grid styles
+* 1bf9292 Lock desktop shop to four equal product cards per row
+* 3529609 Load live Shopify sync before the storefront app
+* 0aaae42 Make Shopify the live source for catalogue and product images
+* 61bc111 Sync Follow God Not Man snapback images from Shopify
+
+END: 2026-08-02T17:03:56.7721845+01:00
+
+===== COMMAND: git remote -v =====
+START: 2026-08-02T17:03:56.8732080+01:00
+EXIT_CODE: 0
+DURATION_MS: 738
+OUTPUT:
+origin	https://github.com/dakande85-bit/radiant-34-brand.git (fetch)
+origin	https://github.com/dakande85-bit/radiant-34-brand.git (push)
+
+END: 2026-08-02T17:03:57.6113324+01:00
+
+===== COMMAND: git diff origin/main...HEAD =====
+START: 2026-08-02T17:03:57.7464363+01:00
+EXIT_CODE: 0
+DURATION_MS: 859
+OUTPUT:
+diff --git a/docs/architecture/CURRENT_ARCHITECTURE.md b/docs/architecture/CURRENT_ARCHITECTURE.md
+new file mode 100644
+index 0000000..80be40f
+--- /dev/null
++++ b/docs/architecture/CURRENT_ARCHITECTURE.md
+@@ -0,0 +1,104 @@
++# Current Architecture
++
++Commit audited: `75d9f6b0ff56bf1c61988cd9b2c03e59ca9d757e`.
++
++## Browser Rendering Flow
++
++```mermaid
++flowchart TD
++  Browser["Browser loads index.html"] --> CSS["Public CSS overrides plus src/styles.css"]
++  Browser --> Patches["Public JS patches"]
++  Browser --> React["React entry src/main.tsx"]
++  React --> Components["Header, pages, shop cards, product page, cart drawer"]
++  Patches --> DOM["Mutate rendered DOM"]
++  CSS --> DOM
++  Components --> DOM
++```
++
++## Shopify Product-Data Flow
++
++```mermaid
++flowchart TD
++  ShopPage["ShopifyProducts in src/main.tsx"] --> Proxy["POST /api/shopify-storefront"]
++  Proxy --> AdminToken["getShopifyAccessToken from client credentials"]
++  AdminToken --> AdminAPI["Shopify Admin GraphQL active products"]
++  Proxy --> StorefrontAPI["Storefront GraphQL products for cart validation"]
++  AdminAPI --> Mapper["toStorefrontProduct"]
++  StorefrontAPI --> Mapper
++  Mapper --> Client["Storefront-shaped product list"]
++  Client --> Overrides["brandOverrides and radiantProductImages"]
++  Overrides --> Cards["React shop cards"]
++  Cards --> PublicScripts["Public shop scripts may rewrite cards"]
++```
++
++## Cart And Checkout Flow
++
++```mermaid
++flowchart TD
++  Card["Quick Add / Buy Now"] --> Variant["storefrontVariantId expected"]
++  Variant --> Lib["src/lib/shopify.ts"]
++  Lib --> Proxy["/api/shopify-storefront"]
++  Proxy --> StorefrontCart["Storefront cartCreate/cartLinesAdd/cartLinesUpdate/cartLinesRemove"]
++  StorefrontCart --> CartId["radiant34CartId localStorage"]
++  StorefrontCart --> CheckoutUrl["Shopify checkoutUrl"]
++  CheckoutUrl --> Redirect["Browser redirects to checkout"]
++```
++
++Current risk: `api/shopify-storefront.ts` can still derive `storefrontVariantId` from an Admin variant fallback when Storefront validation is unavailable.
++
++## Authentication Flow
++
++```mermaid
++flowchart TD
++  AccountScript["public/customer-account.js"] --> Config["GET /api/auth/config"]
++  Config --> SupabaseEnv["SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY"]
++  AccountScript --> ProviderRedirect["Supabase OAuth provider redirect"]
++  ProviderRedirect --> Hash["access_token / refresh_token in URL hash"]
++  AccountScript --> SessionStore["radiant34CustomerSession localStorage"]
++  AccountScript --> SessionAPI["GET /api/auth/session"]
++  SessionAPI --> SupabaseUser["Supabase auth/v1/user"]
++```
++
++Google and Facebook are listed by `api/auth/config.ts`, but provider readiness depends on external Supabase configuration.
++
++## Routing And History Flow
++
++```mermaid
++flowchart TD
++  Link["React navigation click"] --> ReactPush["src/main.tsx window.history.pushState"]
++  ReactPush --> ReactPage["setPage"]
++  BrowserBack["Browser Back"] --> Popstate["popstate"]
++  Popstate --> ReactSync["React syncPage"]
++  Popstate --> PatchListeners["Public patch listeners"]
++  PatchListeners --> DOMMutations["DOM/link/content mutations"]
++  VercelRewrite["Vercel SPA rewrite"] --> Index["index.html"]
++  VercelRedirect["/drop-001 permanent redirect"] --> Shop["/shop"]
++```
++
++Current risk: routing ownership is split between React, public scripts, and Vercel redirects.
++
++## Commercial Function Status
++
++No item below is marked working without runtime evidence.
++
++| Item | Status | Evidence |
++| --- | --- | --- |
++| Live homepage | UNVERIFIED | Build passed, production not manually tested. |
++| Shop page | UNVERIFIED | React renders shop, public patches can hide/mutate UI. |
++| Product-page loading | UNVERIFIED | Direct route code exists; production refresh not tested. |
++| Product images | UNVERIFIED | Multiple source and post-render image overrides exist. |
++| Product variants | UNVERIFIED | Admin and Storefront variant fields are mixed. |
++| Add to Cart | UNVERIFIED | Storefront cart code exists; buttons may be hidden by CSS. |
++| Cart drawer | UNVERIFIED | React drawer exists; not runtime tested. |
++| Cart persistence | UNVERIFIED | `radiant34CartId` localStorage exists; expiry not runtime tested. |
++| Quantity update | UNVERIFIED | Mutation exists; not runtime tested. |
++| Remove item | UNVERIFIED | Mutation exists; not runtime tested. |
++| Buy Now | UNVERIFIED | Uses Storefront cartCreate; no checkout redirect test performed. |
++| Checkout redirect | UNVERIFIED | Checkout URL normalization exists; no live redirect confirmed. |
++| Google sign-in | NOT CONFIGURED | Requires external Supabase/provider setup. |
++| Facebook sign-in | NOT CONFIGURED | Requires external Supabase/provider setup. |
++| Mobile menu | UNVERIFIED | React and public menu script both affect it. |
++| Browser Back | UNVERIFIED | Multiple popstate handlers exist. |
++| Direct product URL refresh | UNVERIFIED | SPA rewrite exists, production browser not tested. |
++| Printful order routing | UNVERIFIED | No repo evidence proving routing. |
++| Gelato order routing | UNVERIFIED | No repo evidence proving routing. |
+diff --git a/docs/architecture/PATCH_INVENTORY.md b/docs/architecture/PATCH_INVENTORY.md
+new file mode 100644
+index 0000000..5c17151
+--- /dev/null
++++ b/docs/architecture/PATCH_INVENTORY.md
+@@ -0,0 +1,44 @@
++# Public Patch Inventory
++
++Loaded by `index.html` on commit `75d9f6b0ff56bf1c61988cd9b2c03e59ca9d757e`.
++
++## CSS Loaded By `index.html`
++
++| File | Purpose | Risk | Recommendation |
++| --- | --- | --- | --- |
++| `public/launch-fixes.css` | Product image containment. | Low/medium; overlaps product card CSS. | Migrate if still needed. |
++| `public/product-page-fixes.css` | Product page layout overrides. | High; many `!important` product rules. | Migrate to React/CSS source. |
++| `public/shop-grid-integrity.css` | Shop grid/card layout overrides. | Critical; hides `.shopify-card__actions`. | Remove after React layout owns shop. |
++| `public/shop-category-cards.css` | Category card styling. | Medium; depends on injected DOM. | Migrate with category React component. |
++| `public/home-route-guard.css` | Route-specific hiding. | Medium; patches route output. | Remove after source cleanup. |
++| `public/contact-page-upgrade.css` | Contact page patch styling. | Medium; supports injected content. | Migrate or remove. |
++| `public/about-page-fix.css` | About page layout patch styling. | Medium/high due `!important`. | Migrate or remove. |
++| `public/mission-product-slider.css` | Mission slider styling. | Medium; supports injected slider. | Migrate if retained. |
++
++## JavaScript Loaded By `index.html`
++
++| File | Purpose | DOM read | DOM changed | Observer | Click interception | History usage | Shopify/data manipulation | React overlap | Recommendation |
++| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
++| Inline route class script | Adds route classes to `<html>`. | `window.location.pathname` | `<html>` classes | No | No | wraps `pushState`, `replaceState`, listens `popstate` | No | Routing/CSS | Migrate or remove. |
++| `public/review-auth.js` | Review auth and review form gate. | Product path, review form, hash params | Inserts auth gate/form with `innerHTML`; localStorage session | Yes | Provider/form clicks | `replaceState` clears hash | Review/customer auth | Product reviews | Migrate retained review auth into React. |
++| `public/shopify-live-sync.js` | Captures Shopify responses and syncs images/gallery. | `fetch`, `.shopify-card`, `.product-gallery` | Rewrites hover images and gallery `innerHTML` | Yes | No | `popstate` listener | Yes; captures product payloads | Shop/product gallery | Remove; feed data through React. |
++| `public/menu-fixes.js` | Removes/changes nav links and forces shop navigation. | All links/buttons, nav/footer | Removes links, injects Contact, changes button text | Yes | Yes, capture phase | `pushState`, synthetic `popstate`, `window.location.assign` | No | Header/footer/router | Remove after React nav fixed. |
++| `public/mobile-menu-fix.js` | Mobile scroll lock and menu close behavior. | `.menu-btn`, `.main-nav` | Body class, injected style | Yes | Yes | `popstate` listener | No | Header/mobile menu | Migrate minimal behavior into React. |
++| `public/contact-page-upgrade.js` | Rewrites contact page. | Page hero, launch section | `innerHTML`, text, image classes | No | Form submit | wraps `pushState`, `replaceState`, listens `popstate` | No | Contact page/newsletter | Remove after React contact page owns content. |
++| `public/mission-product-slider.js` | Adds homepage mission product slider. | `.mission-band` | Removes/replaces mission image, injects slider | No | Slider controls | path check only | Hardcoded Shopify CDN images | Mission/home | Migrate if retained. |
++| `public/shop-hover-mockups.js` | Adds hover mockups by title. | `.shopify-card` titles/images | Adds hover image nodes | Yes | No | `popstate` listener | Hardcoded CDN images by title | Shop card images | Remove; use `radiantProductImages` or Shopify images in React. |
++| `public/shop-catalog-sync-v2.js` | Category chooser and card normalizer. | Shop cards, controls, images, links | Injects category grid, headings, text rewrites, inline display hiding | Yes | Yes, capture phase with stopImmediatePropagation | No | Hardcoded categories/CDN; card classification | Shop filters/cards | Remove after React category UI exists. |
++| `public/shop-grid-normalizer.js` | Normalizes visible shop cards. | `.shop-page`, grid, cards | Inline styles, hidden/aria-hidden | Yes | Schedules on click | `popstate` listener | No | Shop grid/cards | Remove with category patch. |
++| `public/mens-outerwear-thumbnail.js` | Overrides category thumbnail/copy. | Category card and heading | Image src and text content | Yes | No | `popstate` listener | Hardcoded CDN image | Shop category cards | Remove with category patch. |
++| `public/product-page-content-fix.js` | Rewrites one product page. | Product detail/gallery | `innerHTML`, text, image order/classes | Yes | No | path checks and popstate | Hardcoded copy/images | Product page | Remove; use product data. |
++| `public/mission-support.js` | Mission donations page and nav injection. | Main/nav/footer | Injects nav links, replaces `main.innerHTML` | Yes | Link click | `pushState`, synthetic `popstate` | No | Mission route and nav | Remove; React owns mission page. |
++| `public/customer-account.js` | Account modal and social sign-in. | Nav, buttons, URL hash | Injects account button/modal, changes Mission text/title | Yes | Provider/account clicks | `replaceState` clears auth hash | Customer auth | Header/nav/auth | Migrate into React; keep server APIs. |
++
++## Immediate Repair Direction
++
++Retain server-side Shopify proxy, cart library, brand/image manifests, and React card/product components. Remove or migrate the public patch layer incrementally, beginning with commerce blockers:
++
++1. Remove `shop-grid-integrity.css` action hiding.
++2. Replace `shop-catalog-sync-v2.js` with React category UI.
++3. Remove Shopify/gallery post-render mutation scripts after React owns image mapping.
++4. Remove menu/mission/contact/account patches after their behavior is represented in source.
+diff --git a/docs/incident/INCIDENT_TIMELINE.md b/docs/incident/INCIDENT_TIMELINE.md
+new file mode 100644
+index 0000000..bf03533
+--- /dev/null
++++ b/docs/incident/INCIDENT_TIMELINE.md
+@@ -0,0 +1,81 @@
++# Incident Timeline
++
++This timeline distinguishes the current recovery branch from pre-rollback comparison commits. A successful Vercel build does not prove functional storefront stability.
++
++## Current Recovery Head
++
++### `75d9f6b0ff56bf1c61988cd9b2c03e59ca9d757e`
++
++- Subject: `Trigger fresh production deployment from restored storefront`
++- Parent: `b3d9ec8b8b21534909b7f85c877522509af1dc82`
++- Files changed: `index.html`
++- Intended purpose: force a fresh production deployment by adding a restore marker comment.
++- Likely regressions: none from the comment itself.
++- Page loading: no direct change.
++- Cart: no direct change.
++- Checkout: no direct change.
++- Navigation: no direct change.
++- Authentication: no direct change.
++- Vercel production behavior: likely intended to trigger a new build only.
++
++### `b3d9ec8b8b21534909b7f85c877522509af1dc82`
++
++- Subject: `Use Shopify image order for Fearfully and Wonderfully dress`
++- Parent: `bb7f361c5e65a01ab7bf7c8de13317951d5722d0`
++- Files changed: `src/data/brandOverrides.ts`
++- Intended purpose: use Shopify image order for the dress by setting `useShopifyImages: true` and removing hardcoded dress image/gallery overrides.
++- Likely regressions: dress product imagery became dependent on Shopify image order and any public post-render gallery scripts.
++- Page loading: no direct change.
++- Cart: no direct change.
++- Checkout: no direct change.
++- Navigation: no direct change.
++- Authentication: no direct change.
++- Vercel production behavior: no direct change beyond rebuilt assets.
++
++## Pre-Rollback Comparison Commits
++
++These commits exist in the repository but are not ancestors of current `HEAD`.
++
++### `00e2bac8fc8f0642658daa420e877d514ab86dfc`
++
++- Subject: `Restore reliable Buy Now checkout and bound Shopify request time`
++- Files changed: `src/lib/shopify.ts`
++- Intended purpose: add request timeout and convert Buy Now to a native Shopify cart checkout URL.
++- Likely regressions: Buy Now and Add to Cart used different commerce paths; cart version changed from `2` to `3`, invalidating stored carts; numeric variant parsing made Buy Now dependent on variant ID shape.
++- Page loading: no direct change.
++- Cart: affected persistent cart versioning and request timeout.
++- Checkout: affected Buy Now by bypassing Storefront `cartCreate`.
++- Navigation: no direct change.
++- Authentication: no direct change.
++- Vercel production behavior: would change client bundle behavior if deployed.
++
++### `bfeef23d5968d7ae88f381e49bb222cc259cd3cc`
++
++- Subject: `Speed up product pages and prevent stalled Shopify requests`
++- Files changed: `api/shopify-storefront.ts`
++- Intended purpose: add API request timeout and product cache.
++- Likely regressions: removed per-handle Storefront validation and mapped product details from Admin data only, increasing risk that Admin variants appear checkout-enabled.
++- Page loading: affected product direct loading and timeout behavior.
++- Cart: could affect which variants the client receives.
++- Checkout: could re-enable Admin-only variants.
++- Navigation: no direct change.
++- Authentication: no direct change.
++- Vercel production behavior: would affect serverless API responses if deployed.
++
++### `ebcc7bea4db306dc503595b6f82c3d80d18f2d84`
++
++- Subject: `Document current launch hotfixes and remaining blockers`
++- Parent: `b7c5df7fd95618756bf903c63b1d8c0dea7b92c1`
++- Files changed: `docs/launch-hotfixes-2026-08-01.md`
++- Intended purpose: document hotfix status and blockers.
++- Likely regressions: none directly; documentation identified unresolved blockers around Buy Now/cart unification and MutationObserver patches.
++- Page loading: no direct change.
++- Cart: no direct change.
++- Checkout: no direct change.
++- Navigation: no direct change.
++- Authentication: no direct change.
++- Vercel production behavior: no direct app behavior change.
++
++## Observed Pattern
++
++The current incident is not explained by a single TypeScript change. The storefront accumulated a public patch layer that kept adding DOM corrections after React rendered. That made local source truth, live DOM truth, and production deployment truth easy to confuse.
+diff --git a/docs/incident/INITIAL_STATE.md b/docs/incident/INITIAL_STATE.md
+new file mode 100644
+index 0000000..2b97e9c
+--- /dev/null
++++ b/docs/incident/INITIAL_STATE.md
+@@ -0,0 +1,95 @@
++# Radiant 34 Initial State
++
++Date captured: 2026-08-01
++
++Complete raw command transcript: `docs/incident/baseline-command-output.txt`.
++
++## Git State
++
++- Current branch: `recovery/storefront-stabilization-2026-08-01`
++- Recovery branch SHA: `75d9f6b0ff56bf1c61988cd9b2c03e59ca9d757e`
++- Current `origin/main` SHA: `75d9f6b0ff56bf1c61988cd9b2c03e59ca9d757e`
++- Local `main` SHA: `f9b76aca38bb2559277fc03d4e8a4a9c9393f4c6`
++- Backup branch SHA: `origin/backup/pre-rollback-2026-08-01` at `ebcc7bea4db306dc503595b6f82c3d80d18f2d84`
++- `git diff origin/main...HEAD`: no output
++- Repository status before audit docs: clean tracked tree with unrelated untracked design assets:
++  - `separated-collage-contact-sheet.png`
++  - `separated-collage-images.zip`
++  - `separated-collage-images/`
++  - `separated-designs-2026-07-25.zip`
++  - `separated-designs-2026-07-25/`
++
++## Runtime And Dependency State
++
++- `node --version`: `v24.16.0`
++- Requested literal `npm --version`: failed under PowerShell execution policy because `npm.ps1` cannot be loaded.
++- Operational npm command: `npm.cmd --version` returned `11.13.0`.
++- `npm ci`: exit code 0, installed 157 packages, reported 2 high severity vulnerabilities.
++- No package-lock change was required by `npm ci`.
++
++## Package Scripts
++
++Available scripts in `package.json`:
++
++- `npm run dev`: `vite`
++- `npm run build`: `tsc -b && vite build`
++- `npm run preview`: `vite preview`
++- `npm run lint`: `eslint .`
++
++Not available:
++
++- `npm run typecheck`
++- `npm test`
++- `npm run test`
++
++## Baseline Results
++
++- Build: `npm run build` exit code 0. Current commit is locally buildable.
++- Lint: `npm run lint` exit code 1. Main categories are explicit `any` in API routes, unused symbols, React hook compiler errors, and caught-error preservation issues.
++- TypeScript: `npx tsc --noEmit` exit code 0.
++- Tests: no test script exists.
++
++Commit `75d9f6b0ff56bf1c61988cd9b2c03e59ca9d757e` is buildable. It is not proven functionally stable because no runtime browser checkout test was performed during this read-only phase, lint fails, and multiple public scripts can mutate React-rendered commerce UI after render.
++
++## Vercel Summary
++
++- `.vercel/project.json` project name: `radiant-34-brand`
++- Project ID: `prj_Vpf79w2J82UYWnzw4u5wGDHCh238`
++- Framework: `vite`
++- Vercel node version: `24.x`
++- `vercel.json` redirects:
++  - `/drop-001` and `/drop-001/:path*` permanently redirect to `/shop`.
++  - `/cart/:path*` redirects to Shopify cart.
++  - `/checkout/:path*` redirects to Shopify checkout.
++- `vercel.json` SPA rewrite:
++  - `/((?!api/|cart/|checkout/).*)` rewrites to `/index.html`.
++
++## Required Environment Variables
++
++Values were not read or printed.
++
++- `SHOPIFY_STORE_DOMAIN`
++- `SHOPIFY_CLIENT_ID`
++- `SHOPIFY_CLIENT_SECRET`
++- `SHOPIFY_API_VERSION`
++- `SHOPIFY_STOREFRONT_ACCESS_TOKEN` optional in code but referenced
++- `SUPABASE_URL`
++- `SUPABASE_SERVICE_ROLE_KEY`
++- `ADMIN_REVIEW_KEY`
++
++## Known Production Risks
++
++- Public patch scripts loaded by `index.html` mutate navigation, shop cards, product galleries, mission content, account UI, and category selection outside React.
++- `public/shop-grid-integrity.css` hides `.shopify-card__actions` with `display: none !important`, which can make Quick Add and Buy Now unavailable even when React renders them.
++- `api/shopify-storefront.ts` still permits Admin variant fallback when Storefront validation does not return a variant.
++- Product list rendering filters out products unless `canCheckout` or `storefrontVariantId` is true, so active but unpublished or validation-delayed products can disappear.
++- `/drop-001` is both a React page and a Vercel permanent redirect to `/shop`, creating route-contract ambiguity.
++- Social auth depends on Supabase environment and provider setup that cannot be verified from the repo alone.
++- There are no automated browser tests for shop, product direct routes, cart drawer, Buy Now, checkout redirect, auth callback, or mobile menu.
++
++## Unavailable Access Or Evidence
++
++- No Vercel production deployment was triggered in this phase.
++- No production alias, DNS, or `www.radiant34.com` attachment was modified or verified.
++- Shopify Admin catalogue, Storefront publication state, checkout, Gelato order routing, and Printful order routing were not modified or proven.
++- Google/Facebook provider credentials and Supabase redirect allowlist were not available.
+diff --git a/docs/incident/ROOT_CAUSE_AUDIT.md b/docs/incident/ROOT_CAUSE_AUDIT.md
+new file mode 100644
+index 0000000..3f503ed
+--- /dev/null
++++ b/docs/incident/ROOT_CAUSE_AUDIT.md
+@@ -0,0 +1,105 @@
++# Radiant 34 Root Cause Audit
++
++Scope: read-only audit of commit `75d9f6b0ff56bf1c61988cd9b2c03e59ca9d757e`.
++
++## Confirmed Root Causes
++
++### 1. Public patch layer owns React-rendered commerce UI
++
++- File path: `index.html`
++- Script area: head and body public script includes
++- Relevant line range: `index.html:30-78`
++- Technical explanation: `index.html` loads React plus many independent public scripts and CSS files. These scripts run outside React but target the same DOM nodes React renders for routing, navigation, shop cards, product galleries, mission pages, and account controls.
++- Customer impact: UI can change after React render, producing cards that render but cannot be clicked, hidden buttons, overwritten titles, or route state that does not match the URL.
++- Severity: Critical
++- Recommended permanent repair: Move retained behavior into React/TypeScript components and remove DOM-mutating public patches from `index.html`.
++
++### 2. Shop action buttons are hidden by loaded CSS
++
++- File path: `public/shop-grid-integrity.css`
++- Script/component: shop grid integrity CSS
++- Relevant line range: `public/shop-grid-integrity.css:44-45`
++- Technical explanation: `.shop-page .shopify-card__actions { display: none !important; }` hides the React-rendered Quick Add and Buy Now action area.
++- Customer impact: Customers can see product cards but may not see or use commerce actions.
++- Severity: Critical
++- Recommended permanent repair: Remove this override and make the React card layout responsible for visible actions.
++
++### 3. Category and card state is controlled outside React
++
++- File path: `public/shop-catalog-sync-v2.js`
++- Script/component: category chooser and card normalizer
++- Relevant line range: `public/shop-catalog-sync-v2.js:136-172`, `252-290`, `371-387`
++- Technical explanation: The script rewrites product title/category/description text, inserts category UI with `innerHTML`, clicks the React filter button programmatically, hides cards with inline `display:none !important`, intercepts category clicks in capture phase, and runs through a `MutationObserver`.
++- Customer impact: React state and actual visible DOM can diverge. Product counts, filters, and visible cards may not match the product data in React.
++- Severity: Critical
++- Recommended permanent repair: Implement category cards and filtering in React using Shopify product data, then remove this script.
++
++### 4. Admin variant IDs can still become checkout IDs
++
++- File path: `api/shopify-storefront.ts`
++- Function/component: `toStorefrontProduct`
++- Relevant line range: `api/shopify-storefront.ts:211-247`
++- Technical explanation: `checkoutVariant` is set to the first Storefront available variant, but falls back to an Admin variant when no Storefront variant is found and the Admin variant reports `availableForSale`.
++- Customer impact: Cart mutations can receive a `gid://shopify/ProductVariant/...` visible to Admin but not Storefront checkout, causing Shopify to reject checkout with a merchandise-not-found error.
++- Severity: Critical
++- Recommended permanent repair: Set `storefrontVariantId` and `canCheckout` only from Storefront product/variant validation. Keep `adminVariantId` separate and never use it for cart.
++
++### 5. Product page gallery is rewritten after React render
++
++- File path: `public/shopify-live-sync.js`
++- Script/component: live Shopify sync patch
++- Relevant line range: `public/shopify-live-sync.js:96-123`, `143-152`
++- Technical explanation: The script monkey-patches `window.fetch`, captures Shopify product payloads, then replaces `.product-gallery` with `innerHTML`.
++- Customer impact: Product pages can show images or gallery order not controlled by React, and updates can race direct product loading.
++- Severity: High
++- Recommended permanent repair: Pass Shopify gallery data through React state and remove post-render gallery replacement.
++
++### 6. Navigation is rewritten and click-intercepted outside React
++
++- File path: `public/menu-fixes.js`
++- Script/component: menu fixes
++- Relevant line range: `public/menu-fixes.js:5-18`, `35-94`, `101-109`
++- Technical explanation: This script removes links/buttons by label, changes Get Drop Alert to Contact, injects Contact, intercepts Shop clicks in capture phase, calls `window.location.assign('/shop')`, and observes the document.
++- Customer impact: Header/menu behavior can differ between React state, URL, and actual DOM. Browser Back and mobile menu behavior can be inconsistent.
++- Severity: High
++- Recommended permanent repair: Delete the patch after implementing final nav labels and routes in `Header`.
++
++### 7. Mission page can replace the entire React main tree
++
++- File path: `public/mission-support.js`
++- Script/component: mission support patch
++- Relevant line range: `public/mission-support.js:189-212`, `218-260`, `275-283`
++- Technical explanation: The script injects mission navigation, pushes history manually, and uses `main.innerHTML` to replace React-rendered content on `/mission`.
++- Customer impact: React app state and DOM become unsynchronized, especially after browser Back or navigation from mission to product/shop.
++- Severity: High
++- Recommended permanent repair: Keep mission content in React and remove this script.
++
++## Highly Likely Contributing Factors
++
++- `index.html:30-51`, `public/contact-page-upgrade.js:102-118`, `src/main.tsx:1789-1839`, `public/mission-support.js:189-191`, and `public/menu-fixes.js:5-9` all participate in routing/history events.
++- `public/shop-hover-mockups.js:22-60` adds or changes hover images based on visible title text, after React has already selected images.
++- `public/product-page-content-fix.js:40-75` rewrites product gallery and detail copy for a specific product path after React render.
++- `src/main.tsx:1087-1125` filters products to `product.canCheckout || product.storefrontVariantId`, so catalogue visibility depends on checkout validation rather than Shopify active product presence.
++- `vercel.json:4-14` redirects `/drop-001` to `/shop` while React still defines a `/drop-001` page.
++- Multiple CSS files loaded by `index.html` use `!important` heavily against product and route selectors.
++
++## Suspected Issues Requiring Runtime Evidence
++
++- Product-page Back behavior may send users to `/drop-001`, which Vercel production redirects to `/shop`; browser behavior needs production testing.
++- Cart drawer checkout may work if cart creation used Storefront-valid IDs, but no live checkout redirect was performed in this phase.
++- Google and Facebook sign-in may appear in UI, but provider redirects require Supabase configuration evidence.
++- Direct product URL refresh should route through the SPA rewrite, but actual production behavior was not verified in browser.
++- Mobile menu likely opens/closes through React plus `public/mobile-menu-fix.js`; runtime inspection is needed for focus, scroll lock, and route-close behavior.
++
++## Disproven Theories
++
++- The project is not failing to compile locally: `npm run build` passed.
++- Frontend code does not expose `SHOPIFY_CLIENT_SECRET`; Shopify server credentials are read in API routes.
++- There is not currently a tracked diff from recovery branch to `origin/main`.
++
++## Unavailable Evidence
++
++- Production browser screenshots and incognito checkout test were not run.
++- Live `/api/shopify-debug` response was not fetched from production.
++- Shopify publication/channel state and fulfilment routing were not available.
++- Vercel environment variable values and production alias state were not inspected.
+diff --git a/docs/incident/baseline-command-output.txt b/docs/incident/baseline-command-output.txt
+new file mode 100644
+index 0000000..a0049ac
+--- /dev/null
++++ b/docs/incident/baseline-command-output.txt
+@@ -0,0 +1,369 @@
++
++===== COMMAND: git status =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:42:57.3780456+01:00
++EXIT_CODE: 0
++OUTPUT:
++On branch recovery/storefront-stabilization-2026-08-01
++Your branch is up to date with 'origin/main'.
++
++Untracked files:
++  (use "git add <file>..." to include in what will be committed)
++	separated-collage-contact-sheet.png
++	separated-collage-images.zip
++	separated-collage-images/
++	separated-designs-2026-07-25.zip
++	separated-designs-2026-07-25/
++
++nothing added to commit but untracked files present (use "git add" to track)
++END: 2026-08-01T19:42:58.0416583+01:00
++
++===== COMMAND: git branch -vv =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:42:58.0426745+01:00
++EXIT_CODE: 0
++OUTPUT:
++  main                                         f9b76ac [origin/main: behind 139] Launch full Shopify catalog images reviews and brand pages
++* recovery/storefront-stabilization-2026-08-01 75d9f6b [origin/main] Trigger fresh production deployment from restored storefront
++END: 2026-08-01T19:42:58.5131118+01:00
++
++===== COMMAND: git log --oneline --decorate --graph -30 =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:42:58.5131118+01:00
++EXIT_CODE: 0
++OUTPUT:
++* 75d9f6b (HEAD -> recovery/storefront-stabilization-2026-08-01, origin/main, origin/HEAD) Trigger fresh production deployment from restored storefront
++* b3d9ec8 Use Shopify image order for Fearfully and Wonderfully dress
++* bb7f361 Keep active Shopify products visible during storefront sync lag
++* 1dbd59f Refresh corrected mission slider layout
++* 8e3aaa2 Fix mission product slider image sizing and cropping
++* 82934c0 Load customer account and social login controls
++* 6669b2e Add customer account tab and social sign-in
++* cc02a1b Add homepage mission product slider
++* ad06ffb Style mission featured product slider
++* b5ff7fc Replace mission image with featured product slider
++* 6408189 Apply dedicated About page layout and route styling
++* da04345 Redesign and stabilise the About page layout
++* dc1d5ce Load redesigned contact page experience
++* 33bc728 Place contact signup above the fold and improve guidance
++* 26a10e0 Redesign contact page with intuitive above-the-fold signup
++* 2a18e1d Refresh navigation without search tab
++* fe34a08 Remove inactive search tab from site navigation
++* 804a66a Load restored shop category card styles
++* 51c9dc6 Restore shop category card layout without homepage mutators
++* f1acfcb Replace retired homepage mission image with current campaign model
++* 79390a9 Apply permanent homepage route guard and remove conflicting DOM patch
++* c9a4571 Permanently hide retired homepage product strip before React paints
++* b14095a Keep removed featured product image off the homepage
++* 68b5eff Remove duplicate homepage mutators and refresh stable homepage script
++* 898d9b0 Stabilise homepage and remove competing image mutations
++* d134e5a Load refreshed homepage campaign imagery
++* 587304b Apply new Radiant 34 homepage campaign images
++* 8f8248d Refresh homepage campaign imagery
++* dcad5fb Load authoritative shop grid normalizer
++* 490430d Normalize visible shop cards and remove empty grid slots
++END: 2026-08-01T19:42:59.1509216+01:00
++
++===== COMMAND: git diff origin/main...HEAD =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:42:59.1509216+01:00
++EXIT_CODE: 0
++OUTPUT:
++END: 2026-08-01T19:42:59.9880969+01:00
++
++===== COMMAND: node --version =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:42:59.9880969+01:00
++EXIT_CODE: 0
++OUTPUT:
++v24.16.0
++END: 2026-08-01T19:43:00.6645915+01:00
++
++===== COMMAND: npm --version =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:43:00.6645915+01:00
++EXIT_CODE: 1
++OUTPUT:
++npm : File C:\Program Files\nodejs\npm.ps1 cannot be loaded because running scripts is disabled on this system. For 
++more information, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
++At line:1 char:1
+++ npm --version
+++ ~~~
++    + CategoryInfo          : SecurityError: (:) [], PSSecurityException
++    + FullyQualifiedErrorId : UnauthorizedAccess
++END: 2026-08-01T19:43:01.2194798+01:00
++
++===== COMMAND: cat package.json =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:43:01.2194798+01:00
++EXIT_CODE: 0
++OUTPUT:
++{
++  "name": "radiant-34-brand",
++  "private": true,
++  "version": "0.1.0",
++  "type": "module",
++  "scripts": {
++    "dev": "vite",
++    "build": "tsc -b && vite build",
++    "preview": "vite preview",
++    "lint": "eslint ."
++  },
++  "dependencies": {
++    "@vitejs/plugin-react": "latest",
++    "framer-motion": "latest",
++    "lucide-react": "latest",
++    "react": "latest",
++    "react-dom": "latest",
++    "typescript": "latest",
++    "vite": "latest"
++  },
++  "devDependencies": {
++    "@eslint/js": "latest",
++    "@types/node": "^26.1.1",
++    "@types/react": "latest",
++    "@types/react-dom": "latest",
++    "eslint": "latest",
++    "eslint-plugin-react-hooks": "latest",
++    "eslint-plugin-react-refresh": "latest",
++    "globals": "latest",
++    "typescript-eslint": "latest"
++  }
++}
++END: 2026-08-01T19:43:01.7407323+01:00
++
++===== COMMAND: npm ci =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:43:01.7407323+01:00
++EXIT_CODE: 0
++OUTPUT:
++
++added 157 packages, and audited 158 packages in 56s
++
++42 packages are looking for funding
++  run `npm fund` for details
++
++2 high severity vulnerabilities
++
++To address all issues, run:
++  npm audit fix
++
++Run `npm audit` for details.
++END: 2026-08-01T19:43:59.5067496+01:00
++
++===== COMMAND: npm run build =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:43:59.5091928+01:00
++EXIT_CODE: 0
++OUTPUT:
++
++> radiant-34-brand@0.1.0 build
++> tsc -b && vite build
++
++[36mvite v8.1.3 [32mbuilding client environment for production...[36m[39m
++[2K
++transforming...? 20 modules transformed.
++rendering chunks...
++computing gzip size...
++dist/index.html                   4.18 kB ? gzip:  1.20 kB
++dist/assets/index-DkWIvv3O.css   32.79 kB ? gzip:  6.72 kB
++dist/assets/index-kGnrnRZm.js   265.54 kB ? gzip: 78.01 kB
++
++[32m? built in 1.81s[39m
++END: 2026-08-01T19:44:15.7637573+01:00
++
++===== COMMAND: npm run lint =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:44:15.7647763+01:00
++EXIT_CODE: 1
++OUTPUT:
++
++> radiant-34-brand@0.1.0 lint
++> eslint .
++
++
++C:\Users\Adeya\Documents\Radiant 34\api\auth\_supabaseAuth.ts
++  15:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  21:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  32:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\auth\config.ts
++  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\auth\refresh.ts
++  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\auth\session.ts
++  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\reviews\_purchase.ts
++  66:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  70:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\reviews\admin.ts
++   5:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  10:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  10:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\reviews\eligibility.ts
++  6:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  6:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\reviews\index.ts
++  18:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  18:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\reviews\summary.ts
++  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\shopify-debug.ts
++  238:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  238:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\shopify-storefront.ts
++  359:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  359:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\api\shopify-token.ts
++  10:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++  10:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
++
++C:\Users\Adeya\Documents\Radiant 34\src\data\brandOverrides.ts
++  3:7  error  'productImage' is assigned a value but never used  @typescript-eslint/no-unused-vars
++
++C:\Users\Adeya\Documents\Radiant 34\src\lib\shopify.ts
++  225:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
++  285:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
++  349:9  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
++  352:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
++  387:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
++  422:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
++
++C:\Users\Adeya\Documents\Radiant 34\src\main.tsx
++    11:3   error    'getProductsByCategory' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
++   324:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
++
++Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
++* Update external systems with the latest state from React.
++* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
++
++Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
++
++C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:324:5
++  322 |     const primaryOptionName = getPrimaryVariantOptionName(shopifyProduct);
++  323 |     const primaryOptionValues = getVariantOptionValues(shopifyProduct, primaryOptionName ?? '');
++> 324 |     setSelectedSize(primaryOptionValues[0] ?? product.options?.size?.[0] ?? '');
++      |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
++  325 |     setSelectedColor(product.options?.color?.[0] ?? '');
++  326 |   }, [product, shopifyProduct]);
++  327 |  react-hooks/set-state-in-effect
++   359:21  error    Error: This value cannot be modified
++
++Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
++
++C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:359:21
++  357 |       setPurchaseMessage(`${title} added to cart.`);
++  358 |       if (!checkout) onCartChanged();
++> 359 |       if (checkout) window.location.href = cart.checkoutUrl;
++      |                     ^^^^^^^^^^^^^^^ value cannot be modified
++  360 |     } catch (error) {
++  361 |       setPurchaseMessage(error instanceof Error ? error.message : 'Unable to add product.');
++  362 |     } finally {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/immutability
++   489:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
++
++Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
++* Update external systems with the latest state from React.
++* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
++
++Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
++
++C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:489:5
++  487 |   useEffect(() => {
++  488 |     let mounted = true;
++> 489 |     setUnavailable(false);
++      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
++  490 |     setMessage('');
++  491 |
++  492 |     Promise.all([                                                                                                                                                                                                                                             react-hooks/set-state-in-effect
++   864:7   error    'findVariantForSize' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
++  1073:10  error    'lastCartError' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
++  1079:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
++
++Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
++* Update external systems with the latest state from React.
++* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
++
++Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
++
++C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1079:5
++  1077 |     void checkShopifyProxy();
++  1078 |     console.log('Radiant override count:', Object.keys(brandOverrides).length);
++> 1079 |     setProducts([]);
++       |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
++  1080 |     setShopError('');
++  1081 |     setLoading(true);
++  1082 |                                                                                                                                                                      react-hooks/set-state-in-effect
++  1428:20  error    Error: Calling setState synchronously within an effect can trigger cascading renders
++
++Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
++* Update external systems with the latest state from React.
++* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
++
++Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
++
++C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1428:20
++  1426 |
++  1427 |   useEffect(() => {
++> 1428 |     if (open) void loadCart();
++       |                    ^^^^^^^^ Avoid calling setState() directly within an effect
++  1429 |   }, [open]);
++  1430 |
++  1431 |   const replaceCart = (nextCart: ShopifyCart) => {                                                                                                                                                                                                                    react-hooks/set-state-in-effect
++  1429:6   warning  React Hook useEffect has a missing dependency: 'loadCart'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
++  1815:10  error    Error: Calling setState synchronously within an effect can trigger cascading renders
++
++Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
++* Update external systems with the latest state from React.
++* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
++
++Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
++
++C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1815:10
++  1813 |     ensureRadiantCartVersion();
++  1814 |     installClearRadiantCartDev();
++> 1815 |     void refreshCartCount();
++       |          ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
++  1816 |   }, []);
++  1817 |
++  1818 |   useEffect(() => {                                                                                                                                                                                                             react-hooks/set-state-in-effect
++  1855:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
++
++Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
++* Update external systems with the latest state from React.
++* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
++
++Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
++
++C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1855:7
++  1853 |
++  1854 |     if (localOverride && !currentProductStillMatches) {
++> 1855 |       setSelectedShopifyProduct(null);
++       |       ^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
++  1856 |       setSelectedProduct(fallbackForShopifyProduct({ handle: shopifyLookupHandle, title: localOverride.publicTitle }, 0));
++  1857 |     }
++  1858 |                                                                                                     react-hooks/set-state-in-effect
++
++? 44 problems (43 errors, 1 warning)
++
++END: 2026-08-01T19:44:44.3047914+01:00
++
++===== COMMAND: npx tsc --noEmit =====
++PWD: C:\Users\Adeya\Documents\Radiant 34
++START: 2026-08-01T19:44:44.3077918+01:00
++EXIT_CODE: 0
++OUTPUT:
++END: 2026-08-01T19:44:48.2687098+01:00
+diff --git a/index.html b/index.html
+index e699898..2c5fcc4 100644
+--- a/index.html
++++ b/index.html
+@@ -65,7 +65,6 @@
+     <script defer src="%BASE_URL%mobile-menu-fix.js?v=20260725-2038"></script>
+     <script defer src="%BASE_URL%contact-page-upgrade.js?v=20260730-0550"></script>
+     <script defer src="%BASE_URL%mission-product-slider.js?v=20260730-0645"></script>
+-    <script defer src="%BASE_URL%shop-hover-mockups.js"></script>
+     <script defer src="%BASE_URL%shop-catalog-sync-v2.js?v=20260727-1515"></script>
+     <script defer src="%BASE_URL%shop-grid-normalizer.js?v=20260729-0355"></script>
+     <script defer src="%BASE_URL%mens-outerwear-thumbnail.js?v=20260727-0830"></script>
+@@ -73,4 +72,4 @@
+     <script defer src="%BASE_URL%mission-support.js?v=20260723-0225"></script>
+     <script defer src="%BASE_URL%customer-account.js?v=20260730-0705"></script>
+   </body>
+-</html>
+\ No newline at end of file
++</html>
+diff --git a/package-lock.json b/package-lock.json
+index 315792f..6ad8a9c 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -18,6 +18,7 @@
+       },
+       "devDependencies": {
+         "@eslint/js": "latest",
++        "@playwright/test": "^1.62.1",
+         "@types/node": "^26.1.1",
+         "@types/react": "latest",
+         "@types/react-dom": "latest",
+@@ -570,6 +571,22 @@
+         "url": "https://github.com/sponsors/Boshen"
+       }
+     },
++    "node_modules/@playwright/test": {
++      "version": "1.62.1",
++      "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.62.1.tgz",
++      "integrity": "sha512-DTcUc8qii+cpHvtOwggMtBRMjKZHXYWdw8syRYu2vtzuq4Wxphqq4NfCs5Zt44L6mA8rfDfj+PHnxFc/FeK6mQ==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright": "1.62.1"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=20"
++      }
++    },
+     "node_modules/@rolldown/binding-android-arm64": {
+       "version": "1.1.4",
+       "resolved": "https://registry.npmjs.org/@rolldown/binding-android-arm64/-/binding-android-arm64-1.1.4.tgz",
+@@ -2342,6 +2359,53 @@
+         "url": "https://github.com/sponsors/jonschlinkert"
+       }
+     },
++    "node_modules/playwright": {
++      "version": "1.62.1",
++      "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.62.1.tgz",
++      "integrity": "sha512-0M+L3LAD8/nm554LOla9Ayx0j0tmFZ0FBcoQ7F1VuVHpM/XpiC8RcDzBQB8W5+hA8L22THxELzeF+2WcUzvcLg==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright-core": "1.62.1"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=20"
++      },
++      "optionalDependencies": {
++        "fsevents": "2.3.2"
++      }
++    },
++    "node_modules/playwright-core": {
++      "version": "1.62.1",
++      "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.1.tgz",
++      "integrity": "sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "bin": {
++        "playwright-core": "cli.js"
++      },
++      "engines": {
++        "node": ">=20"
++      }
++    },
++    "node_modules/playwright/node_modules/fsevents": {
++      "version": "2.3.2",
++      "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz",
++      "integrity": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
++      }
++    },
+     "node_modules/postcss": {
+       "version": "8.5.16",
+       "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.16.tgz",
+diff --git a/package.json b/package.json
+index 95cfc3f..e8da78b 100644
+--- a/package.json
++++ b/package.json
+@@ -6,6 +6,7 @@
+   "scripts": {
+     "dev": "vite",
+     "build": "tsc -b && vite build",
++    "test:e2e": "playwright test",
+     "preview": "vite preview",
+     "lint": "eslint ."
+   },
+@@ -20,6 +21,7 @@
+   },
+   "devDependencies": {
+     "@eslint/js": "latest",
++    "@playwright/test": "^1.62.1",
+     "@types/node": "^26.1.1",
+     "@types/react": "latest",
+     "@types/react-dom": "latest",
+diff --git a/playwright.config.ts b/playwright.config.ts
+new file mode 100644
+index 0000000..edc7229
+--- /dev/null
++++ b/playwright.config.ts
+@@ -0,0 +1,19 @@
++import { defineConfig } from '@playwright/test';
++
++export default defineConfig({
++  testDir: './tests/e2e',
++  timeout: 30_000,
++  expect: {
++    timeout: 10_000,
++  },
++  use: {
++    baseURL: 'http://127.0.0.1:4177',
++    trace: 'retain-on-failure',
++  },
++  webServer: {
++    command: 'npm.cmd run dev -- --host 127.0.0.1 --port 4177 --strictPort',
++    url: 'http://127.0.0.1:4177',
++    reuseExistingServer: !process.env.CI,
++    timeout: 120_000,
++  },
++});
+diff --git a/public/shop-catalog-sync-v2.js b/public/shop-catalog-sync-v2.js
+index 0b9446c..18216b4 100644
+--- a/public/shop-catalog-sync-v2.js
++++ b/public/shop-catalog-sync-v2.js
+@@ -193,11 +193,11 @@
+ 
+     switch (key) {
+       case 'women':
+-        return ['dress', 'tshirt', 'tank'].includes(kind) || (kind === 'outerwear' && !menOnly);
++        return ['dress', 'tshirt', 'tank'].includes(kind) || (kind === 'outerwear' && womenOnly);
+       case 'men':
+         return !womenOnly && ['tshirt', 'tank', 'outerwear', 'headwear'].includes(kind);
+       case 'womens-outerwear':
+-        return kind === 'outerwear' && !menOnly;
++        return kind === 'outerwear' && womenOnly;
+       case 'mens-outerwear':
+         return kind === 'outerwear' && !womenOnly;
+       case 'dresses': return kind === 'dress';
+@@ -277,6 +277,20 @@
+     return heading;
+   };
+ 
++  const syncTshirtCategoryThumbnail = (shopPage, cards) => {
++    const tshirtCard = cards.find((card) => matchesCategory(card, 'tshirts'));
++    const productImage = tshirtCard?.querySelector('.shopify-card__image img:first-child');
++    const categoryImage = shopPage.querySelector('.r34-shop-category-card[data-r34-category-key="tshirts"] img');
++    const productImageSrc = productImage?.getAttribute('src');
++    if (!categoryImage || !productImageSrc) return;
++    if (categoryImage.getAttribute('src') !== productImageSrc) {
++      categoryImage.setAttribute('src', productImageSrc);
++      categoryImage.removeAttribute('srcset');
++    }
++    const alt = productImage.getAttribute('alt') || 'Radiant 34 T-shirt product';
++    categoryImage.setAttribute('alt', alt);
++  };
++
+   const applyCategory = (shopPage, key, shouldScroll = false) => {
+     const category = categories.find((item) => item.key === key);
+     if (!category) return;
+@@ -352,6 +366,7 @@
+ 
+     cards.forEach(normalizeCard);
+     ensureChooser(shopPage);
++    syncTshirtCategoryThumbnail(shopPage, cards);
+ 
+     const selectedKey = shopPage.dataset.r34SelectedCategory;
+     if (selectedKey) applyCategory(shopPage, selectedKey, false);
+@@ -388,4 +403,4 @@
+   document.addEventListener('DOMContentLoaded', queue);
+   window.addEventListener('popstate', queue);
+   queue();
+-})();
+\ No newline at end of file
++})();
+diff --git a/public/shop-hover-mockups.js b/public/shop-hover-mockups.js
+deleted file mode 100644
+index 7bc32e5..0000000
+--- a/public/shop-hover-mockups.js
++++ /dev/null
+@@ -1,63 +0,0 @@
+-(() => {
+-  const hoverByTitle = {
+-    'Radiant 34 Signature Hoodie': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-signature-hoodie-model-hover.png?v=1784722071',
+-    'Radiant 34 White Hoodie': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant-white-hoodie-hover_b7f76499-7092-4ce3-812d-d6f986730c9d.png?v=1784709841',
+-    'Radiant 34 Ringer T-Shirt': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-ringer-tee-model-hover.png?v=1784722093',
+-    'Radiant 34 Backpack': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-backpack-model-hover.png?v=1784722113',
+-    'Radiant 34 Duffle Bag': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-duffle-bag-lifestyle-hover.png?v=1784722136',
+-    'Radiant 34 Mug': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-logo-mug-lifestyle-hover.png?v=1784722165',
+-    'Radiant 34 Phone Case': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-phone-case-lifestyle-hover.png?v=1784722184',
+-    'Radiant 34 Keyring': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-keyring-lifestyle-hover.png?v=1784722213',
+-    'Radiant 34 Vintage Dad Hat': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-vintage-dad-hat-hover.png?v=1784728229',
+-    'Radiant 34 Be Still Mug': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-be-still-mug-hover.png?v=1784728293',
+-    'Radiant 34 His Peace Calmed a Storm Mug': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-his-peace-mug-hover.png?v=1784728361',
+-    'Radiant 34 Jesus Is My Refuge Mug': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-jesus-refuge-mug-hover.png?v=1784728389',
+-    'Radiant 34 Logo Mug': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-logo-mug-hover-final.png?v=1784728452',
+-    'Radiant 34 Loved First Mug': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-loved-first-mug-hover.png?v=1784728502',
+-    'Radiant 34 My Soul Loves Jesus Mug': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-my-soul-mug-hover-final.png?v=1784728549',
+-    'Radiant 34 Scripture Tough Phone Case': 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-scripture-tough-case-hover-final.png?v=1784728842',
+-  };
+-
+-  const apply = () => {
+-    document.querySelectorAll('.shopify-card').forEach((card) => {
+-      const titleNode = card.querySelector('.shopify-card__body strong');
+-      const title = titleNode?.textContent?.trim();
+-      const hoverUrl = title ? hoverByTitle[title] : null;
+-      if (!hoverUrl) return;
+-
+-      const imageWrap = card.querySelector('.shopify-card__image');
+-      if (!imageWrap) return;
+-
+-      let hover = imageWrap.querySelector('.shopify-card__hover');
+-      if (!hover) {
+-        hover = document.createElement('img');
+-        hover.className = 'shopify-card__hover';
+-        hover.alt = '';
+-        hover.loading = 'lazy';
+-        const firstImage = imageWrap.querySelector('img');
+-        if (firstImage?.nextSibling) imageWrap.insertBefore(hover, firstImage.nextSibling);
+-        else imageWrap.appendChild(hover);
+-      }
+-
+-      if (hover.getAttribute('src') !== hoverUrl) {
+-        hover.setAttribute('src', hoverUrl);
+-        hover.removeAttribute('srcset');
+-      }
+-    });
+-  };
+-
+-  let queued = false;
+-  const queue = () => {
+-    if (queued) return;
+-    queued = true;
+-    requestAnimationFrame(() => {
+-      queued = false;
+-      apply();
+-    });
+-  };
+-
+-  new MutationObserver(queue).observe(document.documentElement, { childList: true, subtree: true });
+-  window.addEventListener('popstate', queue);
+-  document.addEventListener('click', () => setTimeout(queue, 0));
+-  apply();
+-})();
+\ No newline at end of file
+diff --git a/src/playwright.d.ts b/src/playwright.d.ts
+new file mode 100644
+index 0000000..a1d6d29
+--- /dev/null
++++ b/src/playwright.d.ts
+@@ -0,0 +1,12 @@
++export {};
++
++declare global {
++  interface Window {
++    __r34ImageSrcChanges: Array<{
++      kind: string;
++      value: string;
++      className: string;
++      alt: string;
++    }>;
++  }
++}
+diff --git a/src/styles.css b/src/styles.css
+index dc32d0f..5ff334d 100644
+--- a/src/styles.css
++++ b/src/styles.css
+@@ -569,19 +569,21 @@ main {
+   height: calc(100% - 48px) !important;
+ }
+ 
+-.product-card:hover .product-card__visual > img:first-child,
+-.shopify-card__image:hover > img:first-child {
+-  opacity: 0;
+-}
++@media (hover: hover) and (pointer: fine) {
++  .product-card:hover .product-card__visual > img:first-child,
++  .shopify-card__image:hover > img:first-child {
++    opacity: 0;
++  }
+ 
+-.product-card:hover .product-card__hover-image,
+-.shopify-card__image:hover .shopify-card__hover {
+-  opacity: 1;
+-}
++  .product-card:hover .product-card__hover-image,
++  .shopify-card__image:hover .shopify-card__hover {
++    opacity: 1;
++  }
+ 
+-.product-card:hover .product-card__visual > img,
+-.product-card:hover .product-card__visual > img {
+-  transform: scale(1.055);
++  .product-card:hover .product-card__visual > img,
++  .product-card:hover .product-card__visual > img {
++    transform: scale(1.055);
++  }
+ }
+ 
+ .product-card__badges {
+diff --git a/tests/e2e/shop-category-classification.spec.ts b/tests/e2e/shop-category-classification.spec.ts
+new file mode 100644
+index 0000000..ab1832f
+--- /dev/null
++++ b/tests/e2e/shop-category-classification.spec.ts
+@@ -0,0 +1,144 @@
++import { expect, test, type Page } from '@playwright/test';
++
++const SWEATSHIRT_TITLE = 'Radiant 34 All-Over Print Scripture Sweatshirt';
++const DRESS_TITLE = 'Radiant 34 Fearfully & Wonderfully Created T-Shirt Dress';
++const TSHIRT_TITLE = 'Radiant 34 Purple Faith over Fear T-Shirt';
++const TSHIRT_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/2250C457-58F8-4EB6-98F3-79609D88A604.png?v=1785234846';
++
++const image = (name: string) =>
++  `https://cdn.shopify.com/s/files/1/1059/0545/5434/files/${name}.png?v=1785000000`;
++
++const makeProduct = ({
++  id,
++  title,
++  handle,
++  productType,
++  tags = [],
++}: {
++  id: string;
++  title: string;
++  handle: string;
++  productType: string;
++  tags?: string[];
++}) => ({
++  id: `gid://shopify/Product/${id}`,
++  title,
++  handle,
++  description: `${title} test product.`,
++  createdAt: '2026-08-01T00:00:00Z',
++  productType,
++  tags,
++  featuredImage: { url: image(handle), altText: title },
++  images: {
++    nodes: [
++      { url: image(handle), altText: title },
++      { url: image(`${handle}-alt`), altText: `${title} alternate view` },
++    ],
++  },
++  variants: {
++    nodes: [
++      {
++        id: `gid://shopify/ProductVariant/${id}01`,
++        title: 'Default Title',
++        availableForSale: true,
++        selectedOptions: [{ name: 'Title', value: 'Default Title' }],
++      },
++    ],
++  },
++  storefrontVariantId: `gid://shopify/ProductVariant/${id}01`,
++  canCheckout: true,
++  priceRange: {
++    minVariantPrice: { amount: '64.00', currencyCode: 'USD' },
++  },
++});
++
++const products = [
++  {
++    ...makeProduct({
++      id: '10000000000003',
++      title: TSHIRT_TITLE,
++      handle: 'unisex-t-shirt-2',
++      productType: 'T-Shirt',
++      tags: ['t-shirt', 'faith-over-fear'],
++    }),
++    featuredImage: { url: TSHIRT_IMAGE, altText: TSHIRT_TITLE },
++    images: {
++      nodes: [
++        { url: TSHIRT_IMAGE, altText: TSHIRT_TITLE },
++        { url: image('unisex-t-shirt-2-alt'), altText: `${TSHIRT_TITLE} alternate view` },
++      ],
++    },
++  },
++  makeProduct({
++    id: '10000000000001',
++    title: SWEATSHIRT_TITLE,
++    handle: 'all-over-print-scripture-sweatshirt',
++    productType: 'Sweatshirt',
++    tags: ['scripture', 'sweatshirt', 'all-over-print'],
++  }),
++  makeProduct({
++    id: '10000000000002',
++    title: DRESS_TITLE,
++    handle: 't-shirt-dress',
++    productType: 'Dress',
++    tags: ['women', 'dress'],
++  }),
++];
++
++async function mockShopify(page: Page) {
++  await page.route('**/api/shopify-token', async (route) => {
++    await route.fulfill({
++      status: 200,
++      contentType: 'application/json',
++      body: JSON.stringify({ ok: true, configured: true, tokenCached: true }),
++    });
++  });
++
++  await page.route('**/api/reviews/summary', async (route) => {
++    await route.fulfill({
++      status: 200,
++      contentType: 'application/json',
++      body: JSON.stringify({ summaries: {} }),
++    });
++  });
++
++  await page.route('**/api/shopify-storefront', async (route) => {
++    await route.fulfill({
++      status: 200,
++      contentType: 'application/json',
++      body: JSON.stringify({ data: { products: { nodes: products } } }),
++    });
++  });
++}
++
++test('Women category excludes unisex/all-over scripture sweatshirts', async ({ page }) => {
++  await mockShopify(page);
++  await page.goto('/shop');
++
++  await page.getByRole('button', { name: /Shop All Products|All Products/i }).click();
++  const sweatshirtCard = page.locator('.shopify-card', { hasText: SWEATSHIRT_TITLE }).first();
++  await expect(sweatshirtCard).toBeVisible();
++
++  await page.getByRole('button', { name: /^Shop Women$/i }).click();
++  await expect(sweatshirtCard).toBeHidden();
++  await expect(page.locator('.shopify-card', { hasText: DRESS_TITLE }).first()).toBeVisible();
++});
++
++test('T-Shirts category thumbnail uses a matching T-shirt product image', async ({ page }) => {
++  await mockShopify(page);
++  await page.goto('/shop');
++
++  const tshirtCategoryImage = page
++    .locator('.r34-shop-category-card[data-r34-category-key="tshirts"] img')
++    .first();
++  await expect(tshirtCategoryImage).toHaveAttribute('src', TSHIRT_IMAGE);
++  await expect(tshirtCategoryImage).toHaveAttribute('alt', TSHIRT_TITLE);
++
++  await page.getByRole('button', { name: /^Shop T-Shirts$/i }).click();
++  const tshirtCardImage = page
++    .locator('.shopify-card', { hasText: TSHIRT_TITLE })
++    .first()
++    .locator('.shopify-card__image img')
++    .first();
++  await expect(tshirtCardImage).toHaveAttribute('src', TSHIRT_IMAGE);
++});
+diff --git a/tests/e2e/shop-hover-images.spec.ts b/tests/e2e/shop-hover-images.spec.ts
+new file mode 100644
+index 0000000..0567393
+--- /dev/null
++++ b/tests/e2e/shop-hover-images.spec.ts
+@@ -0,0 +1,186 @@
++import { expect, test, type Page } from '@playwright/test';
++
++const PHONE_CASE_TITLE = 'Radiant 34 Scripture Tough Phone Case';
++const PUBLIC_HANDLE = 'radiant-scripture-tough-case';
++const SHOPIFY_HANDLE = 'tough-case-3';
++const PRIMARY_IMAGE =
++  'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/9db4ff38-cb8f-4d85-9fb0-59b229c12ee8.png?v=1785480889';
++const SECONDARY_IMAGE =
++  'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/9bf7335f-2276-4a33-80bc-f3449df130ab.webp?v=1784645743';
++const REMOVED_TITLE_MAPPED_IMAGE =
++  'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-scripture-tough-case-hover-final.png?v=1784728842';
++
++const toughCaseProduct = {
++  id: 'gid://shopify/Product/15921055400266',
++  title: PHONE_CASE_TITLE,
++  handle: SHOPIFY_HANDLE,
++  description: 'Protection with purpose: a durable phone case carrying a bold faith-centred design.',
++  createdAt: '2026-08-01T00:00:00Z',
++  productType: 'Phone Case',
++  tags: ['accessories', 'phone-case'],
++  featuredImage: { url: PRIMARY_IMAGE, altText: PHONE_CASE_TITLE },
++  images: {
++    nodes: [
++      { url: PRIMARY_IMAGE, altText: PHONE_CASE_TITLE },
++      { url: SECONDARY_IMAGE, altText: `${PHONE_CASE_TITLE} alternate view` },
++    ],
++  },
++  variants: {
++    nodes: [
++      {
++        id: 'gid://shopify/ProductVariant/62668676694346',
++        title: 'Default Title',
++        availableForSale: true,
++        selectedOptions: [{ name: 'Title', value: 'Default Title' }],
++      },
++    ],
++  },
++  storefrontVariantId: 'gid://shopify/ProductVariant/62668676694346',
++  canCheckout: true,
++  priceRange: {
++    minVariantPrice: { amount: '24.00', currencyCode: 'USD' },
++  },
++};
++
++async function mockShopify(page: Page) {
++  await page.route('**/api/shopify-token', async (route) => {
++    await route.fulfill({
++      status: 200,
++      contentType: 'application/json',
++      body: JSON.stringify({ ok: true, configured: true, tokenCached: true }),
++    });
++  });
++
++  await page.route('**/api/reviews/summary', async (route) => {
++    await route.fulfill({
++      status: 200,
++      contentType: 'application/json',
++      body: JSON.stringify({ summaries: {} }),
++    });
++  });
++
++  await page.route('**/api/reviews?**', async (route) => {
++    await route.fulfill({
++      status: 200,
++      contentType: 'application/json',
++      body: JSON.stringify({ reviews: [] }),
++    });
++  });
++
++  await page.route('**/api/shopify-storefront', async (route) => {
++    const body = route.request().postDataJSON() as { query?: string; variables?: { handle?: string } };
++    const isProductByHandle = body.query?.includes('RadiantProductByHandle') || body.query?.includes('product(handle:');
++    await route.fulfill({
++      status: 200,
++      contentType: 'application/json',
++      body: JSON.stringify({
++        data: isProductByHandle
++          ? { product: body.variables?.handle === SHOPIFY_HANDLE ? toughCaseProduct : null }
++          : { products: { nodes: [toughCaseProduct] } },
++      }),
++    });
++  });
++}
++
++async function installImageSrcRecorder(page: Page) {
++  await page.addInitScript(() => {
++    window.__r34ImageSrcChanges = [];
++    const srcDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
++    if (srcDescriptor?.get && srcDescriptor?.set) {
++      Object.defineProperty(HTMLImageElement.prototype, 'src', {
++        configurable: true,
++        get() {
++          return srcDescriptor.get?.call(this);
++        },
++        set(value) {
++          window.__r34ImageSrcChanges.push({
++            kind: 'property',
++            value: String(value),
++            className: String(this.className || ''),
++            alt: String(this.alt || ''),
++          });
++          return srcDescriptor.set?.call(this, value);
++        },
++      });
++    }
++
++    const originalSetAttribute = Element.prototype.setAttribute;
++    Element.prototype.setAttribute = function setAttribute(name: string, value: string) {
++      if (this instanceof HTMLImageElement && name.toLowerCase() === 'src') {
++        window.__r34ImageSrcChanges.push({
++          kind: 'attribute',
++          value: String(value),
++          className: String(this.className || ''),
++          alt: String(this.alt || ''),
++        });
++      }
++      return originalSetAttribute.call(this, name, value);
++    };
++  });
++}
++
++async function openShopAndCard(page: Page) {
++  await mockShopify(page);
++  await page.goto('/shop');
++  await page.getByRole('button', { name: /Shop All Products|All Products/i }).click();
++  const card = page.locator('.shopify-card', { hasText: PHONE_CASE_TITLE }).first();
++  await expect(card).toBeVisible();
++  await expect(card.locator('.shopify-card__image img').first()).toHaveAttribute('src', PRIMARY_IMAGE);
++  await expect(card.locator('.shopify-card__hover')).toHaveAttribute('src', SECONDARY_IMAGE);
++  await expect(page.locator(`img[src="${REMOVED_TITLE_MAPPED_IMAGE}"]`)).toHaveCount(0);
++  return card;
++}
++
++test.describe('Radiant 34 Scripture Tough Phone Case mobile card media', () => {
++  test.use({
++    viewport: { width: 390, height: 844 },
++    isMobile: true,
++    hasTouch: true,
++  });
++
++  test('mobile touch keeps the primary image visible while scrolling and opens the product page', async ({ page }) => {
++    await installImageSrcRecorder(page);
++    const card = await openShopAndCard(page);
++    await page.evaluate(() => {
++      window.__r34ImageSrcChanges = [];
++    });
++
++    await card.scrollIntoViewIfNeeded();
++    await page.mouse.wheel(0, 360);
++    await card.scrollIntoViewIfNeeded();
++
++    await expect(card.locator('.shopify-card__image img').first()).toHaveCSS('opacity', '1');
++    await expect(card.locator('.shopify-card__hover')).toHaveCSS('opacity', '0');
++    await expect(card.locator('.shopify-card__image img').first()).toHaveAttribute('src', PRIMARY_IMAGE);
++
++    const changes = await page.evaluate(() => window.__r34ImageSrcChanges);
++    expect(changes).toEqual([]);
++
++    await card.locator('.shopify-card__main').tap();
++    await expect(page).toHaveURL(new RegExp(`/products/${PUBLIC_HANDLE}$`));
++    await expect(page.getByRole('heading', { name: PHONE_CASE_TITLE })).toBeVisible();
++  });
++});
++
++test.describe('Radiant 34 Scripture Tough Phone Case desktop card media', () => {
++  test.use({
++    viewport: { width: 1280, height: 900 },
++  });
++
++  test('desktop hover swaps only to the Shopify secondary product image', async ({ page }) => {
++    const card = await openShopAndCard(page);
++    const primary = card.locator('.shopify-card__image img').first();
++    const hover = card.locator('.shopify-card__hover');
++
++    await expect(primary).toHaveCSS('opacity', '1');
++    await expect(hover).toHaveCSS('opacity', '0');
++    await expect.poll(() => page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)).toBe(true);
++    const imageBox = await card.locator('.shopify-card__image').boundingBox();
++    expect(imageBox).not.toBeNull();
++    await page.mouse.move(imageBox!.x + imageBox!.width / 2, imageBox!.y + imageBox!.height / 2);
++    await expect.poll(async () => Number(await primary.evaluate((node) => getComputedStyle(node).opacity))).toBeLessThan(0.05);
++    await expect.poll(async () => Number(await hover.evaluate((node) => getComputedStyle(node).opacity))).toBeGreaterThan(0.95);
++    await expect(hover).toHaveAttribute('src', SECONDARY_IMAGE);
++    await expect(page.locator(`img[src="${REMOVED_TITLE_MAPPED_IMAGE}"]`)).toHaveCount(0);
++  });
++});
+
+END: 2026-08-02T17:03:58.6052277+01:00
+
+===== COMMAND: git diff --stat origin/main...HEAD =====
+START: 2026-08-02T17:03:58.8281929+01:00
+EXIT_CODE: 0
+DURATION_MS: 795
+OUTPUT:
+ docs/architecture/CURRENT_ARCHITECTURE.md      | 104 +++++++
+ docs/architecture/PATCH_INVENTORY.md           |  44 +++
+ docs/incident/INCIDENT_TIMELINE.md             |  81 ++++++
+ docs/incident/INITIAL_STATE.md                 |  95 +++++++
+ docs/incident/ROOT_CAUSE_AUDIT.md              | 105 +++++++
+ docs/incident/baseline-command-output.txt      | 369 +++++++++++++++++++++++++
+ index.html                                     |   3 +-
+ package-lock.json                              |  64 +++++
+ package.json                                   |   2 +
+ playwright.config.ts                           |  19 ++
+ public/shop-catalog-sync-v2.js                 |  21 +-
+ public/shop-hover-mockups.js                   |  63 -----
+ src/playwright.d.ts                            |  12 +
+ src/styles.css                                 |  24 +-
+ tests/e2e/shop-category-classification.spec.ts | 144 ++++++++++
+ tests/e2e/shop-hover-images.spec.ts            | 186 +++++++++++++
+ 16 files changed, 1257 insertions(+), 79 deletions(-)
+
+END: 2026-08-02T17:03:59.6231901+01:00
+
+===== COMMAND: git ls-files =====
+START: 2026-08-02T17:03:59.7798804+01:00
+EXIT_CODE: 0
+DURATION_MS: 656
+OUTPUT:
+.env.example
+.gitignore
+AGENTS.md
+README.md
+api/_shopifyAuth.ts
+api/auth/_supabaseAuth.ts
+api/auth/config.ts
+api/auth/refresh.ts
+api/auth/session.ts
+api/reviews/_purchase.ts
+api/reviews/_supabase.ts
+api/reviews/admin.ts
+api/reviews/eligibility.ts
+api/reviews/index.ts
+api/reviews/summary.ts
+api/shopify-debug.ts
+api/shopify-storefront.ts
+api/shopify-token.ts
+docs/BRAND-BRIEF.md
+docs/DESIGN-DIRECTION.md
+docs/PRODUCT-ROADMAP.md
+docs/SHOPIFY-PLAN.md
+docs/architecture/CURRENT_ARCHITECTURE.md
+docs/architecture/PATCH_INVENTORY.md
+docs/gelato-shopify-launch-checklist.md
+docs/incident/INCIDENT_TIMELINE.md
+docs/incident/INITIAL_STATE.md
+docs/incident/ROOT_CAUSE_AUDIT.md
+docs/incident/baseline-command-output.txt
+docs/product-reviews-schema.sql
+docs/radiant-design-library.md
+eslint.config.js
+index.html
+package-lock.json
+package.json
+playwright.config.ts
+public/about-page-fix.css
+public/contact-page-upgrade.css
+public/contact-page-upgrade.js
+public/customer-account.js
+public/home-mission-image.js
+public/home-mockups-only.js
+public/home-route-guard.css
+public/homepage-campaign-images.js
+public/images/brand-badge.png
+public/images/cap-radiant.png
+public/images/hero-hoodie.png
+public/images/hoodie-city.png
+public/images/logo-radiant-clean.png
+public/images/logo-transparent.png
+public/images/logo.jpg
+public/images/model-group.png
+public/images/model-hoodie.png
+public/images/model-psalm.png
+public/images/model-tees.png
+public/images/notebook-pen.png
+public/images/products/classic-tee-hover.jpg
+public/images/products/classic-tee-primary.jpg
+public/images/products/everyday-tank-hover.jpg
+public/images/products/everyday-tank-primary.jpg
+public/images/products/psalm-34-tee-detail.jpg
+public/images/products/psalm-34-tee-hover.jpg
+public/images/products/psalm-34-tee-primary.jpg
+public/images/products/radiant-backpack-hover.jpg
+public/images/products/radiant-backpack-primary.jpg
+public/images/products/radiant-hoodie-detail.jpg
+public/images/products/radiant-hoodie-hover.jpg
+public/images/products/radiant-hoodie-primary.jpg
+public/images/products/radiant-water-bottle-hover.jpg
+public/images/products/radiant-water-bottle-primary.jpg
+public/images/r34-logo-clean.svg
+public/images/radiant-backpack.png
+public/images/radiant-black-tee.png
+public/images/radiant-bracelet.png
+public/images/radiant-cap.png
+public/images/radiant-cream-hoodie.png
+public/images/radiant-editorial-01.png
+public/images/radiant-editorial-02.png
+public/images/radiant-editorial-03.png
+public/images/radiant-editorial-04.png
+public/images/radiant-editorial-05.png
+public/images/radiant-editorial-06.png
+public/images/radiant-editorial-07.png
+public/images/radiant-editorial-08.png
+public/images/radiant-editorial-09.png
+public/images/radiant-editorial-10.png
+public/images/radiant-hero-psalm-rooftop.png
+public/images/radiant-key-chain.png
+public/images/radiant-logo-transparent.png
+public/images/radiant-notebook-pen.png
+public/images/radiant-tote-bag.png
+public/images/radiant-water-bottle.png
+public/images/tshirt-black.png
+public/images/tshirt-faith-over-fear.png
+public/images/tshirt-radiant.png
+public/launch-content.js
+public/launch-fixes.css
+public/mens-bomber-fix.js
+public/mens-outerwear-thumbnail.js
+public/menu-fixes.js
+public/mission-product-slider.css
+public/mission-product-slider.js
+public/mission-support.js
+public/mobile-menu-fix.js
+public/product-page-content-fix.js
+public/product-page-fixes.css
+public/radiant-logo-fix.css
+public/review-auth.js
+public/shop-catalog-sync-v2.js
+public/shop-catalog-sync.js
+public/shop-category-bottom.js
+public/shop-category-cards.css
+public/shop-grid-integrity.css
+public/shop-grid-normalizer.js
+public/shop-product-accuracy.js
+public/shopify-live-sync.js
+src/data/brandOverrides.ts
+src/data/products.ts
+src/data/radiantProductImages.ts
+src/data/radiantProducts.ts
+src/data/siteAssets.ts
+src/lib/shopify.ts
+src/main.tsx
+src/playwright.d.ts
+src/styles.css
+src/vite-env.d.ts
+tests/e2e/shop-category-classification.spec.ts
+tests/e2e/shop-hover-images.spec.ts
+tsconfig.app.json
+tsconfig.json
+tsconfig.node.json
+vercel.json
+vite.config.ts
+
+END: 2026-08-02T17:04:00.4361427+01:00
+
+===== COMMAND: node --version =====
+START: 2026-08-02T17:04:00.5698732+01:00
+EXIT_CODE: 0
+DURATION_MS: 610
+OUTPUT:
+v24.16.0
+
+END: 2026-08-02T17:04:01.1797809+01:00
+
+===== COMMAND: npm.cmd --version =====
+START: 2026-08-02T17:04:01.2797988+01:00
+EXIT_CODE: 0
+DURATION_MS: 2245
+OUTPUT:
+11.13.0
+
+END: 2026-08-02T17:04:03.5245564+01:00
+
+===== COMMAND: npm ci =====
+START: 2026-08-02T17:04:03.6431074+01:00
+EXIT_CODE: 0
+DURATION_MS: 51105
+OUTPUT:
+
+added 160 packages, and audited 161 packages in 49s
+
+42 packages are looking for funding
+  run `npm fund` for details
+
+2 high severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+
+END: 2026-08-02T17:04:54.7477485+01:00
+
+===== COMMAND: npm run =====
+START: 2026-08-02T17:04:54.8679236+01:00
+EXIT_CODE: 0
+DURATION_MS: 2307
+OUTPUT:
+Scripts available in radiant-34-brand@0.1.0 via `npm run`:
+  dev
+    vite
+  build
+    tsc -b && vite build
+  test:e2e
+    playwright test
+  preview
+    vite preview
+  lint
+    eslint .
+
+END: 2026-08-02T17:04:57.1745800+01:00
+
+===== COMMAND: npm run build =====
+START: 2026-08-02T17:04:57.2975997+01:00
+EXIT_CODE: 0
+DURATION_MS: 9777
+OUTPUT:
+
+> radiant-34-brand@0.1.0 build
+> tsc -b && vite build
+
+[36mvite v8.1.3 [32mbuilding client environment for production...[36m[39m
+[2K
+transforming...? 20 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   4.12 kB ¦ gzip:  1.18 kB
+dist/assets/index-Ce9QNNSU.css   32.83 kB ¦ gzip:  6.75 kB
+dist/assets/index-mxF3EVi6.js   265.54 kB ¦ gzip: 78.01 kB
+
+[32m? built in 665ms[39m
+
+END: 2026-08-02T17:05:07.0741389+01:00
+
+===== COMMAND: npm run lint =====
+START: 2026-08-02T17:05:07.2301706+01:00
+EXIT_CODE: 1
+DURATION_MS: 16287
+OUTPUT:
+
+> radiant-34-brand@0.1.0 lint
+> eslint .
+
+
+C:\Users\Adeya\Documents\Radiant 34\api\auth\_supabaseAuth.ts
+  15:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\auth\config.ts
+  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\auth\refresh.ts
+  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\auth\session.ts
+  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\_purchase.ts
+  66:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  70:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\admin.ts
+   5:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\eligibility.ts
+  6:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  6:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\index.ts
+  18:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\reviews\summary.ts
+  5:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\shopify-debug.ts
+  238:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\shopify-storefront.ts
+  359:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  359:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\api\shopify-token.ts
+  10:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Adeya\Documents\Radiant 34\src\data\brandOverrides.ts
+  3:7  error  'productImage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Adeya\Documents\Radiant 34\src\lib\shopify.ts
+  225:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  285:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  349:9  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  352:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  387:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+  422:5  error  There is no `cause` attached to the symptom error being thrown  preserve-caught-error
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx
+    11:3   error    'getProductsByCategory' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   324:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:324:5
+  322 |     const primaryOptionName = getPrimaryVariantOptionName(shopifyProduct);
+  323 |     const primaryOptionValues = getVariantOptionValues(shopifyProduct, primaryOptionName ?? '');
+> 324 |     setSelectedSize(primaryOptionValues[0] ?? product.options?.size?.[0] ?? '');
+      |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  325 |     setSelectedColor(product.options?.color?.[0] ?? '');
+  326 |   }, [product, shopifyProduct]);
+  327 |  react-hooks/set-state-in-effect
+   359:21  error    Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:359:21
+  357 |       setPurchaseMessage(`${title} added to cart.`);
+  358 |       if (!checkout) onCartChanged();
+> 359 |       if (checkout) window.location.href = cart.checkoutUrl;
+      |                     ^^^^^^^^^^^^^^^ value cannot be modified
+  360 |     } catch (error) {
+  361 |       setPurchaseMessage(error instanceof Error ? error.message : 'Unable to add product.');
+  362 |     } finally {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/immutability
+   489:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:489:5
+  487 |   useEffect(() => {
+  488 |     let mounted = true;
+> 489 |     setUnavailable(false);
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  490 |     setMessage('');
+  491 |
+  492 |     Promise.all([                                                                                                                                                                                                                                             react-hooks/set-state-in-effect
+   864:7   error    'findVariantForSize' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  1073:10  error    'lastCartError' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  1079:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1079:5
+  1077 |     void checkShopifyProxy();
+  1078 |     console.log('Radiant override count:', Object.keys(brandOverrides).length);
+> 1079 |     setProducts([]);
+       |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  1080 |     setShopError('');
+  1081 |     setLoading(true);
+  1082 |                                                                                                                                                                      react-hooks/set-state-in-effect
+  1428:20  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1428:20
+  1426 |
+  1427 |   useEffect(() => {
+> 1428 |     if (open) void loadCart();
+       |                    ^^^^^^^^ Avoid calling setState() directly within an effect
+  1429 |   }, [open]);
+  1430 |
+  1431 |   const replaceCart = (nextCart: ShopifyCart) => {                                                                                                                                                                                                                    react-hooks/set-state-in-effect
+  1429:6   warning  React Hook useEffect has a missing dependency: 'loadCart'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+  1815:10  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1815:10
+  1813 |     ensureRadiantCartVersion();
+  1814 |     installClearRadiantCartDev();
+> 1815 |     void refreshCartCount();
+       |          ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  1816 |   }, []);
+  1817 |
+  1818 |   useEffect(() => {                                                                                                                                                                                                             react-hooks/set-state-in-effect
+  1855:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Adeya\Documents\Radiant 34\src\main.tsx:1855:7
+  1853 |
+  1854 |     if (localOverride && !currentProductStillMatches) {
+> 1855 |       setSelectedShopifyProduct(null);
+       |       ^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  1856 |       setSelectedProduct(fallbackForShopifyProduct({ handle: shopifyLookupHandle, title: localOverride.publicTitle }, 0));
+  1857 |     }
+  1858 |                                                                                                     react-hooks/set-state-in-effect
+
+? 44 problems (43 errors, 1 warning)
+
+
+END: 2026-08-02T17:05:23.5172561+01:00
+
+===== COMMAND: npx tsc --noEmit =====
+START: 2026-08-02T17:05:23.6533154+01:00
+EXIT_CODE: 0
+DURATION_MS: 4514
+OUTPUT:
+
+END: 2026-08-02T17:05:28.1669825+01:00
+
+===== COMMAND: npm test =====
+START: 2026-08-02T17:05:28.2702893+01:00
+EXIT_CODE: 1
+DURATION_MS: 1257
+OUTPUT:
+powershell.exe : npm error Missing script: "test"
+At line:34 char:13
++   $output = & powershell -NoProfile -ExecutionPolicy Bypass -Command  ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm error Missing script: "test":String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: 
+C:\Users\Adeya\AppData\Local\npm-cache\_logs\2026-08-02T16_05_29_266Z-debug-0.log
+
+END: 2026-08-02T17:05:29.5271373+01:00
+
+===== COMMAND: npm run test =====
+START: 2026-08-02T17:05:29.8949619+01:00
+EXIT_CODE: 1
+DURATION_MS: 1794
+OUTPUT:
+powershell.exe : npm error Missing script: "test"
+At line:34 char:13
++   $output = & powershell -NoProfile -ExecutionPolicy Bypass -Command  ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm error Missing script: "test":String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: 
+C:\Users\Adeya\AppData\Local\npm-cache\_logs\2026-08-02T16_05_31_437Z-debug-0.log
+
+END: 2026-08-02T17:05:31.6885922+01:00
+
+===== COMMAND: npm run test:unit =====
+START: 2026-08-02T17:05:31.8642211+01:00
+EXIT_CODE: 1
+DURATION_MS: 1896
+OUTPUT:
+powershell.exe : npm error Missing script: "test:unit"
+At line:34 char:13
++   $output = & powershell -NoProfile -ExecutionPolicy Bypass -Command  ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm error Missing script: "test:unit":String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: 
+C:\Users\Adeya\AppData\Local\npm-cache\_logs\2026-08-02T16_05_33_452Z-debug-0.log
+
+END: 2026-08-02T17:05:33.7603668+01:00
+
+===== COMMAND: npm run test:e2e =====
+START: 2026-08-02T17:05:33.9883118+01:00
+EXIT_CODE: 0
+DURATION_MS: 23261
+OUTPUT:
+
+> radiant-34-brand@0.1.0 test:e2e
+> playwright test
+
+
+Running 4 tests using 2 workers
+
+  ok 1 tests\e2e\shop-category-classification.spec.ts:114:1 › Women category excludes unisex/all-over scripture sweatshirts (5.7s)
+  ok 2 tests\e2e\shop-hover-images.spec.ts:141:3 › Radiant 34 Scripture Tough Phone Case mobile card media › mobile touch keeps the primary image visible while scrolling and opens the product page (7.2s)
+  ok 3 tests\e2e\shop-category-classification.spec.ts:127:1 › T-Shirts category thumbnail uses a matching T-shirt product image (4.6s)
+  ok 4 tests\e2e\shop-hover-images.spec.ts:170:3 › Radiant 34 Scripture Tough Phone Case desktop card media › desktop hover swaps only to the Shopify secondary product image (5.6s)
+
+  4 passed (18.6s)
+
+END: 2026-08-02T17:05:57.2495619+01:00
+
+===== COMMAND: npm audit --json =====
+START: 2026-08-02T17:05:57.4389999+01:00
+EXIT_CODE: 1
+DURATION_MS: 5104
+OUTPUT:
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "brace-expansion": {
+      "name": "brace-expansion",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1130591,
+          "name": "brace-expansion",
+          "dependency": "brace-expansion",
+          "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+          "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+          "severity": "high",
+          "cwe": [
+            "CWE-400",
+            "CWE-770"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=4.0.0 <5.0.8"
+        }
+      ],
+      "effects": [],
+      "range": "4.0.0 - 5.0.7",
+      "nodes": [
+        "node_modules/brace-expansion"
+      ],
+      "fixAvailable": true
+    },
+    "postcss": {
+      "name": "postcss",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1124288,
+          "name": "postcss",
+          "dependency": "postcss",
+          "title": "PostCSS: Path Traversal in Previous Source Map Auto-Loading (sourceMappingURL) leads to Arbitrary .map File Disclosure",
+          "url": "https://github.com/advisories/GHSA-r28c-9q8g-f849",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+          },
+          "range": "<=8.5.17"
+        }
+      ],
+      "effects": [],
+      "range": "<=8.5.17",
+      "nodes": [
+        "node_modules/postcss"
+      ],
+      "fixAvailable": true
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 2,
+      "critical": 0,
+      "total": 2
+    },
+    "dependencies": {
+      "prod": 26,
+      "dev": 134,
+      "optional": 33,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 191
+    }
+  }
+}
+
+END: 2026-08-02T17:06:02.5430850+01:00
+
+===== COMMAND: npm outdated =====
+START: 2026-08-02T17:06:02.7036844+01:00
+EXIT_CODE: 1
+DURATION_MS: 6581
+OUTPUT:
+Package               Current   Wanted   Latest  Location                           Depended by
+@types/node            26.1.1   26.1.2   26.1.2  node_modules/@types/node           Radiant 34
+@types/react          19.2.17  19.2.18  19.2.18  node_modules/@types/react          Radiant 34
+@types/react-dom       19.2.3   19.2.4   19.2.4  node_modules/@types/react-dom      Radiant 34
+@vitejs/plugin-react    6.0.3    6.0.5    6.0.5  node_modules/@vitejs/plugin-react  Radiant 34
+eslint                 10.6.0   10.8.0   10.8.0  node_modules/eslint                Radiant 34
+framer-motion         12.42.2  12.43.0  12.43.0  node_modules/framer-motion         Radiant 34
+globals                17.7.0   17.9.0   17.9.0  node_modules/globals               Radiant 34
+lucide-react           1.23.0   1.28.0   1.28.0  node_modules/lucide-react          Radiant 34
+react                  19.2.7   19.2.8   19.2.8  node_modules/react                 Radiant 34
+react-dom              19.2.7   19.2.8   19.2.8  node_modules/react-dom             Radiant 34
+typescript              6.0.3    7.0.2    7.0.2  node_modules/typescript            Radiant 34
+typescript-eslint      8.62.1   8.65.0   8.65.0  node_modules/typescript-eslint     Radiant 34
+vite                    8.1.3    8.2.0    8.2.0  node_modules/vite                  Radiant 34
+
+END: 2026-08-02T17:06:09.2851320+01:00
+
+===== COMMAND: npm ls --all =====
+START: 2026-08-02T17:06:09.4305936+01:00
+EXIT_CODE: 0
+DURATION_MS: 2679
+OUTPUT:
+radiant-34-brand@0.1.0 C:\Users\Adeya\Documents\Radiant 34
++-- @eslint/js@10.0.1
+| `-- eslint@10.6.0 deduped
++-- @playwright/test@1.62.1
+| `-- playwright@1.62.1
+|   +-- UNMET OPTIONAL DEPENDENCY fsevents@2.3.2
+|   `-- playwright-core@1.62.1
++-- @types/node@26.1.1
+| `-- undici-types@8.3.0
++-- @types/react-dom@19.2.3
+| `-- @types/react@19.2.17 deduped
++-- @types/react@19.2.17
+| `-- csstype@3.2.3
++-- @vitejs/plugin-react@6.0.3
+| +-- UNMET OPTIONAL DEPENDENCY @rolldown/plugin-babel@^0.1.7 || ^0.2.0
+| +-- @rolldown/pluginutils@1.0.1
+| +-- UNMET OPTIONAL DEPENDENCY babel-plugin-react-compiler@^1.0.0
+| `-- vite@8.1.3 deduped
++-- eslint-plugin-react-hooks@7.1.1
+| +-- @babel/core@7.29.7
+| | +-- @babel/code-frame@7.29.7
+| | | +-- @babel/helper-validator-identifier@7.29.7
+| | | +-- js-tokens@4.0.0
+| | | `-- picocolors@1.1.1 deduped
+| | +-- @babel/generator@7.29.7
+| | | +-- @babel/parser@7.29.7 deduped
+| | | +-- @babel/types@7.29.7 deduped
+| | | +-- @jridgewell/gen-mapping@0.3.13
+| | | | +-- @jridgewell/sourcemap-codec@1.5.5
+| | | | `-- @jridgewell/trace-mapping@0.3.31 deduped
+| | | +-- @jridgewell/trace-mapping@0.3.31
+| | | | +-- @jridgewell/resolve-uri@3.1.2
+| | | | `-- @jridgewell/sourcemap-codec@1.5.5 deduped
+| | | `-- jsesc@3.1.0
+| | +-- @babel/helper-compilation-targets@7.29.7
+| | | +-- @babel/compat-data@7.29.7
+| | | +-- @babel/helper-validator-option@7.29.7
+| | | +-- browserslist@4.28.4
+| | | | +-- baseline-browser-mapping@2.10.42
+| | | | +-- caniuse-lite@1.0.30001800
+| | | | +-- electron-to-chromium@1.5.387
+| | | | +-- node-releases@2.0.50
+| | | | `-- update-browserslist-db@1.2.3
+| | | |   +-- browserslist@4.28.4 deduped
+| | | |   +-- escalade@3.2.0
+| | | |   `-- picocolors@1.1.1 deduped
+| | | +-- lru-cache@5.1.1
+| | | | `-- yallist@3.1.1
+| | | `-- semver@6.3.1 deduped
+| | +-- @babel/helper-module-transforms@7.29.7
+| | | +-- @babel/core@7.29.7 deduped
+| | | +-- @babel/helper-module-imports@7.29.7
+| | | | +-- @babel/traverse@7.29.7 deduped
+| | | | `-- @babel/types@7.29.7 deduped
+| | | +-- @babel/helper-validator-identifier@7.29.7 deduped
+| | | `-- @babel/traverse@7.29.7 deduped
+| | +-- @babel/helpers@7.29.7
+| | | +-- @babel/template@7.29.7 deduped
+| | | `-- @babel/types@7.29.7 deduped
+| | +-- @babel/parser@7.29.7 deduped
+| | +-- @babel/template@7.29.7
+| | | +-- @babel/code-frame@7.29.7 deduped
+| | | +-- @babel/parser@7.29.7 deduped
+| | | `-- @babel/types@7.29.7 deduped
+| | +-- @babel/traverse@7.29.7
+| | | +-- @babel/code-frame@7.29.7 deduped
+| | | +-- @babel/generator@7.29.7 deduped
+| | | +-- @babel/helper-globals@7.29.7
+| | | +-- @babel/parser@7.29.7 deduped
+| | | +-- @babel/template@7.29.7 deduped
+| | | +-- @babel/types@7.29.7 deduped
+| | | `-- debug@4.4.3 deduped
+| | +-- @babel/types@7.29.7
+| | | +-- @babel/helper-string-parser@7.29.7
+| | | `-- @babel/helper-validator-identifier@7.29.7 deduped
+| | +-- @jridgewell/remapping@2.3.5
+| | | +-- @jridgewell/gen-mapping@0.3.13 deduped
+| | | `-- @jridgewell/trace-mapping@0.3.31 deduped
+| | +-- convert-source-map@2.0.0
+| | +-- debug@4.4.3 deduped
+| | +-- gensync@1.0.0-beta.2
+| | +-- json5@2.2.3
+| | `-- semver@6.3.1
+| +-- @babel/parser@7.29.7
+| | `-- @babel/types@7.29.7 deduped
+| +-- eslint@10.6.0 deduped
+| +-- hermes-parser@0.25.1
+| | `-- hermes-estree@0.25.1
+| +-- zod-validation-error@4.0.2
+| | `-- zod@4.4.3 deduped
+| `-- zod@4.4.3
++-- eslint-plugin-react-refresh@0.5.3
+| `-- eslint@10.6.0 deduped
++-- eslint@10.6.0
+| +-- @eslint-community/eslint-utils@4.9.1
+| | +-- eslint-visitor-keys@3.4.3
+| | `-- eslint@10.6.0 deduped
+| +-- @eslint-community/regexpp@4.12.2
+| +-- @eslint/config-array@0.23.5
+| | +-- @eslint/object-schema@3.0.5
+| | +-- debug@4.4.3 deduped
+| | `-- minimatch@10.2.5 deduped
+| +-- @eslint/config-helpers@0.6.0
+| | `-- @eslint/core@1.2.1 deduped
+| +-- @eslint/core@1.2.1
+| | `-- @types/json-schema@7.0.15
+| +-- @eslint/plugin-kit@0.7.2
+| | +-- @eslint/core@1.2.1 deduped
+| | `-- levn@0.4.1
+| |   +-- prelude-ls@1.2.1 deduped
+| |   `-- type-check@0.4.0 deduped
+| +-- @humanfs/node@0.16.8
+| | +-- @humanfs/core@0.19.2
+| | | `-- @humanfs/types@0.15.0 deduped
+| | +-- @humanfs/types@0.15.0
+| | `-- @humanwhocodes/retry@0.4.3 deduped
+| +-- @humanwhocodes/module-importer@1.0.1
+| +-- @humanwhocodes/retry@0.4.3
+| +-- @types/estree@1.0.9
+| +-- ajv@6.15.0
+| | +-- fast-deep-equal@3.1.3 deduped
+| | +-- fast-json-stable-stringify@2.1.0
+| | +-- json-schema-traverse@0.4.1
+| | `-- uri-js@4.4.1
+| |   `-- punycode@2.3.1
+| +-- cross-spawn@7.0.6
+| | +-- path-key@3.1.1
+| | +-- shebang-command@2.0.0
+| | | `-- shebang-regex@3.0.0
+| | `-- which@2.0.2
+| |   `-- isexe@2.0.0
+| +-- debug@4.4.3
+| | `-- ms@2.1.3
+| +-- escape-string-regexp@4.0.0
+| +-- eslint-scope@9.1.2
+| | +-- @types/esrecurse@4.3.1
+| | +-- @types/estree@1.0.9 deduped
+| | +-- esrecurse@4.3.0
+| | | `-- estraverse@5.3.0 deduped
+| | `-- estraverse@5.3.0
+| +-- eslint-visitor-keys@5.0.1
+| +-- espree@11.2.0
+| | +-- acorn-jsx@5.3.2
+| | | `-- acorn@8.17.0 deduped
+| | +-- acorn@8.17.0
+| | `-- eslint-visitor-keys@5.0.1 deduped
+| +-- esquery@1.7.0
+| | `-- estraverse@5.3.0 deduped
+| +-- esutils@2.0.3
+| +-- fast-deep-equal@3.1.3
+| +-- file-entry-cache@8.0.0
+| | `-- flat-cache@4.0.1
+| |   +-- flatted@3.4.2
+| |   `-- keyv@4.5.4
+| |     `-- json-buffer@3.0.1
+| +-- find-up@5.0.0
+| | +-- locate-path@6.0.0
+| | | `-- p-locate@5.0.0
+| | |   `-- p-limit@3.1.0
+| | |     `-- yocto-queue@0.1.0
+| | `-- path-exists@4.0.0
+| +-- glob-parent@6.0.2
+| | `-- is-glob@4.0.3 deduped
+| +-- ignore@5.3.2
+| +-- imurmurhash@0.1.4
+| +-- is-glob@4.0.3
+| | `-- is-extglob@2.1.1
+| +-- UNMET OPTIONAL DEPENDENCY jiti@*
+| +-- json-stable-stringify-without-jsonify@1.0.1
+| +-- minimatch@10.2.5
+| | `-- brace-expansion@5.0.7
+| |   `-- balanced-match@4.0.4
+| +-- natural-compare@1.4.0
+| `-- optionator@0.9.4
+|   +-- deep-is@0.1.4
+|   +-- fast-levenshtein@2.0.6
+|   +-- levn@0.4.1 deduped
+|   +-- prelude-ls@1.2.1
+|   +-- type-check@0.4.0
+|   | `-- prelude-ls@1.2.1 deduped
+|   `-- word-wrap@1.2.5
++-- framer-motion@12.42.2
+| +-- UNMET OPTIONAL DEPENDENCY @emotion/is-prop-valid@*
+| +-- motion-dom@12.42.2
+| | `-- motion-utils@12.39.0 deduped
+| +-- motion-utils@12.39.0
+| +-- react-dom@19.2.7 deduped
+| +-- react@19.2.7 deduped
+| `-- tslib@2.8.1
++-- globals@17.7.0
++-- lucide-react@1.23.0
+| `-- react@19.2.7 deduped
++-- react-dom@19.2.7
+| +-- react@19.2.7 deduped
+| `-- scheduler@0.27.0
++-- react@19.2.7
++-- typescript-eslint@8.62.1
+| +-- @typescript-eslint/eslint-plugin@8.62.1
+| | +-- @eslint-community/regexpp@4.12.2 deduped
+| | +-- @typescript-eslint/parser@8.62.1 deduped
+| | +-- @typescript-eslint/scope-manager@8.62.1
+| | | +-- @typescript-eslint/types@8.62.1 deduped
+| | | `-- @typescript-eslint/visitor-keys@8.62.1 deduped
+| | +-- @typescript-eslint/type-utils@8.62.1
+| | | +-- @typescript-eslint/types@8.62.1 deduped
+| | | +-- @typescript-eslint/typescript-estree@8.62.1 deduped
+| | | +-- @typescript-eslint/utils@8.62.1 deduped
+| | | +-- debug@4.4.3 deduped
+| | | +-- eslint@10.6.0 deduped
+| | | +-- ts-api-utils@2.5.0 deduped
+| | | `-- typescript@6.0.3 deduped
+| | +-- @typescript-eslint/utils@8.62.1 deduped
+| | +-- @typescript-eslint/visitor-keys@8.62.1
+| | | +-- @typescript-eslint/types@8.62.1 deduped
+| | | `-- eslint-visitor-keys@5.0.1 deduped
+| | +-- eslint@10.6.0 deduped
+| | +-- ignore@7.0.5
+| | +-- natural-compare@1.4.0 deduped
+| | +-- ts-api-utils@2.5.0
+| | | `-- typescript@6.0.3 deduped
+| | `-- typescript@6.0.3 deduped
+| +-- @typescript-eslint/parser@8.62.1
+| | +-- @typescript-eslint/scope-manager@8.62.1 deduped
+| | +-- @typescript-eslint/types@8.62.1
+| | +-- @typescript-eslint/typescript-estree@8.62.1 deduped
+| | +-- @typescript-eslint/visitor-keys@8.62.1 deduped
+| | +-- debug@4.4.3 deduped
+| | +-- eslint@10.6.0 deduped
+| | `-- typescript@6.0.3 deduped
+| +-- @typescript-eslint/typescript-estree@8.62.1
+| | +-- @typescript-eslint/project-service@8.62.1
+| | | +-- @typescript-eslint/tsconfig-utils@8.62.1 deduped
+| | | +-- @typescript-eslint/types@8.62.1 deduped
+| | | +-- debug@4.4.3 deduped
+| | | `-- typescript@6.0.3 deduped
+| | +-- @typescript-eslint/tsconfig-utils@8.62.1
+| | | `-- typescript@6.0.3 deduped
+| | +-- @typescript-eslint/types@8.62.1 deduped
+| | +-- @typescript-eslint/visitor-keys@8.62.1 deduped
+| | +-- debug@4.4.3 deduped
+| | +-- minimatch@10.2.5 deduped
+| | +-- semver@7.8.5
+| | +-- tinyglobby@0.2.17 deduped
+| | +-- ts-api-utils@2.5.0 deduped
+| | `-- typescript@6.0.3 deduped
+| +-- @typescript-eslint/utils@8.62.1
+| | +-- @eslint-community/eslint-utils@4.9.1 deduped
+| | +-- @typescript-eslint/scope-manager@8.62.1 deduped
+| | +-- @typescript-eslint/types@8.62.1 deduped
+| | +-- @typescript-eslint/typescript-estree@8.62.1 deduped
+| | +-- eslint@10.6.0 deduped
+| | `-- typescript@6.0.3 deduped
+| +-- eslint@10.6.0 deduped
+| `-- typescript@6.0.3 deduped
++-- typescript@6.0.3
+`-- vite@8.1.3
+  +-- @types/node@26.1.1 deduped
+  +-- UNMET OPTIONAL DEPENDENCY @vitejs/devtools@^0.3.0
+  +-- UNMET OPTIONAL DEPENDENCY esbuild@^0.27.0 || ^0.28.0
+  +-- UNMET OPTIONAL DEPENDENCY fsevents@~2.3.3
+  +-- UNMET OPTIONAL DEPENDENCY jiti@>=1.21.0
+  +-- UNMET OPTIONAL DEPENDENCY less@^4.0.0
+  +-- lightningcss@1.32.0
+  | +-- detect-libc@2.1.2
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-android-arm64@1.32.0
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-darwin-arm64@1.32.0
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-darwin-x64@1.32.0
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-freebsd-x64@1.32.0
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-linux-arm-gnueabihf@1.32.0
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-linux-arm64-gnu@1.32.0
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-linux-arm64-musl@1.32.0
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-linux-x64-gnu@1.32.0
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-linux-x64-musl@1.32.0
+  | +-- UNMET OPTIONAL DEPENDENCY lightningcss-win32-arm64-msvc@1.32.0
+  | `-- lightningcss-win32-x64-msvc@1.32.0
+  +-- picomatch@4.0.5
+  +-- postcss@8.5.16
+  | +-- nanoid@3.3.15
+  | +-- picocolors@1.1.1
+  | `-- source-map-js@1.2.1
+  +-- rolldown@1.1.4
+  | +-- @oxc-project/types@0.138.0
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-android-arm64@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-darwin-arm64@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-darwin-x64@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-freebsd-x64@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-linux-arm-gnueabihf@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-linux-arm64-gnu@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-linux-arm64-musl@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-linux-ppc64-gnu@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-linux-s390x-gnu@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-linux-x64-gnu@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-linux-x64-musl@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-openharmony-arm64@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-wasm32-wasi@1.1.4
+  | +-- UNMET OPTIONAL DEPENDENCY @rolldown/binding-win32-arm64-msvc@1.1.4
+  | +-- @rolldown/binding-win32-x64-msvc@1.1.4
+  | `-- @rolldown/pluginutils@1.0.1 deduped
+  +-- UNMET OPTIONAL DEPENDENCY sass-embedded@^1.70.0
+  +-- UNMET OPTIONAL DEPENDENCY sass@^1.70.0
+  +-- UNMET OPTIONAL DEPENDENCY stylus@>=0.54.8
+  +-- UNMET OPTIONAL DEPENDENCY sugarss@^5.0.0
+  +-- UNMET OPTIONAL DEPENDENCY terser@^5.16.0
+  +-- tinyglobby@0.2.17
+  | +-- fdir@6.5.0
+  | | `-- picomatch@4.0.5 deduped
+  | `-- picomatch@4.0.5 deduped
+  +-- UNMET OPTIONAL DEPENDENCY tsx@^4.8.1
+  `-- UNMET OPTIONAL DEPENDENCY yaml@^2.4.2
+
+
+END: 2026-08-02T17:06:12.1098197+01:00

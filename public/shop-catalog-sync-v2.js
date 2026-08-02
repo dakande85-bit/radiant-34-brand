@@ -277,6 +277,20 @@
     return heading;
   };
 
+  const syncTshirtCategoryThumbnail = (shopPage, cards) => {
+    const tshirtCard = cards.find((card) => matchesCategory(card, 'tshirts'));
+    const productImage = tshirtCard?.querySelector('.shopify-card__image img:first-child');
+    const categoryImage = shopPage.querySelector('.r34-shop-category-card[data-r34-category-key="tshirts"] img');
+    const productImageSrc = productImage?.getAttribute('src');
+    if (!categoryImage || !productImageSrc) return;
+    if (categoryImage.getAttribute('src') !== productImageSrc) {
+      categoryImage.setAttribute('src', productImageSrc);
+      categoryImage.removeAttribute('srcset');
+    }
+    const alt = productImage.getAttribute('alt') || 'Radiant 34 T-shirt product';
+    categoryImage.setAttribute('alt', alt);
+  };
+
   const applyCategory = (shopPage, key, shouldScroll = false) => {
     const category = categories.find((item) => item.key === key);
     if (!category) return;
@@ -352,6 +366,7 @@
 
     cards.forEach(normalizeCard);
     ensureChooser(shopPage);
+    syncTshirtCategoryThumbnail(shopPage, cards);
 
     const selectedKey = shopPage.dataset.r34SelectedCategory;
     if (selectedKey) applyCategory(shopPage, selectedKey, false);

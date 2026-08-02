@@ -2,6 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 
 const SWEATSHIRT_TITLE = 'Radiant 34 All-Over Print Scripture Sweatshirt';
 const DRESS_TITLE = 'Radiant 34 Fearfully & Wonderfully Created T-Shirt Dress';
+const TSHIRT_TITLE = 'Radiant 34 Purple Faith over Fear T-Shirt';
+const TSHIRT_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/2250C457-58F8-4EB6-98F3-79609D88A604.png?v=1785234846';
 
 const image = (name: string) =>
   `https://cdn.shopify.com/s/files/1/1059/0545/5434/files/${name}.png?v=1785000000`;
@@ -51,6 +53,22 @@ const makeProduct = ({
 });
 
 const products = [
+  {
+    ...makeProduct({
+      id: '10000000000003',
+      title: TSHIRT_TITLE,
+      handle: 'unisex-t-shirt-2',
+      productType: 'T-Shirt',
+      tags: ['t-shirt', 'faith-over-fear'],
+    }),
+    featuredImage: { url: TSHIRT_IMAGE, altText: TSHIRT_TITLE },
+    images: {
+      nodes: [
+        { url: TSHIRT_IMAGE, altText: TSHIRT_TITLE },
+        { url: image('unisex-t-shirt-2-alt'), altText: `${TSHIRT_TITLE} alternate view` },
+      ],
+    },
+  },
   makeProduct({
     id: '10000000000001',
     title: SWEATSHIRT_TITLE,
@@ -104,4 +122,23 @@ test('Women category excludes unisex/all-over scripture sweatshirts', async ({ p
   await page.getByRole('button', { name: /^Shop Women$/i }).click();
   await expect(sweatshirtCard).toBeHidden();
   await expect(page.locator('.shopify-card', { hasText: DRESS_TITLE }).first()).toBeVisible();
+});
+
+test('T-Shirts category thumbnail uses a matching T-shirt product image', async ({ page }) => {
+  await mockShopify(page);
+  await page.goto('/shop');
+
+  const tshirtCategoryImage = page
+    .locator('.r34-shop-category-card[data-r34-category-key="tshirts"] img')
+    .first();
+  await expect(tshirtCategoryImage).toHaveAttribute('src', TSHIRT_IMAGE);
+  await expect(tshirtCategoryImage).toHaveAttribute('alt', TSHIRT_TITLE);
+
+  await page.getByRole('button', { name: /^Shop T-Shirts$/i }).click();
+  const tshirtCardImage = page
+    .locator('.shopify-card', { hasText: TSHIRT_TITLE })
+    .first()
+    .locator('.shopify-card__image img')
+    .first();
+  await expect(tshirtCardImage).toHaveAttribute('src', TSHIRT_IMAGE);
 });

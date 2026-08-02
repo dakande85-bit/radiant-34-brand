@@ -193,11 +193,11 @@
 
     switch (key) {
       case 'women':
-        return ['dress', 'tshirt', 'tank'].includes(kind) || (kind === 'outerwear' && !menOnly);
+        return ['dress', 'tshirt', 'tank'].includes(kind) || (kind === 'outerwear' && womenOnly);
       case 'men':
         return !womenOnly && ['tshirt', 'tank', 'outerwear', 'headwear'].includes(kind);
       case 'womens-outerwear':
-        return kind === 'outerwear' && !menOnly;
+        return kind === 'outerwear' && womenOnly;
       case 'mens-outerwear':
         return kind === 'outerwear' && !womenOnly;
       case 'dresses': return kind === 'dress';

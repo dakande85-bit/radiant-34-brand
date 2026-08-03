@@ -4,7 +4,7 @@
 
   const CATEGORY_IMAGES = {
     women: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
-    men: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-follow-god-not-man-snapback-model.png?v=1784775143',
+    men: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/unisex-sports-tee-black-front-6a7087ff9a6c2.jpg?v=1785759762',
     womensOuterwear: '/images/radiant-cream-hoodie.png',
     mensOuterwear: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-unisex-bomber-jacket-white-front-6a6170040175a.jpg?v=1784770593',
     dresses: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-t-shirt-dress-white-front-6a61f2fc0fdf2.jpg?v=1784804134',
@@ -243,7 +243,7 @@
       chooser.appendChild(grid);
     }
 
-    const signature = 'authoritative-shop-categories-v11-ranked-product-thumbnails';
+    const signature = 'authoritative-shop-categories-v12-men-product-thumbnail';
     if (grid.dataset.r34CatalogSignature !== signature) {
       grid.dataset.r34CatalogSignature = signature;
       grid.innerHTML = categories.map((category) => `
@@ -361,6 +361,8 @@
 
   const syncCategoryThumbnails = (shopPage, cards) => {
     categories.forEach((category) => {
+      if (category.key === 'men') return;
+
       const productCard = bestThumbnailCard(category, cards);
       const productImage = productCard?.querySelector('.shopify-card__image img:first-child');
       const categoryImage = shopPage.querySelector(`.r34-shop-category-card[data-r34-category-key="${category.key}"] img`);

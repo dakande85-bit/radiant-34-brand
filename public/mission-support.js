@@ -8,22 +8,6 @@
       website: 'https://www.equipgodspeople.co.uk/',
       donate: 'https://www.equipgodspeople.co.uk/give',
     },
-    {
-      name: 'Tenerife Family Church',
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-mission-tenerife-family-church.jpg?v=1784769733',
-      alt: 'Tenerife Family Church community',
-      description: 'A mission-minded church serving families, young people and the wider Tenerife community through outreach, discipleship, pastoral care, prayer and practical support.',
-      website: 'https://www.tenerifefamilychurch.org/',
-      donate: 'https://www.stewardship.org.uk/partners/20039743',
-    },
-    {
-      name: 'The Grassroots Trust',
-      image: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-mission-grassroots.jpg?v=1784769753',
-      alt: 'Grassroots community support project',
-      description: 'A Christian charity relieving poverty and sharing the love of Jesus through child sponsorship, local partnerships and practical projects around the world.',
-      website: 'https://grassroots.org.uk/',
-      donate: 'https://grassroots.org.uk/product/give-now/',
-    },
   ];
 
   const installStyles = () => {
@@ -88,7 +72,7 @@
       }
       .r34-mission-grid {
         display:grid;
-        grid-template-columns:repeat(3,minmax(0,1fr));
+        grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));
         gap:clamp(20px,2.5vw,36px);
       }
       .r34-mission-card {

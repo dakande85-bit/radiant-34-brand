@@ -7,6 +7,7 @@ export type BrandOverride = {
   publicHandle: string;
   description?: string;
   badge?: string;
+  displayColor?: string;
   primaryImage?: string;
   hoverImage?: string;
   gallery?: string[];
@@ -74,6 +75,15 @@ export const brandOverrides: Record<string, BrandOverride> = {
     publicHandle: 'radiant-heavyweight-scripture-tshirt-04',
     description: 'A heavyweight unisex T-shirt made to bring faith into everyday life.',
     badge: 'Drop 001',
+    useShopifyImages: true,
+    drop001: true,
+  },
+  'radiant-34-jesus-symbol-50-cotton': {
+    publicTitle: 'Radiant 34 Jesus Symbol T-Shirt',
+    publicHandle: 'radiant-34-jesus-symbol-50-cotton',
+    description: 'A black everyday T-shirt featuring the Radiant 34 Jesus symbol, designed as a clean statement of faith for daily wear.',
+    badge: 'Drop 001',
+    displayColor: 'Black',
     useShopifyImages: true,
     drop001: true,
   },

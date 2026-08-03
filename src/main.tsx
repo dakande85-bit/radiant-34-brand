@@ -51,6 +51,7 @@ type ShopifyProduct = {
   tags: string[];
   badges: string[];
   swatches: string[];
+  displayColor?: string;
   variantId?: string;
   adminVariantId?: string;
   storefrontVariantId?: string;
@@ -324,8 +325,13 @@ function ProductDetail({
   useEffect(() => {
     const primaryOptionName = getPrimaryVariantOptionName(shopifyProduct);
     const primaryOptionValues = getVariantOptionValues(shopifyProduct, primaryOptionName ?? '');
+    const colorOptionName = getVariantOptionNames(shopifyProduct)
+      .find((name) => ['color', 'colour'].includes(name.toLowerCase()));
+    const colorValues = colorOptionName
+      ? getVariantOptionValues(shopifyProduct, colorOptionName)
+      : shopifyProduct?.displayColor ? [shopifyProduct.displayColor] : product.options?.color ?? [];
     setSelectedSize(primaryOptionValues[0] ?? product.options?.size?.[0] ?? '');
-    setSelectedColor(product.options?.color?.[0] ?? '');
+    setSelectedColor(colorValues[0] ?? '');
   }, [product, shopifyProduct]);
 
   const title = shopifyProduct?.title ?? product.title;
@@ -334,6 +340,9 @@ function ProductDetail({
   const primaryOptionValues = getVariantOptionValues(shopifyProduct, primaryOptionName ?? '');
   const colorOptionName = getVariantOptionNames(shopifyProduct)
     .find((name) => ['color', 'colour'].includes(name.toLowerCase()));
+  const displayColorValues = colorOptionName
+    ? getVariantOptionValues(shopifyProduct, colorOptionName)
+    : shopifyProduct?.displayColor ? [shopifyProduct.displayColor] : product.options?.color ?? [];
   const selectedVariant = findVariantForSelectedOptions(shopifyProduct, {
     ...(primaryOptionName && selectedSize ? { [primaryOptionName]: selectedSize } : {}),
     ...(colorOptionName && selectedColor ? { [colorOptionName]: selectedColor } : {}),
@@ -411,11 +420,11 @@ function ProductDetail({
           </div>
         ) : null}
 
-        {product.options?.color ? (
+        {displayColorValues.length ? (
           <div className="selector-group">
             <span>Colour</span>
             <div>
-              {product.options.color.map((color) => (
+              {displayColorValues.map((color) => (
                 <button
                   type="button"
                   key={color}
@@ -969,6 +978,8 @@ const applyBrandOverride = (
     handle: override.publicHandle,
     description: override.description ?? product.description,
     badges: [override.badge ?? product.badges[0] ?? 'Radiant 34'],
+    displayColor: override.displayColor ?? product.displayColor,
+    swatches: override.displayColor ? [override.displayColor] : product.swatches,
     image: override.useShopifyImages ? product.image : override.primaryImage ?? product.image,
     hoverImage: override.useShopifyImages ? product.hoverImage : override.hoverImage ?? product.hoverImage,
     gallery: brandedGallery.length ? brandedGallery : product.gallery,

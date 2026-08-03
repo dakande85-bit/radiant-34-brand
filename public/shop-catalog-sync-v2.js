@@ -8,7 +8,7 @@
     womensOuterwear: '/images/radiant-cream-hoodie.png',
     mensOuterwear: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-unisex-bomber-jacket-white-front-6a6170040175a.jpg?v=1784770593',
     dresses: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-t-shirt-dress-white-front-6a61f2fc0fdf2.jpg?v=1784804134',
-    tshirts: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/228c2e23-e93d-46ac-a7c0-f0e9d9b3d17f.webp?v=1784711348',
+    tshirts: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/unisex-sports-tee-black-front-6a7087ff9a6c2.jpg?v=1785759762',
     tanks: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/bf1822ec-2f59-4a22-9850-6ff6ed0887bf.jpg?v=1784727959',
     headwear: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/classic-snapback-dark-navy-front-6a617b2f5d17f.jpg?v=1784773446',
     drinkware: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-his-peace-calmed-a-storm-mug-primary.png?v=1784714241',
@@ -243,7 +243,7 @@
       chooser.appendChild(grid);
     }
 
-    const signature = 'authoritative-shop-categories-v12-men-product-thumbnail';
+    const signature = 'authoritative-shop-categories-v13-neutral-tee-thumbnails';
     if (grid.dataset.r34CatalogSignature !== signature) {
       grid.dataset.r34CatalogSignature = signature;
       grid.innerHTML = categories.map((category) => `
@@ -361,7 +361,7 @@
 
   const syncCategoryThumbnails = (shopPage, cards) => {
     categories.forEach((category) => {
-      if (category.key === 'men') return;
+      if (category.key === 'men' || category.key === 'tshirts') return;
 
       const productCard = bestThumbnailCard(category, cards);
       const productImage = productCard?.querySelector('.shopify-card__image img:first-child');

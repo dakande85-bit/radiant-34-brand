@@ -243,7 +243,7 @@
       chooser.appendChild(grid);
     }
 
-    const signature = 'authoritative-shop-categories-v10-product-matched-thumbnails';
+    const signature = 'authoritative-shop-categories-v11-ranked-product-thumbnails';
     if (grid.dataset.r34CatalogSignature !== signature) {
       grid.dataset.r34CatalogSignature = signature;
       grid.innerHTML = categories.map((category) => `
@@ -277,9 +277,91 @@
     return heading;
   };
 
+  const thumbnailScore = (categoryKey, card, index) => {
+    if (!matchesCategory(card, categoryKey)) return Number.NEGATIVE_INFINITY;
+
+    const kind = card.dataset.r34Kind || 'other';
+    const signal = signalForCard(card);
+    const menOnly = card.dataset.r34MenOnlyOuterwear === 'true';
+    const womenOnly = card.dataset.r34WomenOnlyOuterwear === 'true';
+    let score = 1000 - index;
+
+    switch (categoryKey) {
+      case 'women':
+        if (kind === 'dress') score += 5000;
+        if (kind === 'tank') score += 3500;
+        if (womenOnly) score += 3000;
+        if (kind === 'tshirt') score += 1500;
+        if (menOnly) score -= 7000;
+        break;
+      case 'men':
+        if (kind === 'headwear') score += 6000;
+        if (menOnly) score += 5000;
+        if (kind === 'outerwear') score += 3500;
+        if (kind === 'tshirt') score += 1200;
+        if (womenOnly || containsAny(signal, ['women', 'dress', 'female', 'ladies'])) score -= 8000;
+        break;
+      case 'womens-outerwear':
+        if (womenOnly) score += 6000;
+        if (kind === 'outerwear') score += 3000;
+        if (menOnly) score -= 9000;
+        break;
+      case 'mens-outerwear':
+        if (menOnly) score += 6000;
+        if (kind === 'outerwear') score += 3000;
+        if (womenOnly || containsAny(signal, ['women', 'dress', 'female', 'ladies'])) score -= 9000;
+        break;
+      case 'dresses':
+        if (kind === 'dress') score += 6000;
+        break;
+      case 'tshirts':
+        if (kind === 'tshirt') score += 6000;
+        break;
+      case 'tanks':
+        if (kind === 'tank') score += 6000;
+        break;
+      case 'headwear':
+        if (kind === 'headwear') score += 6000;
+        break;
+      case 'drinkware':
+        if (kind === 'drinkware') score += 6000;
+        break;
+      case 'bags':
+        if (kind === 'bag') score += 6000;
+        break;
+      case 'accessories':
+        if (kind === 'accessories') score += 6000;
+        break;
+      case 'all':
+        if (kind === 'outerwear') score += 5000;
+        if (kind === 'tshirt') score += 3500;
+        if (kind === 'headwear') score += 2500;
+        break;
+      default:
+        break;
+    }
+
+    return score;
+  };
+
+  const bestThumbnailCard = (category, cards) => {
+    let bestCard = null;
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    cards.forEach((card, index) => {
+      const score = thumbnailScore(category.key, card, index);
+      if (score > bestScore) {
+        bestScore = score;
+        bestCard = card;
+      }
+    });
+
+    return bestCard;
+  };
+
   const syncCategoryThumbnails = (shopPage, cards) => {
     categories.forEach((category) => {
-      const productCard = cards.find((card) => matchesCategory(card, category.key));
+      const productCard = bestThumbnailCard(category, cards);
       const productImage = productCard?.querySelector('.shopify-card__image img:first-child');
       const categoryImage = shopPage.querySelector(`.r34-shop-category-card[data-r34-category-key="${category.key}"] img`);
       const productImageSrc = productImage?.getAttribute('src');

@@ -4,10 +4,12 @@ const SWEATSHIRT_TITLE = 'Radiant 34 All-Over Print Scripture Sweatshirt';
 const DRESS_TITLE = 'Radiant 34 Fearfully & Wonderfully Created T-Shirt Dress';
 const TSHIRT_TITLE = 'Radiant 34 Purple Faith over Fear T-Shirt';
 const TSHIRT_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/2250C457-58F8-4EB6-98F3-79609D88A604.png?v=1785234846';
+const HEADWEAR_TITLE = 'Radiant 34 Follow God Not Man Snapback';
 const WOMENS_OUTERWEAR_TITLE = "Radiant 34 Women's All-Over Print Bomber Jacket";
 
 const image = (name: string) =>
   `https://cdn.shopify.com/s/files/1/1059/0545/5434/files/${name}.png?v=1785000000`;
+const HEADWEAR_IMAGE = image('snapback-hat');
 const WOMENS_OUTERWEAR_IMAGE = image('unisex-bomber-jacket-1');
 
 const makeProduct = ({
@@ -71,6 +73,13 @@ const products = [
       ],
     },
   },
+  makeProduct({
+    id: '10000000000005',
+    title: HEADWEAR_TITLE,
+    handle: 'snapback-hat',
+    productType: 'Headwear',
+    tags: ['men', 'snapback', 'headwear'],
+  }),
   makeProduct({
     id: '10000000000001',
     title: SWEATSHIRT_TITLE,
@@ -159,8 +168,8 @@ test('category thumbnails use matching product images for outerwear and all prod
   const allProductsImage = page
     .locator('.r34-shop-category-card[data-r34-category-key="all"] img')
     .first();
-  await expect(allProductsImage).toHaveAttribute('src', TSHIRT_IMAGE);
-  await expect(allProductsImage).toHaveAttribute('alt', TSHIRT_TITLE);
+  await expect(allProductsImage).toHaveAttribute('src', image('all-over-print-scripture-sweatshirt'));
+  await expect(allProductsImage).toHaveAttribute('alt', SWEATSHIRT_TITLE);
 
   const womensOuterwearImage = page
     .locator('.r34-shop-category-card[data-r34-category-key="womens-outerwear"] img')
@@ -175,4 +184,16 @@ test('category thumbnails use matching product images for outerwear and all prod
     .locator('.shopify-card__image img')
     .first();
   await expect(womensOuterwearCardImage).toHaveAttribute('src', WOMENS_OUTERWEAR_IMAGE);
+});
+
+test('Men category thumbnail prefers a men-relevant product image', async ({ page }) => {
+  await mockShopify(page);
+  await page.goto('/shop');
+
+  const menImage = page
+    .locator('.r34-shop-category-card[data-r34-category-key="men"] img')
+    .first();
+  await expect(menImage).toHaveAttribute('src', HEADWEAR_IMAGE);
+  await expect(menImage).toHaveAttribute('alt', HEADWEAR_TITLE);
+  await expect(menImage).not.toHaveAttribute('src', TSHIRT_IMAGE);
 });

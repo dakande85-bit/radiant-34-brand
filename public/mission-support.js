@@ -168,34 +168,8 @@
     document.head.appendChild(style);
   };
 
-  const navigateToMission = (event) => {
-    if (event) event.preventDefault();
-    if (window.location.pathname === '/mission') return;
-    window.history.pushState(null, '', '/mission');
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  };
-
   const ensureNavigation = () => {
-    const nav = document.querySelector('.main-nav');
-    if (nav && !nav.querySelector('[data-r34-mission-link]')) {
-      const link = document.createElement('a');
-      link.href = '/mission';
-      link.textContent = 'Our Mission';
-      link.dataset.r34MissionLink = 'true';
-      link.addEventListener('click', navigateToMission);
-      const mobileActions = nav.querySelector('.mobile-nav-actions');
-      nav.insertBefore(link, mobileActions ?? null);
-    }
-
-    const footerNav = document.querySelector('.site-footer nav');
-    if (footerNav && !footerNav.querySelector('[data-r34-mission-link]')) {
-      const link = document.createElement('a');
-      link.href = '/mission';
-      link.textContent = 'Our Mission';
-      link.dataset.r34MissionLink = 'true';
-      link.addEventListener('click', navigateToMission);
-      footerNav.appendChild(link);
-    }
+    document.querySelectorAll('[data-r34-mission-link]').forEach((link) => link.remove());
   };
 
   const renderMissionPage = () => {

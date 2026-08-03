@@ -3,24 +3,6 @@
   const shopLabels = new Set(['shop', 'shop all products']);
   const normalize = (value) => (value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
-  const navigateInternally = (path) => {
-    if (window.location.pathname === path) return;
-    window.history.pushState(null, '', path);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const createContactLink = () => {
-    const link = document.createElement('a');
-    link.href = '/contact';
-    link.textContent = 'Contact';
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      navigateInternally('/contact');
-    });
-    return link;
-  };
-
   const isDrop001Control = (element) => {
     const label = normalize(element.textContent);
     const href = element.getAttribute?.('href') || '';
@@ -53,12 +35,9 @@
       if (blockedLabels.has(normalize(link.textContent)) || isDrop001Control(link)) link.remove();
     });
 
-    const directLinks = [...nav.querySelectorAll(':scope > a')];
-    const hasContact = directLinks.some((link) => normalize(link.textContent) === 'contact');
-    if (!hasContact) {
-      const mobileActions = nav.querySelector('.mobile-nav-actions');
-      nav.insertBefore(createContactLink(), mobileActions || null);
-    }
+    [...nav.querySelectorAll(':scope > a')].forEach((link) => {
+      if (normalize(link.textContent) === 'contact') link.remove();
+    });
   };
 
   const updateFooterNavigation = () => {

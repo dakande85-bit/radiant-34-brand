@@ -126,7 +126,6 @@ const navItems: { label: string; path: Page }[] = [
   { label: 'Drop 001', path: '/drop-001' },
   { label: 'Lookbook', path: '/lookbook' },
   { label: 'Our Story', path: '/about' },
-  { label: 'Mission', path: '/mission' },
 ];
 
 const footerItems: { label: string; path: Page }[] = [
@@ -1569,7 +1568,7 @@ function LookbookPage() {
   );
 }
 
-function AboutPage() {
+function AboutPage({ navigate }: { navigate: (path: Page) => void }) {
   return (
     <>
       <section className="page-hero page-hero--editorial">
@@ -1600,6 +1599,7 @@ function AboutPage() {
           message further.
         </p>
       </section>
+      <MissionPreview navigate={navigate} />
     </>
   );
 }
@@ -1900,7 +1900,7 @@ function App() {
           />
         ) : null}
         {page === '/lookbook' ? <LookbookPage /> : null}
-        {page === '/about' ? <AboutPage /> : null}
+        {page === '/about' ? <AboutPage navigate={navigate} /> : null}
         {page === '/mission' ? <MissionPage /> : null}
         {page === '/contact' ? <ContactPage /> : null}
         {page === '/admin/reviews' ? <AdminReviewsPage /> : null}

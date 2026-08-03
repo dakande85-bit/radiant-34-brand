@@ -4,9 +4,11 @@ const SWEATSHIRT_TITLE = 'Radiant 34 All-Over Print Scripture Sweatshirt';
 const DRESS_TITLE = 'Radiant 34 Fearfully & Wonderfully Created T-Shirt Dress';
 const TSHIRT_TITLE = 'Radiant 34 Purple Faith over Fear T-Shirt';
 const TSHIRT_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/2250C457-58F8-4EB6-98F3-79609D88A604.png?v=1785234846';
+const WOMENS_OUTERWEAR_TITLE = "Radiant 34 Women's All-Over Print Bomber Jacket";
 
 const image = (name: string) =>
   `https://cdn.shopify.com/s/files/1/1059/0545/5434/files/${name}.png?v=1785000000`;
+const WOMENS_OUTERWEAR_IMAGE = image('unisex-bomber-jacket-1');
 
 const makeProduct = ({
   id,
@@ -77,6 +79,13 @@ const products = [
     tags: ['scripture', 'sweatshirt', 'all-over-print'],
   }),
   makeProduct({
+    id: '10000000000004',
+    title: WOMENS_OUTERWEAR_TITLE,
+    handle: 'unisex-bomber-jacket-1',
+    productType: 'Bomber Jacket',
+    tags: ['women', 'outerwear', 'bomber'],
+  }),
+  makeProduct({
     id: '10000000000002',
     title: DRESS_TITLE,
     handle: 't-shirt-dress',
@@ -141,4 +150,29 @@ test('T-Shirts category thumbnail uses a matching T-shirt product image', async 
     .locator('.shopify-card__image img')
     .first();
   await expect(tshirtCardImage).toHaveAttribute('src', TSHIRT_IMAGE);
+});
+
+test('category thumbnails use matching product images for outerwear and all products', async ({ page }) => {
+  await mockShopify(page);
+  await page.goto('/shop');
+
+  const allProductsImage = page
+    .locator('.r34-shop-category-card[data-r34-category-key="all"] img')
+    .first();
+  await expect(allProductsImage).toHaveAttribute('src', TSHIRT_IMAGE);
+  await expect(allProductsImage).toHaveAttribute('alt', TSHIRT_TITLE);
+
+  const womensOuterwearImage = page
+    .locator('.r34-shop-category-card[data-r34-category-key="womens-outerwear"] img')
+    .first();
+  await expect(womensOuterwearImage).toHaveAttribute('src', WOMENS_OUTERWEAR_IMAGE);
+  await expect(womensOuterwearImage).toHaveAttribute('alt', WOMENS_OUTERWEAR_TITLE);
+
+  await page.getByRole('button', { name: /Shop Women.*Outerwear/i }).click();
+  const womensOuterwearCardImage = page
+    .locator('.shopify-card', { hasText: WOMENS_OUTERWEAR_TITLE })
+    .first()
+    .locator('.shopify-card__image img')
+    .first();
+  await expect(womensOuterwearCardImage).toHaveAttribute('src', WOMENS_OUTERWEAR_IMAGE);
 });

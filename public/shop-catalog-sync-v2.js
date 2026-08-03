@@ -243,7 +243,7 @@
       chooser.appendChild(grid);
     }
 
-    const signature = 'authoritative-shop-categories-v9-womens-outerwear';
+    const signature = 'authoritative-shop-categories-v10-product-matched-thumbnails';
     if (grid.dataset.r34CatalogSignature !== signature) {
       grid.dataset.r34CatalogSignature = signature;
       grid.innerHTML = categories.map((category) => `
@@ -277,18 +277,22 @@
     return heading;
   };
 
-  const syncTshirtCategoryThumbnail = (shopPage, cards) => {
-    const tshirtCard = cards.find((card) => matchesCategory(card, 'tshirts'));
-    const productImage = tshirtCard?.querySelector('.shopify-card__image img:first-child');
-    const categoryImage = shopPage.querySelector('.r34-shop-category-card[data-r34-category-key="tshirts"] img');
-    const productImageSrc = productImage?.getAttribute('src');
-    if (!categoryImage || !productImageSrc) return;
-    if (categoryImage.getAttribute('src') !== productImageSrc) {
-      categoryImage.setAttribute('src', productImageSrc);
-      categoryImage.removeAttribute('srcset');
-    }
-    const alt = productImage.getAttribute('alt') || 'Radiant 34 T-shirt product';
-    categoryImage.setAttribute('alt', alt);
+  const syncCategoryThumbnails = (shopPage, cards) => {
+    categories.forEach((category) => {
+      const productCard = cards.find((card) => matchesCategory(card, category.key));
+      const productImage = productCard?.querySelector('.shopify-card__image img:first-child');
+      const categoryImage = shopPage.querySelector(`.r34-shop-category-card[data-r34-category-key="${category.key}"] img`);
+      const productImageSrc = productImage?.getAttribute('src');
+      if (!categoryImage || !productImageSrc) return;
+
+      if (categoryImage.getAttribute('src') !== productImageSrc) {
+        categoryImage.setAttribute('src', productImageSrc);
+        categoryImage.removeAttribute('srcset');
+      }
+
+      const alt = productImage.getAttribute('alt') || `${category.label} Radiant 34 product`;
+      categoryImage.setAttribute('alt', alt);
+    });
   };
 
   const applyCategory = (shopPage, key, shouldScroll = false) => {
@@ -366,7 +370,7 @@
 
     cards.forEach(normalizeCard);
     ensureChooser(shopPage);
-    syncTshirtCategoryThumbnail(shopPage, cards);
+    syncCategoryThumbnails(shopPage, cards);
 
     const selectedKey = shopPage.dataset.r34SelectedCategory;
     if (selectedKey) applyCategory(shopPage, selectedKey, false);

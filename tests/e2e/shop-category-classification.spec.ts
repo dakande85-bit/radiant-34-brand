@@ -6,6 +6,7 @@ const TSHIRT_TITLE = 'Radiant 34 Purple Faith over Fear T-Shirt';
 const TSHIRT_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/2250C457-58F8-4EB6-98F3-79609D88A604.png?v=1785234846';
 const HEADWEAR_TITLE = 'Radiant 34 Follow God Not Man Snapback';
 const NEUTRAL_TEE_CATEGORY_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/unisex-sports-tee-black-front-6a7087ff9a6c2.jpg?v=1785759762';
+const MEN_CATEGORY_IMAGE = '/images/category-men-faith-over-fear.png';
 const WOMENS_OUTERWEAR_TITLE = "Radiant 34 Women's All-Over Print Bomber Jacket";
 const WOMENS_CATEGORY_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279';
 const WOMENS_OUTERWEAR_CATEGORY_IMAGE = '/images/radiant-cream-hoodie.png';
@@ -204,7 +205,7 @@ test('Men category thumbnail uses a neutral product image instead of a women mod
   const menImage = page
     .locator('.r34-shop-category-card[data-r34-category-key="men"] img')
     .first();
-  await expect(menImage).toHaveAttribute('src', NEUTRAL_TEE_CATEGORY_IMAGE);
+  await expect(menImage).toHaveAttribute('src', MEN_CATEGORY_IMAGE);
   await expect(menImage).toHaveAttribute('alt', 'Men');
   await expect(menImage).not.toHaveAttribute('src', HEADWEAR_IMAGE);
   await expect(menImage).not.toHaveAttribute('src', TSHIRT_IMAGE);

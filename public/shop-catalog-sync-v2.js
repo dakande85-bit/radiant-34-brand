@@ -4,7 +4,7 @@
 
   const CATEGORY_IMAGES = {
     women: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279',
-    men: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/unisex-sports-tee-black-front-6a7087ff9a6c2.jpg?v=1785759762',
+    men: '/images/category-men-faith-over-fear.png',
     womensOuterwear: '/images/radiant-cream-hoodie.png',
     mensOuterwear: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-unisex-bomber-jacket-white-front-6a6170040175a.jpg?v=1784770593',
     dresses: 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/all-over-print-t-shirt-dress-white-front-6a61f2fc0fdf2.jpg?v=1784804134',
@@ -243,7 +243,7 @@
       chooser.appendChild(grid);
     }
 
-    const signature = 'authoritative-shop-categories-v14-fixed-thumbnails';
+    const signature = 'authoritative-shop-categories-v15-fixed-men-thumbnail';
     if (grid.dataset.r34CatalogSignature !== signature) {
       grid.dataset.r34CatalogSignature = signature;
       grid.innerHTML = categories.map((category) => `

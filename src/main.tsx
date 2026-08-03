@@ -86,6 +86,9 @@ type ShopifyVariant = {
   selectedOptions: Array<{ name: string; value: string }>;
 };
 
+const isStorefrontVariantId = (id: string | undefined): id is string =>
+  typeof id === 'string' && /^gid:\/\/shopify\/ProductVariant\/\d+$/.test(id);
+
 type ShopifyProductNode = {
   id: string;
   title: string;
@@ -329,8 +332,13 @@ function ProductDetail({
   const description = shopifyProduct?.description ?? product.description;
   const primaryOptionName = getPrimaryVariantOptionName(shopifyProduct);
   const primaryOptionValues = getVariantOptionValues(shopifyProduct, primaryOptionName ?? '');
-  const selectedVariant = findVariantForOption(shopifyProduct, primaryOptionName, selectedSize);
-  const canCheckoutSelectedVariant = Boolean(selectedVariant?.id);
+  const colorOptionName = getVariantOptionNames(shopifyProduct)
+    .find((name) => ['color', 'colour'].includes(name.toLowerCase()));
+  const selectedVariant = findVariantForSelectedOptions(shopifyProduct, {
+    ...(primaryOptionName && selectedSize ? { [primaryOptionName]: selectedSize } : {}),
+    ...(colorOptionName && selectedColor ? { [colorOptionName]: selectedColor } : {}),
+  });
+  const canCheckoutSelectedVariant = Boolean(selectedVariant?.id && shopifyProduct?.storefrontVariantId);
   const selectedSizeUnavailable = Boolean(shopifyProduct?.storefrontVariantId) && !canCheckoutSelectedVariant;
   const galleryImages = (shopifyProduct?.gallery?.length
     ? shopifyProduct.gallery
@@ -345,7 +353,7 @@ function ProductDetail({
     if (isAdding) return;
 
     if (!selectedVariant?.id) {
-      setPurchaseMessage(shopifyProduct?.storefrontVariantId ? 'This size is currently unavailable.' : 'Unavailable.');
+      setPurchaseMessage('This product is temporarily unavailable.');
       return;
     }
 
@@ -442,7 +450,7 @@ function ProductDetail({
             </>
           ) : (
             <button className="btn btn--gold" type="button" disabled>
-              Unavailable
+              This product is temporarily unavailable.
             </button>
           )}
         </div>
@@ -861,19 +869,6 @@ const money = (amount: string, currencyCode: string) =>
 const selectedOptionValue = (variant: ShopifyVariant | undefined, optionName: string) =>
   variant?.selectedOptions.find((option) => option.name.toLowerCase() === optionName.toLowerCase())?.value;
 
-const findVariantForSize = (product: ShopifyProduct | null | undefined, size: string) => {
-  const variants = product?.variants?.filter((variant) => variant.availableForSale) ?? [];
-  if (!variants.length) return null;
-  if (!size) return variants[0];
-
-  const normalizedSize = size.trim().toLowerCase();
-  const variantsHaveSize = variants.some((variant) => Boolean(selectedOptionValue(variant, 'Size')));
-  const matchedVariant = variants.find((variant) =>
-    selectedOptionValue(variant, 'Size')?.trim().toLowerCase() === normalizedSize);
-
-  return matchedVariant ?? (variantsHaveSize ? null : variants[0]);
-};
-
 const getVariantOptionValues = (product: ShopifyProduct | null | undefined, optionName: string) =>
   Array.from(new Set(
     product?.variants
@@ -882,30 +877,31 @@ const getVariantOptionValues = (product: ShopifyProduct | null | undefined, opti
       .filter((value): value is string => Boolean(value)) ?? [],
   ));
 
-const getPrimaryVariantOptionName = (product: ShopifyProduct | null | undefined) => {
-  const optionNames = Array.from(new Set(
+const getVariantOptionNames = (product: ShopifyProduct | null | undefined) =>
+  Array.from(new Set(
     product?.variants
       ?.flatMap((variant) => variant.selectedOptions.map((option) => option.name))
       .filter(Boolean) ?? [],
   ));
+
+const getPrimaryVariantOptionName = (product: ShopifyProduct | null | undefined) => {
+  const optionNames = getVariantOptionNames(product);
   return optionNames.find((name) => name.toLowerCase() === 'size') ?? optionNames[0] ?? null;
 };
 
-const findVariantForOption = (
+const findVariantForSelectedOptions = (
   product: ShopifyProduct | null | undefined,
-  optionName: string | null,
-  optionValue: string,
+  selectedOptions: Record<string, string>,
 ) => {
-  const variants = product?.variants?.filter((variant) => variant.availableForSale) ?? [];
+  const variants = product?.variants
+    ?.filter((variant) => variant.availableForSale && isStorefrontVariantId(variant.id)) ?? [];
   if (!variants.length) return null;
-  if (!optionName || !optionValue) return variants[0];
+  const selections = Object.entries(selectedOptions).filter(([, value]) => Boolean(value));
+  if (!selections.length) return variants[0];
 
-  const normalizedValue = optionValue.trim().toLowerCase();
-  const variantsHaveOption = variants.some((variant) => Boolean(selectedOptionValue(variant, optionName)));
-  const matchedVariant = variants.find((variant) =>
-    selectedOptionValue(variant, optionName)?.trim().toLowerCase() === normalizedValue);
-
-  return matchedVariant ?? (variantsHaveOption ? null : variants[0]);
+  return variants.find((variant) =>
+    selections.every(([name, value]) =>
+      selectedOptionValue(variant, name)?.trim().toLowerCase() === value.trim().toLowerCase())) ?? null;
 };
 
 const reviewStars = (rating: number) => {
@@ -985,10 +981,11 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
   const override = getBrandOverrideByShopifyHandle(product.handle);
   const images = product.images?.nodes ?? [];
   const variants = product.variants?.nodes ?? [];
-  const variant = variants.find((node) => node.availableForSale) ?? variants[0];
-  const swatches = variant?.selectedOptions
+  const displayVariant = variants.find((node) => node.availableForSale) ?? variants[0];
+  const swatches = displayVariant?.selectedOptions
     .filter((option) => option.name.toLowerCase().includes('color') || option.name.toLowerCase().includes('colour'))
     .map((option) => option.value) ?? [];
+  const checkoutEnabled = Boolean(product.canCheckout && isStorefrontVariantId(product.storefrontVariantId));
 
   const shopifyGallery = uniqueImages([
     product.featuredImage?.url,
@@ -1011,11 +1008,11 @@ const toShopifyProduct = (product: ShopifyProductNode, index = 0): ShopifyProduc
     tags: product.tags ?? [],
     badges: ['Radiant 34'],
     swatches: swatches.length ? swatches : fallback.swatches,
-    variantId: product.storefrontVariantId ?? variant?.id,
+    variantId: checkoutEnabled ? product.storefrontVariantId : undefined,
     adminVariantId: product.adminVariantId,
-    storefrontVariantId: product.storefrontVariantId ?? variant?.id,
-    canCheckout: product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id),
-    status: (product.canCheckout ?? Boolean(product.storefrontVariantId ?? variant?.id)) ? undefined : 'Unavailable',
+    storefrontVariantId: checkoutEnabled ? product.storefrontVariantId : undefined,
+    canCheckout: checkoutEnabled,
+    status: checkoutEnabled ? undefined : 'Unavailable',
     variants,
     drop001: Boolean(override?.drop001),
   };
@@ -1070,7 +1067,6 @@ function ShopifyProducts({
   const [sort, setSort] = useState('Featured');
   const [search, setSearch] = useState('');
   const [cartMessage, setCartMessage] = useState('');
-  const [lastCartError, setLastCartError] = useState('');
   const [addingHandle, setAddingHandle] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1146,13 +1142,12 @@ function ShopifyProducts({
     }>(query)
       .then((data) => {
         if (!mounted) return;
-        const shopifyProducts = data.products.nodes.map((product, index) => toShopifyProduct(product, index));
-        const finalProducts = shopifyProducts.filter((product) => product.canCheckout || product.storefrontVariantId);
+        const finalProducts = data.products.nodes.map((product, index) => toShopifyProduct(product, index));
 
-        console.log('Shopify product count:', shopifyProducts.length);
+        console.log('Shopify product count:', finalProducts.length);
         console.log('Final rendered product count:', finalProducts.length);
-        logShopifyDebug('Product count returned', shopifyProducts.length);
-        if (!shopifyProducts.length) {
+        logShopifyDebug('Product count returned', finalProducts.length);
+        if (!finalProducts.length) {
           logShopifyDebug('No active Shopify products returned. Check product status, sales channel publishing, and product images.');
         }
         setProducts(finalProducts);
@@ -1223,15 +1218,13 @@ function ShopifyProducts({
     }
 
     if (!product.storefrontVariantId) {
-      const errorText = 'Unavailable.';
+      const errorText = 'This product is temporarily unavailable.';
       setCartMessage(errorText);
-      setLastCartError(errorText);
       return;
     }
 
     try {
       setAddingHandle(product.handle);
-      setLastCartError('');
       const cart = checkout
         ? await buyNowVariant(product.storefrontVariantId, 1)
         : await addVariantToCart(product.storefrontVariantId, 1);
@@ -1241,7 +1234,6 @@ function ShopifyProducts({
     } catch (error) {
       const errorText = error instanceof Error ? error.message : 'Unable to add product.';
       setCartMessage(errorText);
-      setLastCartError(errorText);
     } finally {
       setAddingHandle(null);
     }
@@ -1334,7 +1326,7 @@ function ShopifyProducts({
                   </button>
                 </>
               ) : (
-                <button type="button" disabled>Unavailable</button>
+                <button type="button" disabled>This product is temporarily unavailable.</button>
               )}
             </div>
           </article>

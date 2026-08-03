@@ -9,20 +9,40 @@ type StorefrontRequestBody = {
   variables?: Record<string, unknown>;
 };
 
+type JsonResponder = {
+  json: (payload: unknown) => unknown;
+};
+
+type VercelRequest = {
+  method?: string;
+  headers?: Record<string, string | string[] | undefined>;
+  body?: unknown;
+};
+
+type VercelResponse = {
+  setHeader: (name: string, value: string) => void;
+  status: (code: number) => JsonResponder;
+};
+
+type AdminProductId = string & { readonly __brand: 'AdminProductId' };
+type AdminVariantId = string & { readonly __brand: 'AdminVariantId' };
+type StorefrontProductId = string & { readonly __brand: 'StorefrontProductId' };
+type StorefrontVariantId = string & { readonly __brand: 'StorefrontVariantId' };
+
 type AdminImage = {
   url?: string;
   altText?: string | null;
 };
 
 type AdminVariant = {
-  id: string;
+  id: AdminVariantId;
   title?: string;
   availableForSale?: boolean;
   selectedOptions?: Array<{ name: string; value: string }>;
 };
 
 type AdminProduct = {
-  id: string;
+  id: AdminProductId;
   title: string;
   handle: string;
   description?: string;
@@ -37,13 +57,13 @@ type AdminProduct = {
 };
 
 type StorefrontProductForCart = {
-  id: string;
+  id: StorefrontProductId;
   title: string;
   handle: string;
   availableForSale: boolean;
   variants?: {
     nodes?: Array<{
-      id: string;
+      id: StorefrontVariantId;
       title: string;
       availableForSale: boolean;
       selectedOptions?: Array<{ name: string; value: string }>;
@@ -66,6 +86,17 @@ let catalogCache: { expiresAt: number; payload: CatalogPayload } | null = null;
 const isProductListQuery = (query: string) => /\bproducts\s*\(/.test(query);
 const isProductHandleQuery = (query: string) =>
   /\bproduct\s*\(\s*handle\s*:/.test(query) || /\bproductByHandle\s*\(/.test(query);
+const isAllowedStorefrontOperation = (query: string) => {
+  const compact = query.replace(/\s+/g, ' ');
+  const allowedPatterns = [
+    /\bcart\s*\(\s*id\s*:/,
+    /\bcartCreate\s*\(/,
+    /\bcartLinesAdd\s*\(/,
+    /\bcartLinesUpdate\s*\(/,
+    /\bcartLinesRemove\s*\(/,
+  ];
+  return allowedPatterns.some((pattern) => pattern.test(compact));
+};
 
 const buildStorefrontHeaders = () => {
   const headers: Record<string, string> = {
@@ -76,6 +107,18 @@ const buildStorefrontHeaders = () => {
   const storefrontToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
   if (storefrontToken) headers['X-Shopify-Storefront-Access-Token'] = storefrontToken;
   return headers;
+};
+
+const isStorefrontVariantId = (id: string | undefined): id is StorefrontVariantId =>
+  typeof id === 'string' && /^gid:\/\/shopify\/ProductVariant\/\d+$/.test(id);
+
+const containsInvalidVariantId = (variables: Record<string, unknown> | undefined) => {
+  if (!variables) return false;
+  const variantValues = Object.entries(variables)
+    .filter(([key]) => key.toLowerCase().includes('variantid') || key.toLowerCase().includes('merchandiseid'))
+    .map(([, value]) => value);
+
+  return variantValues.some((value) => typeof value !== 'string' || !isStorefrontVariantId(value));
 };
 
 const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -210,9 +253,11 @@ const toStorefrontProduct = (
 
   const adminVariants = product.variants?.nodes ?? [];
   const adminVariant = adminVariants.find((variant) => variant.availableForSale) ?? adminVariants[0] ?? null;
+  const storefrontProductAvailable = Boolean(storefrontProduct?.availableForSale);
   const storefrontVariants = storefrontProduct?.variants?.nodes ?? [];
-  const storefrontVariant = storefrontVariants.find((variant) => variant.availableForSale) ?? null;
-  const checkoutVariant = storefrontVariant ?? (adminVariant?.availableForSale ? adminVariant : null);
+  const storefrontVariant = storefrontProductAvailable
+    ? storefrontVariants.find((variant) => variant.availableForSale && isStorefrontVariantId(variant.id)) ?? null
+    : null;
 
   const displayVariants = storefrontVariants.length
     ? storefrontVariants
@@ -243,8 +288,8 @@ const toStorefrontProduct = (
     },
     variants: { nodes: displayVariants },
     adminVariantId: adminVariant?.id,
-    storefrontVariantId: checkoutVariant?.id,
-    canCheckout: Boolean(checkoutVariant),
+    storefrontVariantId: storefrontVariant?.id,
+    canCheckout: Boolean(storefrontVariant),
     priceRange: {
       minVariantPrice: product.priceRangeV2?.minVariantPrice,
     },
@@ -356,15 +401,30 @@ async function fetchAdminProductByHandle(domain: string, version: string, handle
   };
 }
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const body = (
-    typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body
-  ) as StorefrontRequestBody;
+  const contentType = String(req.headers?.['content-type'] ?? '');
+  if (contentType && !contentType.toLowerCase().includes('application/json')) {
+    return res.status(415).json({ errors: [{ message: 'Content-Type must be application/json.' }] });
+  }
+
+  const contentLength = Number(req.headers?.['content-length'] ?? 0);
+  if (contentLength > 20_000) {
+    return res.status(413).json({ errors: [{ message: 'Request body is too large.' }] });
+  }
+
+  let body: StorefrontRequestBody;
+  try {
+    body = (
+      typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body
+    ) as StorefrontRequestBody;
+  } catch {
+    return res.status(400).json({ errors: [{ message: 'Invalid JSON body.' }] });
+  }
 
   if (!body.query || typeof body.query !== 'string') {
     return res.status(400).json({ error: 'GraphQL query is required.' });
@@ -388,6 +448,14 @@ export default async function handler(req: any, res: any) {
     if (isProductHandleQuery(body.query) && typeof body.variables?.handle === 'string') {
       const payload = await fetchAdminProductByHandle(domain, version, body.variables.handle);
       return res.status(200).json(payload);
+    }
+
+    if (!isAllowedStorefrontOperation(body.query)) {
+      return res.status(400).json({ errors: [{ message: 'Unsupported Shopify operation.' }] });
+    }
+
+    if (containsInvalidVariantId(body.variables)) {
+      return res.status(400).json({ errors: [{ message: 'Invalid product variant.' }] });
     }
 
     const storefrontUrl = `https://${domain}/api/${version}/graphql.json`;
@@ -416,6 +484,12 @@ export default async function handler(req: any, res: any) {
     if (payload.errors?.length && isDevelopment) {
       console.error('[Radiant 34 Shopify] Storefront GraphQL errors', {
         errors: payload.errors,
+      });
+    }
+
+    if (payload.errors?.length) {
+      return res.status(502).json({
+        errors: [{ message: 'Shopify storefront operation failed.' }],
       });
     }
 

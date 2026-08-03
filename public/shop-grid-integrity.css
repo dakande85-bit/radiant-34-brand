@@ -40,11 +40,6 @@
   display: flex !important;
 }
 
-/* Remove old duplicated catalogue purchase controls. */
-.shop-page .shopify-card__actions {
-  display: none !important;
-}
-
 .shop-page .shopify-card__main {
   width: 100% !important;
   height: 100% !important;

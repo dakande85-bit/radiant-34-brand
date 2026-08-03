@@ -7,6 +7,9 @@ const TSHIRT_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/225
 const HEADWEAR_TITLE = 'Radiant 34 Follow God Not Man Snapback';
 const NEUTRAL_TEE_CATEGORY_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/unisex-sports-tee-black-front-6a7087ff9a6c2.jpg?v=1785759762';
 const WOMENS_OUTERWEAR_TITLE = "Radiant 34 Women's All-Over Print Bomber Jacket";
+const WOMENS_CATEGORY_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-womens-dress-editorial.png?v=1784775279';
+const WOMENS_OUTERWEAR_CATEGORY_IMAGE = '/images/radiant-cream-hoodie.png';
+const ALL_PRODUCTS_CATEGORY_IMAGE = 'https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-signature-hoodie-cream-primary_128d2f24-8bd2-4f6b-bdcc-bd432ee36ee6.png?v=1784758611';
 
 const image = (name: string) =>
   `https://cdn.shopify.com/s/files/1/1059/0545/5434/files/${name}.png?v=1785000000`;
@@ -163,21 +166,27 @@ test('T-Shirts category thumbnail uses a neutral product image instead of a wome
   await expect(tshirtCardImage).toHaveAttribute('src', TSHIRT_IMAGE);
 });
 
-test('category thumbnails use matching product images for outerwear and all products', async ({ page }) => {
+test('category thumbnails stay fixed when matching products change', async ({ page }) => {
   await mockShopify(page);
   await page.goto('/shop');
+
+  const womenImage = page
+    .locator('.r34-shop-category-card[data-r34-category-key="women"] img')
+    .first();
+  await expect(womenImage).toHaveAttribute('src', WOMENS_CATEGORY_IMAGE);
+  await expect(womenImage).toHaveAttribute('alt', 'Women');
 
   const allProductsImage = page
     .locator('.r34-shop-category-card[data-r34-category-key="all"] img')
     .first();
-  await expect(allProductsImage).toHaveAttribute('src', image('all-over-print-scripture-sweatshirt'));
-  await expect(allProductsImage).toHaveAttribute('alt', SWEATSHIRT_TITLE);
+  await expect(allProductsImage).toHaveAttribute('src', ALL_PRODUCTS_CATEGORY_IMAGE);
+  await expect(allProductsImage).toHaveAttribute('alt', 'All Products');
 
   const womensOuterwearImage = page
     .locator('.r34-shop-category-card[data-r34-category-key="womens-outerwear"] img')
     .first();
-  await expect(womensOuterwearImage).toHaveAttribute('src', WOMENS_OUTERWEAR_IMAGE);
-  await expect(womensOuterwearImage).toHaveAttribute('alt', WOMENS_OUTERWEAR_TITLE);
+  await expect(womensOuterwearImage).toHaveAttribute('src', WOMENS_OUTERWEAR_CATEGORY_IMAGE);
+  await expect(womensOuterwearImage).toHaveAttribute('alt', 'Women’s Outerwear');
 
   await page.getByRole('button', { name: /Shop Women.*Outerwear/i }).click();
   const womensOuterwearCardImage = page

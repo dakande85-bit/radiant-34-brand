@@ -50,6 +50,18 @@ img {
   max-width: 100%;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 main {
   padding-top: var(--header);
 }
@@ -543,8 +555,8 @@ main {
 .product-detail__media > img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center top;
+  object-fit: contain;
+  object-position: center;
   transition: transform 420ms ease;
 }
 
@@ -569,15 +581,31 @@ main {
   height: calc(100% - 48px) !important;
 }
 
+.shopify-card--hover .shopify-card__image > img:first-child {
+  opacity: 0 !important;
+}
+
+.shopify-card--hover .shopify-card__hover {
+  opacity: 1 !important;
+}
+
+.shopify-card__hover-hit:hover + img {
+  opacity: 0 !important;
+}
+
+.shopify-card__hover-hit:hover ~ .shopify-card__hover {
+  opacity: 1 !important;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .product-card:hover .product-card__visual > img:first-child,
-  .shopify-card__image:hover > img:first-child {
-    opacity: 0;
+  .shopify-card:hover .shopify-card__image > img:first-child {
+    opacity: 0 !important;
   }
 
   .product-card:hover .product-card__hover-image,
-  .shopify-card__image:hover .shopify-card__hover {
-    opacity: 1;
+  .shopify-card:hover .shopify-card__hover {
+    opacity: 1 !important;
   }
 
   .product-card:hover .product-card__visual > img,
@@ -1316,6 +1344,29 @@ main {
   line-height: 1.72;
 }
 
+.support-section {
+  max-width: var(--max);
+  margin: 0 auto 80px;
+  padding: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--cream-2);
+}
+
+.support-section h2 {
+  margin: 0 0 14px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 400;
+}
+
+.support-section p:last-child {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
 .shop-empty {
   max-width: 620px;
   min-height: 240px;
@@ -1332,6 +1383,41 @@ main {
   font-size: clamp(1.7rem, 3vw, 2.8rem);
   font-weight: 400;
   line-height: 1.1;
+}
+
+.r34-shop-categories {
+  margin: 0 0 32px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.r34-shop-category-card {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--cream-2);
+  color: var(--ink);
+  text-align: left;
+  box-shadow: none;
+}
+
+.r34-shop-category-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: var(--cream);
+}
+
+.r34-shop-category-card span {
+  display: block;
+  padding: 12px 14px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .shop-controls {
@@ -1448,6 +1534,12 @@ main {
   border: 0;
   aspect-ratio: 4 / 5;
   background: var(--cream);
+}
+
+.shopify-card__hover-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
 }
 
 .shopify-card__image img {
@@ -2042,6 +2134,10 @@ main {
     grid-template-columns: 1fr;
   }
 
+  .r34-shop-categories {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .lookbook-copy {
     min-height: auto;
   }
@@ -2057,6 +2153,34 @@ main {
     --header-main: 76px;
   }
 
+  .site-header {
+    background: var(--cream);
+    backdrop-filter: none;
+  }
+
+  .section-band,
+  .lookbook,
+  .lookbook-editorial,
+  .about-section,
+  .integration-note,
+  .launch-section,
+  .mission-band,
+  .campaign-statement,
+  .scripture-band,
+  .campaign-grid {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 760px;
+  }
+
+  .product-card,
+  .shopify-card,
+  .page-hero--editorial img,
+  .mission-band img,
+  .about-image,
+  .product-detail {
+    box-shadow: none;
+  }
+
   .header-actions {
     display: none;
   }
@@ -2069,6 +2193,10 @@ main {
   .header-inner {
     display: flex;
     padding: 0 18px;
+  }
+
+  .r34-shop-categories {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .brand-link {

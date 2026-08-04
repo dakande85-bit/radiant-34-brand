@@ -175,9 +175,7 @@ test.describe('Radiant 34 Scripture Tough Phone Case desktop card media', () => 
     await expect(primary).toHaveCSS('opacity', '1');
     await expect(hover).toHaveCSS('opacity', '0');
     await expect.poll(() => page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)).toBe(true);
-    const imageBox = await card.locator('.shopify-card__image').boundingBox();
-    expect(imageBox).not.toBeNull();
-    await page.mouse.move(imageBox!.x + imageBox!.width / 2, imageBox!.y + imageBox!.height / 2);
+    await card.locator('.shopify-card__main').hover();
     await expect.poll(async () => Number(await primary.evaluate((node) => getComputedStyle(node).opacity))).toBeLessThan(0.05);
     await expect.poll(async () => Number(await hover.evaluate((node) => getComputedStyle(node).opacity))).toBeGreaterThan(0.95);
     await expect(hover).toHaveAttribute('src', SECONDARY_IMAGE);

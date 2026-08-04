@@ -22,54 +22,11 @@
       content="Radiant 34 is a Bible-inspired clothing label rooted in Psalm 34:5, creating faith-led art, apparel, and everyday pieces."
     />
     <meta name="twitter:image" content="https://cdn.shopify.com/s/files/1/1059/0545/5434/files/radiant34-home-hero.webp?v=1785331751" />
-    <script>
-      (() => {
-        const syncRouteClasses = () => {
-          const path = window.location.pathname.replace(/\/$/, '') || '/';
-          document.documentElement.classList.toggle('r34-home-route', path === '/');
-          document.documentElement.classList.toggle('r34-about-route', path === '/about');
-        };
-        const originalPushState = window.history.pushState.bind(window.history);
-        const originalReplaceState = window.history.replaceState.bind(window.history);
-        window.history.pushState = (...args) => {
-          const result = originalPushState(...args);
-          syncRouteClasses();
-          return result;
-        };
-        window.history.replaceState = (...args) => {
-          const result = originalReplaceState(...args);
-          syncRouteClasses();
-          return result;
-        };
-        window.addEventListener('popstate', syncRouteClasses);
-        syncRouteClasses();
-      })();
-    </script>
-    <link rel="stylesheet" href="%BASE_URL%launch-fixes.css" />
-    <link rel="stylesheet" href="%BASE_URL%product-page-fixes.css?v=20260727-1246" />
-    <link rel="stylesheet" href="%BASE_URL%shop-grid-integrity.css?v=20260729-0355" />
-    <link rel="stylesheet" href="%BASE_URL%shop-category-cards.css?v=20260730-0535" />
-    <link rel="stylesheet" href="%BASE_URL%home-route-guard.css?v=20260729-1645" />
-    <link rel="stylesheet" href="%BASE_URL%contact-page-upgrade.css?v=20260730-0550" />
-    <link rel="stylesheet" href="%BASE_URL%about-page-fix.css?v=20260730-0600" />
-    <link rel="stylesheet" href="%BASE_URL%mission-product-slider.css?v=20260730-0745" />
     <title>Radiant 34 | Bible Inspired Clothing</title>
     <!-- Production restore marker: 2026-08-01T12:28+01:00 -->
   </head>
   <body>
     <div id="root"></div>
-    <script src="%BASE_URL%review-auth.js?v=20260725-1545"></script>
-    <script src="%BASE_URL%shopify-live-sync.js?v=20260728-0015"></script>
     <script type="module" src="/src/main.tsx"></script>
-    <script defer src="%BASE_URL%menu-fixes.js?v=20260730-0532"></script>
-    <script defer src="%BASE_URL%mobile-menu-fix.js?v=20260725-2038"></script>
-    <script defer src="%BASE_URL%contact-page-upgrade.js?v=20260730-0550"></script>
-    <script defer src="%BASE_URL%mission-product-slider.js?v=20260730-0645"></script>
-    <script defer src="%BASE_URL%shop-catalog-sync-v2.js?v=20260727-1515"></script>
-    <script defer src="%BASE_URL%shop-grid-normalizer.js?v=20260729-0355"></script>
-    <script defer src="%BASE_URL%mens-outerwear-thumbnail.js?v=20260727-0830"></script>
-    <script defer src="%BASE_URL%product-page-content-fix.js?v=20260727-1246"></script>
-    <script defer src="%BASE_URL%mission-support.js?v=20260723-0225"></script>
-    <script defer src="%BASE_URL%customer-account.js?v=20260730-0705"></script>
   </body>
 </html>

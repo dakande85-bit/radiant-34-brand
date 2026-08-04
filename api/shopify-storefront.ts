@@ -1,5 +1,4 @@
 import {
-  getShopifyAccessToken,
   getShopifyApiVersion,
   getShopifyDomain,
 } from './_shopifyAuth.js';
@@ -24,101 +23,77 @@ type VercelResponse = {
   status: (code: number) => JsonResponder;
 };
 
-type AdminProductId = string & { readonly __brand: 'AdminProductId' };
-type AdminVariantId = string & { readonly __brand: 'AdminVariantId' };
-type StorefrontProductId = string & { readonly __brand: 'StorefrontProductId' };
-type StorefrontVariantId = string & { readonly __brand: 'StorefrontVariantId' };
-
-type AdminImage = {
+type ShopifyImage = {
   url?: string;
   altText?: string | null;
 };
 
-type AdminVariant = {
-  id: AdminVariantId;
+type ShopifyVariant = {
+  id: string;
   title?: string;
   availableForSale?: boolean;
   selectedOptions?: Array<{ name: string; value: string }>;
 };
 
-type AdminProduct = {
-  id: AdminProductId;
+type StorefrontProduct = {
+  id: string;
   title: string;
   handle: string;
   description?: string;
   createdAt?: string;
   productType?: string;
   tags?: string[];
-  status?: string;
-  featuredMedia?: { preview?: { image?: AdminImage | null } | null } | null;
-  media?: { nodes?: Array<{ preview?: { image?: AdminImage | null } | null }> };
-  variants?: { nodes?: AdminVariant[] };
-  priceRangeV2?: { minVariantPrice?: { amount: string; currencyCode: string } };
-};
-
-type StorefrontProductForCart = {
-  id: StorefrontProductId;
-  title: string;
-  handle: string;
-  availableForSale: boolean;
-  variants?: {
-    nodes?: Array<{
-      id: StorefrontVariantId;
-      title: string;
-      availableForSale: boolean;
-      selectedOptions?: Array<{ name: string; value: string }>;
-    }>;
-  };
+  availableForSale?: boolean;
+  featuredImage?: ShopifyImage | null;
+  images?: { nodes?: ShopifyImage[] };
+  variants?: { nodes?: ShopifyVariant[] };
+  priceRange?: { minVariantPrice?: { amount: string; currencyCode: string } };
 };
 
 type CatalogPayload = {
   data: {
     products: {
-      nodes: ReturnType<typeof toStorefrontProduct>[];
+      nodes: ReturnType<typeof toClientProduct>[];
     };
   };
 };
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
-const catalogCacheTtlMs = 60_000;
+const catalogCacheTtlMs = 5 * 60_000;
 let catalogCache: { expiresAt: number; payload: CatalogPayload } | null = null;
 
 const isProductListQuery = (query: string) => /\bproducts\s*\(/.test(query);
 const isProductHandleQuery = (query: string) =>
   /\bproduct\s*\(\s*handle\s*:/.test(query) || /\bproductByHandle\s*\(/.test(query);
-const isAllowedStorefrontOperation = (query: string) => {
+const isAllowedCartOperation = (query: string) => {
   const compact = query.replace(/\s+/g, ' ');
-  const allowedPatterns = [
+  return [
     /\bcart\s*\(\s*id\s*:/,
     /\bcartCreate\s*\(/,
     /\bcartLinesAdd\s*\(/,
     /\bcartLinesUpdate\s*\(/,
     /\bcartLinesRemove\s*\(/,
-  ];
-  return allowedPatterns.some((pattern) => pattern.test(compact));
+  ].some((pattern) => pattern.test(compact));
 };
 
 const buildStorefrontHeaders = () => {
+  const storefrontToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
-
-  const storefrontToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
   if (storefrontToken) headers['X-Shopify-Storefront-Access-Token'] = storefrontToken;
   return headers;
 };
 
-const isStorefrontVariantId = (id: string | undefined): id is StorefrontVariantId =>
+const isStorefrontVariantId = (id: string | undefined): id is string =>
   typeof id === 'string' && /^gid:\/\/shopify\/ProductVariant\/\d+$/.test(id);
 
 const containsInvalidVariantId = (variables: Record<string, unknown> | undefined) => {
   if (!variables) return false;
-  const variantValues = Object.entries(variables)
+  return Object.entries(variables)
     .filter(([key]) => key.toLowerCase().includes('variantid') || key.toLowerCase().includes('merchandiseid'))
-    .map(([, value]) => value);
-
-  return variantValues.some((value) => typeof value !== 'string' || !isStorefrontVariantId(value));
+    .some(([, value]) => typeof value !== 'string' || !isStorefrontVariantId(value));
 };
 
 const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -135,7 +110,6 @@ const fetchWithRetry = async (url: string, init: RequestInit, attempts = 2) => {
     } catch (error) {
       lastError = error;
     }
-
     if (attempt < attempts - 1) await wait(300 * (attempt + 1));
   }
 
@@ -143,7 +117,7 @@ const fetchWithRetry = async (url: string, init: RequestInit, attempts = 2) => {
   throw lastError instanceof Error ? lastError : new Error('Shopify request failed.');
 };
 
-const adminProductSelection = `
+const productGridSelection = `
   id
   title
   handle
@@ -151,10 +125,10 @@ const adminProductSelection = `
   createdAt
   productType
   tags
-  status
-  featuredMedia { preview { image { url altText } } }
-  media(first: 8) { nodes { preview { image { url altText } } } }
-  variants(first: 100) {
+  availableForSale
+  featuredImage { url altText }
+  images(first: 2) { nodes { url altText } }
+  variants(first: 1) {
     nodes {
       id
       title
@@ -162,14 +136,20 @@ const adminProductSelection = `
       selectedOptions { name value }
     }
   }
-  priceRangeV2 { minVariantPrice { amount currencyCode } }
+  priceRange { minVariantPrice { amount currencyCode } }
 `;
 
-const storefrontProductSelection = `
+const productDetailSelection = `
   id
   title
   handle
+  description
+  createdAt
+  productType
+  tags
   availableForSale
+  featuredImage { url altText }
+  images(first: 12) { nodes { url altText } }
   variants(first: 100) {
     nodes {
       id
@@ -178,95 +158,12 @@ const storefrontProductSelection = `
       selectedOptions { name value }
     }
   }
+  priceRange { minVariantPrice { amount currencyCode } }
 `;
 
-const fetchStorefrontProductsForCart = async (domain: string, version: string) => {
-  const response = await fetchWithRetry(`https://${domain}/api/${version}/graphql.json`, {
-    method: 'POST',
-    headers: buildStorefrontHeaders(),
-    body: JSON.stringify({
-      query: `
-        query RadiantStorefrontProducts {
-          products(first: 100) {
-            nodes {
-              ${storefrontProductSelection}
-            }
-          }
-        }
-      `,
-      variables: {},
-    }),
-  });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload.errors?.length) {
-    console.error('[Radiant 34 Shopify] Storefront product validation failed', {
-      status: response.status,
-      errors: payload.errors,
-    });
-    return new Map<string, StorefrontProductForCart>();
-  }
-
-  const products = (payload.data?.products?.nodes ?? []) as StorefrontProductForCart[];
-  return new Map(products.map((product) => [product.handle, product]));
-};
-
-const fetchStorefrontProductForCart = async (domain: string, version: string, handle: string) => {
-  const response = await fetchWithRetry(`https://${domain}/api/${version}/graphql.json`, {
-    method: 'POST',
-    headers: buildStorefrontHeaders(),
-    body: JSON.stringify({
-      query: `
-        query ProductForCart($handle: String!) {
-          product(handle: $handle) {
-            ${storefrontProductSelection}
-          }
-        }
-      `,
-      variables: { handle },
-    }),
-  });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload.errors?.length) {
-    if (isDevelopment) {
-      console.info('[Radiant 34 Shopify] Storefront cart validation failed', {
-        handle,
-        status: response.status,
-        errors: payload.errors,
-      });
-    }
-    return null;
-  }
-
-  return (payload.data?.product ?? null) as StorefrontProductForCart | null;
-};
-
-const toStorefrontProduct = (
-  product: AdminProduct,
-  storefrontProduct: StorefrontProductForCart | null = null,
-) => {
-  const featuredImage = product.featuredMedia?.preview?.image ?? null;
-  const images = product.media?.nodes
-    ?.map((node) => node.preview?.image)
-    .filter((image): image is AdminImage => Boolean(image?.url)) ?? [];
-
-  const adminVariants = product.variants?.nodes ?? [];
-  const adminVariant = adminVariants.find((variant) => variant.availableForSale) ?? adminVariants[0] ?? null;
-  const storefrontProductAvailable = Boolean(storefrontProduct?.availableForSale);
-  const storefrontVariants = storefrontProduct?.variants?.nodes ?? [];
-  const storefrontVariant = storefrontProductAvailable
-    ? storefrontVariants.find((variant) => variant.availableForSale && isStorefrontVariantId(variant.id)) ?? null
-    : null;
-
-  const displayVariants = storefrontVariants.length
-    ? storefrontVariants
-    : adminVariants.map((variant) => ({
-      id: variant.id,
-      title: variant.title ?? 'Default Title',
-      availableForSale: Boolean(variant.availableForSale),
-      selectedOptions: variant.selectedOptions ?? [],
-    }));
+const toClientProduct = (product: StorefrontProduct) => {
+  const variants = product.variants?.nodes ?? [];
+  const checkoutVariant = variants.find((variant) => variant.availableForSale && isStorefrontVariantId(variant.id)) ?? null;
 
   return {
     id: product.id,
@@ -276,130 +173,94 @@ const toStorefrontProduct = (
     createdAt: product.createdAt,
     productType: product.productType ?? '',
     tags: product.tags ?? [],
-    status: product.status ?? 'ACTIVE',
-    featuredImage: featuredImage?.url
-      ? { url: featuredImage.url, altText: featuredImage.altText ?? undefined }
+    status: product.availableForSale ? 'ACTIVE' : 'ARCHIVED',
+    featuredImage: product.featuredImage?.url
+      ? { url: product.featuredImage.url, altText: product.featuredImage.altText ?? undefined }
       : null,
     images: {
-      nodes: images.map((image) => ({
-        url: image.url,
-        altText: image.altText ?? undefined,
-      })),
+      nodes: (product.images?.nodes ?? [])
+        .filter((image): image is Required<Pick<ShopifyImage, 'url'>> & ShopifyImage => Boolean(image.url))
+        .map((image) => ({ url: image.url, altText: image.altText ?? undefined })),
     },
-    variants: { nodes: displayVariants },
-    adminVariantId: adminVariant?.id,
-    storefrontVariantId: storefrontVariant?.id,
-    canCheckout: Boolean(storefrontVariant),
-    priceRange: {
-      minVariantPrice: product.priceRangeV2?.minVariantPrice,
-    },
+    variants: { nodes: variants },
+    storefrontVariantId: checkoutVariant?.id,
+    canCheckout: Boolean(checkoutVariant),
+    priceRange: product.priceRange,
   };
 };
 
-const fetchAdminProductNodes = async (domain: string, version: string) => {
-  const token = await getShopifyAccessToken();
-  const adminUrl = `https://${domain}/admin/api/${version}/graphql.json`;
-  const response = await fetchWithRetry(adminUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'X-Shopify-Access-Token': token.accessToken,
-    },
-    body: JSON.stringify({
-      query: `
-        query RadiantAdminProducts {
-          products(first: 50, query: "status:active", sortKey: UPDATED_AT, reverse: true) {
-            nodes {
-              ${adminProductSelection}
-            }
-          }
-        }
-      `,
-      variables: {},
-    }),
-  });
+const storefrontUrl = () => `https://${getShopifyDomain()}/api/${getShopifyApiVersion()}/graphql.json`;
 
+const shopifyRequest = async (query: string, variables: Record<string, unknown> = {}) => {
+  const response = await fetchWithRetry(storefrontUrl(), {
+    method: 'POST',
+    headers: buildStorefrontHeaders(),
+    body: JSON.stringify({ query, variables }),
+  });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload.errors?.length) {
-    console.error('[Radiant 34 Shopify] Admin products request failed', {
+
+  if (!response.ok) {
+    console.error('[Radiant 34 Shopify] Storefront request failed', {
       status: response.status,
-      errors: payload.errors,
+      statusText: response.statusText,
     });
-    throw new Error(`Shopify Admin products request failed: ${response.status}`);
+    throw new Error('Shopify storefront request failed.');
   }
 
-  return (payload.data?.products?.nodes ?? []) as AdminProduct[];
+  if (payload.errors?.length) {
+    if (isDevelopment) console.error('[Radiant 34 Shopify] Storefront GraphQL errors', payload.errors);
+    throw new Error('Shopify storefront operation failed.');
+  }
+
+  return payload;
 };
 
-async function fetchAdminProducts(domain: string, version: string): Promise<CatalogPayload> {
+const fetchCatalog = async (): Promise<CatalogPayload> => {
   if (catalogCache && catalogCache.expiresAt > Date.now()) return catalogCache.payload;
 
-  const [products, storefrontProducts] = await Promise.all([
-    fetchAdminProductNodes(domain, version),
-    fetchStorefrontProductsForCart(domain, version),
-  ]);
+  const payload = await shopifyRequest(`
+    query RadiantStorefrontCatalog {
+      products(first: 36, sortKey: UPDATED_AT, reverse: true) {
+        nodes {
+          ${productGridSelection}
+        }
+      }
+    }
+  `);
 
-  const activeProducts = products.filter((product) => product.status === 'ACTIVE');
-  const payload: CatalogPayload = {
+  const products = (payload.data?.products?.nodes ?? []) as StorefrontProduct[];
+  const clientPayload: CatalogPayload = {
     data: {
       products: {
-        nodes: activeProducts.map((product) =>
-          toStorefrontProduct(product, storefrontProducts.get(product.handle) ?? null)),
+        nodes: products.filter((product) => product.availableForSale).map(toClientProduct),
       },
     },
   };
 
   catalogCache = {
     expiresAt: Date.now() + catalogCacheTtlMs,
-    payload,
+    payload: clientPayload,
   };
 
-  return payload;
-}
+  return clientPayload;
+};
 
-async function fetchAdminProductByHandle(domain: string, version: string, handle: string) {
-  const token = await getShopifyAccessToken();
-  const adminUrl = `https://${domain}/admin/api/${version}/graphql.json`;
-  const response = await fetchWithRetry(adminUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'X-Shopify-Access-Token': token.accessToken,
-    },
-    body: JSON.stringify({
-      query: `
-        query RadiantAdminProductByIdentifier($identifier: ProductIdentifierInput!) {
-          product: productByIdentifier(identifier: $identifier) {
-            ${adminProductSelection}
-          }
-        }
-      `,
-      variables: { identifier: { handle } },
-    }),
-  });
+const fetchProductByHandle = async (handle: string) => {
+  const payload = await shopifyRequest(`
+    query RadiantStorefrontProduct($handle: String!) {
+      product(handle: $handle) {
+        ${productDetailSelection}
+      }
+    }
+  `, { handle });
 
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload.errors?.length) {
-    console.error('[Radiant 34 Shopify] Admin product handle request failed', {
-      status: response.status,
-      errors: payload.errors,
-    });
-    throw new Error(`Shopify Admin product request failed: ${response.status}`);
-  }
-
-  const product = payload.data?.product as AdminProduct | null | undefined;
-  const storefrontProduct = product
-    ? await fetchStorefrontProductForCart(domain, version, product.handle)
-    : null;
-
+  const product = payload.data?.product as StorefrontProduct | null | undefined;
   return {
     data: {
-      product: product ? toStorefrontProduct(product, storefrontProduct) : null,
+      product: product ? toClientProduct(product) : null,
     },
   };
-}
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -413,44 +274,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const contentLength = Number(req.headers?.['content-length'] ?? 0);
-  if (contentLength > 20_000) {
-    return res.status(413).json({ errors: [{ message: 'Request body is too large.' }] });
-  }
+  if (contentLength > 20_000) return res.status(413).json({ errors: [{ message: 'Request body is too large.' }] });
 
   let body: StorefrontRequestBody;
   try {
-    body = (
-      typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body
-    ) as StorefrontRequestBody;
+    body = (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body ?? {}) as StorefrontRequestBody;
   } catch {
     return res.status(400).json({ errors: [{ message: 'Invalid JSON body.' }] });
   }
 
   if (!body.query || typeof body.query !== 'string') {
-    return res.status(400).json({ error: 'GraphQL query is required.' });
+    return res.status(400).json({ errors: [{ message: 'GraphQL query is required.' }] });
   }
 
   try {
-    const domain = getShopifyDomain();
-    const version = getShopifyApiVersion();
-
     if (isProductListQuery(body.query)) {
-      const payload = await fetchAdminProducts(domain, version);
-      if (isDevelopment) {
-        console.info(
-          '[Radiant 34 Shopify] Active Admin product count returned',
-          payload.data.products.nodes.length,
-        );
-      }
-      return res.status(200).json(payload);
+      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
+      return res.status(200).json(await fetchCatalog());
     }
 
     if (isProductHandleQuery(body.query) && typeof body.variables?.handle === 'string') {
-      const payload = await fetchAdminProductByHandle(domain, version, body.variables.handle);
-      return res.status(200).json(payload);
+      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
+      return res.status(200).json(await fetchProductByHandle(body.variables.handle));
     }
 
-    if (!isAllowedStorefrontOperation(body.query)) {
+    if (!isAllowedCartOperation(body.query)) {
       return res.status(400).json({ errors: [{ message: 'Unsupported Shopify operation.' }] });
     }
 
@@ -458,42 +306,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ errors: [{ message: 'Invalid product variant.' }] });
     }
 
-    const storefrontUrl = `https://${domain}/api/${version}/graphql.json`;
-    const shopifyResponse = await fetchWithRetry(storefrontUrl, {
-      method: 'POST',
-      headers: buildStorefrontHeaders(),
-      body: JSON.stringify({
-        query: body.query,
-        variables: body.variables ?? {},
-      }),
-    });
-
-    const payload = await shopifyResponse.json().catch(() => ({}));
-    if (!shopifyResponse.ok) {
-      console.error('[Radiant 34 Shopify] Storefront request failed', {
-        status: shopifyResponse.status,
-        statusText: shopifyResponse.statusText,
-        domain,
-        version,
-      });
-      return res.status(shopifyResponse.status).json({
-        errors: [{ message: 'Shopify storefront request failed.' }],
-      });
-    }
-
-    if (payload.errors?.length && isDevelopment) {
-      console.error('[Radiant 34 Shopify] Storefront GraphQL errors', {
-        errors: payload.errors,
-      });
-    }
-
-    if (payload.errors?.length) {
-      return res.status(502).json({
-        errors: [{ message: 'Shopify storefront operation failed.' }],
-      });
-    }
-
-    return res.status(200).json(payload);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json(await shopifyRequest(body.query, body.variables ?? {}));
   } catch (error) {
     console.error('[Radiant 34 Shopify] Storefront proxy error', {
       message: error instanceof Error ? error.message : error,

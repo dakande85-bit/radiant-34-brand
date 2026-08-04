@@ -1,15 +1,36 @@
 {
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://cdn.shopify.com https://*.shopifycdn.net; font-src 'self' data:; connect-src 'self' https://xagsqp-u0.myshopify.com https://*.myshopify.com https://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://xagsqp-u0.myshopify.com https://*.myshopify.com; upgrade-insecure-requests"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+        }
+      ]
+    }
+  ],
   "redirects": [
-    {
-      "source": "/drop-001",
-      "destination": "/shop",
-      "permanent": true
-    },
-    {
-      "source": "/drop-001/:path*",
-      "destination": "/shop",
-      "permanent": true
-    },
     {
       "source": "/cart/:path*",
       "destination": "https://xagsqp-u0.myshopify.com/cart/:path*",
@@ -23,7 +44,51 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api/|cart/|checkout/).*)",
+      "source": "/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/shop",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/drop-001",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/lookbook",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/mission",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/account",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin/reviews",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/products/:handle",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/collections/:handle",
       "destination": "/index.html"
     }
   ]

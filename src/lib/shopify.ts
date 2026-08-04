@@ -187,25 +187,6 @@ export function logShopifyDebug(message: string, detail?: unknown) {
   console.info(`[Radiant 34 Shopify] ${message}`, detail);
 }
 
-export async function checkShopifyProxy() {
-  if (!import.meta.env.DEV) return;
-
-  try {
-    const response = await fetch('/api/shopify-token');
-    const body = await response.json().catch(() => ({}));
-    logShopifyDebug('Proxy token route status', {
-      ok: response.ok,
-      domainLoaded: body.domainLoaded,
-      clientIdExists: body.clientIdExists,
-      clientSecretExists: body.clientSecretExists,
-      configured: body.configured,
-      tokenCached: body.tokenCached,
-    });
-  } catch (error) {
-    logShopifyDebug('Proxy token route failed', error instanceof Error ? error.message : error);
-  }
-}
-
 export async function shopifyFetch<T = unknown>(
   query: string,
   variables?: Record<string, unknown>,
@@ -222,7 +203,7 @@ export async function shopifyFetch<T = unknown>(
     });
   } catch (error) {
     console.error('[Radiant 34 Shopify] Network request failed', error);
-    throw new Error('Connection problem. Please try again.');
+    throw new Error('Connection problem. Please try again.', { cause: error });
   }
 
   const json = await response.json().catch(() => ({})) as ProxyResponse<T>;
@@ -282,7 +263,7 @@ export async function buyNowVariant(variantId: string, quantity = 1) {
     return await createCart(variantId, quantity, false);
   } catch (error) {
     console.error('[Radiant 34 Shopify] Buy Now failed', error);
-    throw new Error(userMessageForError(error));
+    throw new Error(userMessageForError(error), { cause: error });
   }
 }
 
@@ -346,10 +327,10 @@ export async function addVariantToCart(variantId: string, quantity = 1) {
         return await createCart(variantId, quantity);
       } catch (retryError) {
         console.error('[Radiant 34 Shopify] Fresh cart retry failed', retryError);
-        throw new Error(userMessageForError(retryError));
+        throw new Error(userMessageForError(retryError), { cause: retryError });
       }
     }
-    throw new Error(userMessageForError(error));
+    throw new Error(userMessageForError(error), { cause: error });
   }
 }
 
@@ -384,7 +365,7 @@ export async function updateCartLine(cartId: string, lineId: string, quantity: n
   } catch (error) {
     console.error('[Radiant 34 Shopify] Cart line update failed', error);
     if (isStaleCartError(error)) clearRadiantCart();
-    throw new Error(userMessageForError(error));
+    throw new Error(userMessageForError(error), { cause: error });
   }
 }
 
@@ -419,6 +400,6 @@ export async function removeCartLine(cartId: string, lineId: string) {
   } catch (error) {
     console.error('[Radiant 34 Shopify] Cart line remove failed', error);
     if (isStaleCartError(error)) clearRadiantCart();
-    throw new Error(userMessageForError(error));
+    throw new Error(userMessageForError(error), { cause: error });
   }
 }
